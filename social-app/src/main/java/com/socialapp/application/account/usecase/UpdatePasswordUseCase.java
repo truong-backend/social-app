@@ -4,7 +4,7 @@ import com.socialapp.application.account.dto.request.AccountRequestDtos.UpdatePa
 import com.socialapp.application.account.dto.response.AccountResponseDtos.MessageResponse;
 import com.socialapp.application.shared.exception.ResourceNotFoundException;
 import com.socialapp.domain.account.entity.Account;
-import com.socialapp.domain.account.entity.AccountDomainException;
+import com.socialapp.domain.account.exception.AccountDomainException;
 import com.socialapp.domain.account.repository.AccountRepository;
 import com.socialapp.domain.account.valueobject.HashedPassword;
 import lombok.RequiredArgsConstructor;
