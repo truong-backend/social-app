@@ -1,4 +1,4 @@
-package com.socialapp.application.account.usecase;
+package com.socialapp.application.account.usecase.Register;
 
 import com.socialapp.application.account.dto.request.AccountRequestDtos.ConfirmEmailRequest;
 import com.socialapp.application.account.dto.response.AccountResponseDtos.AuthResponse;
@@ -6,7 +6,6 @@ import com.socialapp.application.shared.exception.ResourceNotFoundException;
 import com.socialapp.application.shared.port.TokenProvider;
 import com.socialapp.domain.account.entity.Account;
 import com.socialapp.domain.account.repository.AccountRepository;
-import com.socialapp.domain.shared.valueobject.Email;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

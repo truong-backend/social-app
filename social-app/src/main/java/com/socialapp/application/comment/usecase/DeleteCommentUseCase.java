@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-class DeleteCommentUseCase {
+public class DeleteCommentUseCase {
 
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;

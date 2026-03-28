@@ -1,4 +1,4 @@
-package com.socialapp.application.account.usecase;
+package com.socialapp.application.account.usecase.login;
 
 import com.socialapp.application.account.dto.request.AccountRequestDtos.PrepareResetPasswordRequest;
 import com.socialapp.application.account.dto.response.AccountResponseDtos.MessageResponse;

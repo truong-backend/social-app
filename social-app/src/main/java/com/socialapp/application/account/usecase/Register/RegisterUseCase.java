@@ -1,8 +1,7 @@
-package com.socialapp.application.account.usecase;
+package com.socialapp.application.account.usecase.Register;
 
 import com.socialapp.application.account.dto.request.AccountRequestDtos.RegisterRequest;
 import com.socialapp.application.account.dto.response.AccountResponseDtos.RegisterResponse;
-import com.socialapp.application.shared.exception.ConflictException;
 import com.socialapp.application.shared.port.EmailSender;
 import com.socialapp.domain.account.entity.Account;
 import com.socialapp.domain.account.repository.AccountRepository;

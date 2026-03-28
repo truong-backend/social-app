@@ -24,7 +24,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-class ReplyCommentUseCase {
+public class ReplyCommentUseCase {
 
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;

@@ -1,24 +1,13 @@
-package com.socialapp.application.notification;
+package com.socialapp.application.notification.usecase;
 
-import com.socialapp.application.shared.exception.ResourceNotFoundException;
-import com.socialapp.domain.notification.entity.Notification;
+//import com.socialapp.application.notification.dto.response.NotificationResponse;
+import com.socialapp.application.notification.dto.response.NotificationResponse;
 import com.socialapp.domain.notification.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
-
-record NotificationResponse(
-        String id,
-        String byUserId,
-        String action,
-        String targetType,
-        String targetId,
-        boolean isRead,
-        LocalDateTime sentAt
-) {}
 
 @Service
 @RequiredArgsConstructor

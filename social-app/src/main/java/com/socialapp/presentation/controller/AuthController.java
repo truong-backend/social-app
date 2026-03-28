@@ -2,7 +2,13 @@ package com.socialapp.presentation.controller;
 
 import com.socialapp.application.account.dto.request.AccountRequestDtos.*;
 import com.socialapp.application.account.dto.response.AccountResponseDtos.*;
-import com.socialapp.application.account.usecase.*;
+import com.socialapp.application.account.usecase.Register.ConfirmEmailUseCase;
+import com.socialapp.application.account.usecase.Register.RegisterUseCase;
+import com.socialapp.application.account.usecase.login.ConfirmResetCodeUseCase;
+import com.socialapp.application.account.usecase.login.LoginUseCase;
+import com.socialapp.application.account.usecase.login.PrepareResetPasswordUseCase;
+import com.socialapp.application.account.usecase.login.UpdatePasswordUseCase;
+import com.socialapp.application.account.usecase.logout.LogoutUseCase;
 import com.socialapp.presentation.util.ApiResponse;
 import com.socialapp.presentation.util.SecurityUtil;
 import jakarta.validation.Valid;
@@ -15,13 +21,13 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final RegisterUseCase              registerUseCase;
-    private final ConfirmEmailUseCase          confirmEmailUseCase;
-    private final LoginUseCase                 loginUseCase;
-    private final LogoutUseCase                logoutUseCase;
-    private final PrepareResetPasswordUseCase  prepareResetUseCase;
-    private final ConfirmResetCodeUseCase      confirmResetCodeUseCase;
-    private final UpdatePasswordUseCase        updatePasswordUseCase;
+    private final RegisterUseCase registerUseCase;
+    private final ConfirmEmailUseCase confirmEmailUseCase;
+    private final LoginUseCase loginUseCase;
+    private final LogoutUseCase logoutUseCase;
+    private final PrepareResetPasswordUseCase prepareResetUseCase;
+    private final ConfirmResetCodeUseCase confirmResetCodeUseCase;
+    private final UpdatePasswordUseCase updatePasswordUseCase;
 
     /** POST /api/auth/register */
     @PostMapping("/register")

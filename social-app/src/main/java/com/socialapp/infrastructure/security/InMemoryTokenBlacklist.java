@@ -1,6 +1,6 @@
 package com.socialapp.infrastructure.security;
 
-import com.socialapp.application.account.usecase.LogoutUseCase.TokenBlacklist;
+import com.socialapp.application.account.usecase.logout.LogoutUseCase.TokenBlacklist;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;

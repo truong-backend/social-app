@@ -1,6 +1,6 @@
 package com.socialapp.infrastructure.security.filter;
 
-import com.socialapp.application.account.usecase.LogoutUseCase.TokenBlacklist;
+import com.socialapp.application.account.usecase.logout.LogoutUseCase.TokenBlacklist;
 import com.socialapp.infrastructure.security.jwt.JwtTokenProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

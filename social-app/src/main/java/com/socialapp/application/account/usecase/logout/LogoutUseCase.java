@@ -1,4 +1,4 @@
-package com.socialapp.application.account.usecase;
+package com.socialapp.application.account.usecase.logout;
 
 import com.socialapp.application.account.dto.response.AccountResponseDtos.MessageResponse;
 import lombok.RequiredArgsConstructor;

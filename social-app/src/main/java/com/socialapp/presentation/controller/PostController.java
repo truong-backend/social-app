@@ -3,6 +3,8 @@ package com.socialapp.presentation.controller;
 import com.socialapp.application.post.dto.request.PostRequestDtos.*;
 import com.socialapp.application.post.dto.response.PostResponseDtos.*;
 import com.socialapp.application.post.usecase.*;
+import com.socialapp.application.post.usecase.postInteraction.*;
+import com.socialapp.application.post.usecase.postMutation.*;
 import com.socialapp.domain.account.repository.AccountRepository;
 import com.socialapp.presentation.util.ApiResponse;
 import com.socialapp.presentation.util.SecurityUtil;
@@ -21,11 +23,11 @@ public class PostController {
 
     private final CreatePostUseCase         createPostUseCase;
     private final GetPostUseCase            getPostUseCase;
-    private final UpdatePostContentUseCase  updatePostContentUseCase;
+    private final UpdatePostContentUseCase updatePostContentUseCase;
     private final UpdatePostPrivacyUseCase  updatePostPrivacyUseCase;
     private final DeletePostUseCase         deletePostUseCase;
     private final LikePostUseCase           likePostUseCase;
-    private final UnlikePostUseCase         unlikePostUseCase;
+    private final UnlikePostUseCase unlikePostUseCase;
     private final SharePostUseCase          sharePostUseCase;
     private final AccountRepository         accountRepository;
 

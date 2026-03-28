@@ -18,7 +18,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-class UpdateCommentUseCase {
+public class UpdateCommentUseCase {
 
     private final CommentRepository commentRepository;
     private final FileStorage fileStorage;

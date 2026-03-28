@@ -1,12 +1,12 @@
 package com.socialapp.presentation.advice;
 
 import com.socialapp.application.shared.exception.*;
-import com.socialapp.domain.account.entity.AccountDomainException;
-import com.socialapp.domain.comment.entity.CommentDomainException;
-import com.socialapp.domain.message.entity.MessageDomainException;
-import com.socialapp.domain.post.entity.PostDomainException;
-import com.socialapp.domain.relationship.entity.RelationshipDomainException;
-import com.socialapp.domain.user.entity.UserDomainException;
+import com.socialapp.domain.account.exception.AccountDomainException;
+import com.socialapp.domain.comment.exception.CommentDomainException;
+import com.socialapp.domain.message.exception.MessageDomainException;
+import com.socialapp.domain.post.exception.PostDomainException;
+import com.socialapp.domain.relationship.exception.RelationshipDomainException;
+import com.socialapp.domain.user.exception.UserDomainException;
 import com.socialapp.presentation.util.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;

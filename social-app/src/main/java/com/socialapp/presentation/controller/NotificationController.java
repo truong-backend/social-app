@@ -1,7 +1,7 @@
 package com.socialapp.presentation.controller;
 
 import com.socialapp.application.notification.usecase.GetNotificationsUseCase;
-import com.socialapp.application.notification.usecase.NotificationResponse;
+import com.socialapp.application.notification.dto.response.NotificationResponse;
 import com.socialapp.domain.account.repository.AccountRepository;
 import com.socialapp.presentation.util.ApiResponse;
 import com.socialapp.presentation.util.SecurityUtil;

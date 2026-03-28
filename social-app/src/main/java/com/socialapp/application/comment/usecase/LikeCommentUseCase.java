@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-class LikeCommentUseCase {
+public class LikeCommentUseCase {
 
     private final CommentRepository commentRepository;
     private final CommentDomainService commentDomainService;
