@@ -24,8 +24,10 @@ public class Call extends Message {
                  LocalDateTime sentAt,
                  String callId, LocalDateTime callAt,
                  LocalDateTime endAt, boolean isAnswered, boolean isVideoCall) {
-        super(Message.reconstitute(id, senderId, chatId, content,
-                filePaths, false, null, null, sentAt, sentAt));
+//        super(Message.reconstitute(id, senderId, chatId, content,
+//                filePaths, false, null, null, sentAt, sentAt));
+        super(id, senderId, chatId, content, filePaths,
+                false, null, null, sentAt, sentAt);
         this.callId      = callId;
         this.callAt      = callAt;
         this.endAt       = endAt;

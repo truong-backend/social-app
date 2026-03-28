@@ -32,7 +32,7 @@ public class Message {
     private LocalDateTime updatedAt;
 
     // ── Private constructor ───────────────────────────────────
-    private Message(String id, String senderId, String chatId,
+    protected Message(String id, String senderId, String chatId,
                     String content, List<String> attachedFilePaths,
                     boolean isRead,
                     LocalDateTime deletedForEveryoneAt, LocalDateTime deletedForSenderAt,
@@ -48,6 +48,14 @@ public class Message {
         this.sentAt                 = sentAt;
         this.updatedAt              = updatedAt;
     }
+
+//    public Message(Message reconstitute, String id, String senderId, String chatId, List<String> attachedFilePaths, LocalDateTime sentAt) {
+//        this.id = id;
+//        this.senderId = senderId;
+//        this.chatId = chatId;
+//        this.attachedFilePaths = attachedFilePaths;
+//        this.sentAt = sentAt;
+//    }
 
     // ── Factory Methods ───────────────────────────────────────
 
