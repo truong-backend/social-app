@@ -23,6 +23,7 @@ public class ConfirmEmailUseCase {
     @Transactional
     public AuthResponse execute(String accountId, ConfirmEmailRequest request) {
 
+
         // 1. Load account
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
