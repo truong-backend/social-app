@@ -16,13 +16,18 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
+
 public class UpdateCommentUseCase {
 
     private final CommentRepository commentRepository;
     private final FileStorage fileStorage;
     private final FileRepository fileRepository;
+
+    public UpdateCommentUseCase(CommentRepository commentRepository, FileStorage fileStorage, FileRepository fileRepository) {
+        this.commentRepository = commentRepository;
+        this.fileStorage = fileStorage;
+        this.fileRepository = fileRepository;
+    }
 
     @Transactional
     public CommentResponseDtos.CommentResponse execute(String requesterId, String commentId,

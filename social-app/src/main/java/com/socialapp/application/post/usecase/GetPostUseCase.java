@@ -10,15 +10,19 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@RequiredArgsConstructor
+
 public class GetPostUseCase {
 
     private final PostRepository    postRepository;
     private final PostDomainService postDomainService;
     private final FriendRepository  friendRepository;
 
-    @Transactional(readOnly = true)
+    public GetPostUseCase(PostRepository postRepository, PostDomainService postDomainService, FriendRepository friendRepository) {
+        this.postRepository = postRepository;
+        this.postDomainService = postDomainService;
+        this.friendRepository = friendRepository;
+    }
+
     public PostResponse execute(String requesterId, String postId) {
 
         Post post = postRepository.findByIdNotDeleted(postId)

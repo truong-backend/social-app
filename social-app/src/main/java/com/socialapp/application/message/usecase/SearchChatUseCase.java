@@ -8,11 +8,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
 public class SearchChatUseCase {
 
     private final ChatRepository chatRepository;
+
+    public SearchChatUseCase(ChatRepository chatRepository) {
+        this.chatRepository = chatRepository;
+    }
 
     @Transactional(readOnly = true)
     public List<MessageResponseDtos.ChatResponse> execute(String userId, String query) {

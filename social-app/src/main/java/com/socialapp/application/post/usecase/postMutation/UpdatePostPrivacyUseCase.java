@@ -14,11 +14,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 // ── UpdatePostPrivacyUseCase ────────────────────────────────────────────────
 
-@Service
-@RequiredArgsConstructor
+
 public class UpdatePostPrivacyUseCase {
 
     private final PostRepository postRepository;
+
+    public UpdatePostPrivacyUseCase(PostRepository postRepository) {
+        this.postRepository = postRepository;
+    }
 
     @Transactional
     public MessageResponse execute(String requesterId, String postId,

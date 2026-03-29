@@ -1,9 +1,9 @@
-package com.socialapp.infrastructure.persistence.post;
+package com.socialapp.infrastructure.persistence.post.neo4j;
 
 import com.socialapp.domain.post.entity.Post;
 import com.socialapp.domain.post.repository.PostRepository;
 import com.socialapp.infrastructure.persistence.post.mapper.PostMapper;
-import com.socialapp.infrastructure.persistence.post.neo4j.PostNeo4jRepository;
+import com.socialapp.infrastructure.persistence.post.neo4j.repository.PostNeo4jRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

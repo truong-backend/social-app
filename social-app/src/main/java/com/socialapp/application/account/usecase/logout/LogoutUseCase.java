@@ -9,11 +9,13 @@ import org.springframework.stereotype.Service;
  * JWT là stateless — logout chỉ cần blacklist token ở infrastructure.
  * Domain không cần làm gì thêm.
  */
-@Service
-@RequiredArgsConstructor
 public class LogoutUseCase {
 
     private final TokenBlacklist tokenBlacklist;
+
+    public LogoutUseCase(TokenBlacklist tokenBlacklist) {
+        this.tokenBlacklist = tokenBlacklist;
+    }
 
     public MessageResponse execute(String accessToken) {
         tokenBlacklist.revoke(accessToken);

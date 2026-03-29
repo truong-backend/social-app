@@ -1,9 +1,7 @@
 package com.socialapp.infrastructure.persistence.message.mapper;
 
 import com.socialapp.domain.message.entity.Chat;
-import com.socialapp.domain.message.entity.Message;
-import com.socialapp.infrastructure.persistence.message.neo4j.ChatNode;
-import com.socialapp.infrastructure.persistence.message.neo4j.MessageNode;
+import com.socialapp.infrastructure.persistence.message.neo4j.node.ChatNode;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;

@@ -9,13 +9,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
 public class GetNotificationsUseCase {
 
     private final NotificationRepository notificationRepository;
 
-    @Transactional(readOnly = true)
+    public GetNotificationsUseCase(NotificationRepository notificationRepository) {
+        this.notificationRepository = notificationRepository;
+    }
+
     public List<NotificationResponse> execute(String ownerId, int skip, int limit) {
         return notificationRepository.findByOwnerId(ownerId, skip, limit)
                 .stream()

@@ -4,7 +4,7 @@ import com.socialapp.domain.user.entity.User;
 import com.socialapp.domain.user.repository.UserRepository;
 import com.socialapp.domain.user.valueobject.Username;
 import com.socialapp.infrastructure.persistence.user.mapper.UserMapper;
-import com.socialapp.infrastructure.persistence.user.neo4j.UserNeo4jRepository;
+import com.socialapp.infrastructure.persistence.user.neo4j.repository.UserNeo4jRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

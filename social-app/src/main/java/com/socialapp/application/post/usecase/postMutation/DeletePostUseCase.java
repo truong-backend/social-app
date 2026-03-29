@@ -10,13 +10,18 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@RequiredArgsConstructor
+
 public class DeletePostUseCase {
 
     private final PostRepository postRepository;
     private final FileStorage fileStorage;
     private final FileRepository fileRepository;
+
+    public DeletePostUseCase(PostRepository postRepository, FileStorage fileStorage, FileRepository fileRepository) {
+        this.postRepository = postRepository;
+        this.fileStorage = fileStorage;
+        this.fileRepository = fileRepository;
+    }
 
     @Transactional
     public PostResponseDtos.MessageResponse execute(String requesterId, String postId, boolean isAdmin) {

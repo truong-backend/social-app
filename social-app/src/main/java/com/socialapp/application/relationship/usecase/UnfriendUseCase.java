@@ -9,13 +9,18 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@RequiredArgsConstructor
+
 public class UnfriendUseCase {
 
     private final UserRepository userRepository;
     private final FriendRepository friendRepository;
     private final RelationshipDomainService domainService;
+
+    public UnfriendUseCase(UserRepository userRepository, FriendRepository friendRepository, RelationshipDomainService domainService) {
+        this.userRepository = userRepository;
+        this.friendRepository = friendRepository;
+        this.domainService = domainService;
+    }
 
     @Transactional
     public MessageResponse execute(String requesterId, String targetId) {

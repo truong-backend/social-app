@@ -13,14 +13,19 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@RequiredArgsConstructor
 public class LoginUseCase {
 
     private final AccountRepository    accountRepository;
     private final AccountDomainService accountDomainService;
     private final TokenProvider        tokenProvider;
     private final PasswordEncoder      passwordEncoder;
+
+    public LoginUseCase(AccountRepository accountRepository, AccountDomainService accountDomainService, TokenProvider tokenProvider, PasswordEncoder passwordEncoder) {
+        this.accountRepository = accountRepository;
+        this.accountDomainService = accountDomainService;
+        this.tokenProvider = tokenProvider;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @Transactional(readOnly = true)
     public AuthResponse execute(LoginRequest request) {

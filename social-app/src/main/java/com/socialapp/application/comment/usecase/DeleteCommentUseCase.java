@@ -7,12 +7,8 @@ import com.socialapp.domain.comment.entity.Comment;
 import com.socialapp.domain.comment.repository.CommentRepository;
 import com.socialapp.domain.file.repository.FileRepository;
 import com.socialapp.domain.post.repository.PostRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@RequiredArgsConstructor
+
 public class DeleteCommentUseCase {
 
     private final CommentRepository commentRepository;
@@ -20,7 +16,13 @@ public class DeleteCommentUseCase {
     private final FileStorage fileStorage;
     private final FileRepository fileRepository;
 
-    @Transactional
+    public DeleteCommentUseCase(CommentRepository commentRepository, PostRepository postRepository, FileStorage fileStorage, FileRepository fileRepository) {
+        this.commentRepository = commentRepository;
+        this.postRepository = postRepository;
+        this.fileStorage = fileStorage;
+        this.fileRepository = fileRepository;
+    }
+
     public CommentResponseDtos.MessageResponse execute(String requesterId, String commentId, boolean isAdmin) {
 
         Comment comment = commentRepository.findById(commentId)

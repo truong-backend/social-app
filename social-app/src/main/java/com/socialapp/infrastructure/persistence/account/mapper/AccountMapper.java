@@ -5,7 +5,7 @@ import com.socialapp.domain.account.valueobject.HashedPassword;
 import com.socialapp.domain.account.valueobject.Role;
 import com.socialapp.domain.account.valueobject.VerifyCode;
 import com.socialapp.domain.shared.valueobject.Email;
-import com.socialapp.infrastructure.persistence.account.neo4j.AccountNode;
+import com.socialapp.infrastructure.persistence.account.neo4j.node.AccountNode;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;

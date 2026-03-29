@@ -9,11 +9,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
+
 public class SearchUserUseCase {
 
     private final UserRepository userRepository;
+
+    public SearchUserUseCase(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     @Transactional(readOnly = true)
     public List<UserSummaryResponse> execute(String keyword, String requesterId) {

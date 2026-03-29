@@ -1,10 +1,10 @@
-package com.socialapp.infrastructure.persistence.account;
+package com.socialapp.infrastructure.persistence.account.neo4j;
 
 import com.socialapp.domain.account.entity.Account;
 import com.socialapp.domain.account.repository.AccountRepository;
 import com.socialapp.domain.shared.valueobject.Email;
 import com.socialapp.infrastructure.persistence.account.mapper.AccountMapper;
-import com.socialapp.infrastructure.persistence.account.neo4j.AccountNeo4jRepository;
+import com.socialapp.infrastructure.persistence.account.neo4j.repository.AccountNeo4jRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

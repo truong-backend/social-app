@@ -12,12 +12,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@RequiredArgsConstructor
 public class UpdatePasswordUseCase {
 
     private final AccountRepository accountRepository;
     private final PasswordEncoder   passwordEncoder;
+
+    public UpdatePasswordUseCase(AccountRepository accountRepository, PasswordEncoder passwordEncoder) {
+        this.accountRepository = accountRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @Transactional
     public MessageResponse execute(String accountId, UpdatePasswordRequest request) {

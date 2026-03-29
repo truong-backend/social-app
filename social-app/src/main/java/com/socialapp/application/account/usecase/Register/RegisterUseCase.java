@@ -20,8 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
-@Service
-@RequiredArgsConstructor
 public class RegisterUseCase {
 
     private final AccountRepository    accountRepository;
@@ -29,6 +27,14 @@ public class RegisterUseCase {
     private final AccountDomainService accountDomainService;
     private final EmailSender          emailSender;
     private final PasswordEncoder      passwordEncoder;
+
+    public RegisterUseCase(AccountRepository accountRepository, UserRepository userRepository, AccountDomainService accountDomainService, EmailSender emailSender, PasswordEncoder passwordEncoder) {
+        this.accountRepository = accountRepository;
+        this.userRepository = userRepository;
+        this.accountDomainService = accountDomainService;
+        this.emailSender = emailSender;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @Transactional
     public RegisterResponse execute(RegisterRequest request) {

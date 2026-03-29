@@ -3,7 +3,7 @@ package com.socialapp.infrastructure.persistence.post.mapper;
 import com.socialapp.domain.post.entity.Post;
 import com.socialapp.domain.post.valueobject.PostCounts;
 import com.socialapp.domain.post.valueobject.Privacy;
-import com.socialapp.infrastructure.persistence.post.neo4j.PostNode;
+import com.socialapp.infrastructure.persistence.post.neo4j.node.PostNode;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;

@@ -13,8 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@RequiredArgsConstructor
 public class LikeCommentUseCase {
 
     private final CommentRepository commentRepository;
@@ -22,6 +20,14 @@ public class LikeCommentUseCase {
     private final NotificationRepository notificationRepository;
     private final NotificationDomainService notificationDomainService;
     private final RealtimePublisher realtimePublisher;
+
+    public LikeCommentUseCase(CommentRepository commentRepository, CommentDomainService commentDomainService, NotificationRepository notificationRepository, NotificationDomainService notificationDomainService, RealtimePublisher realtimePublisher) {
+        this.commentRepository = commentRepository;
+        this.commentDomainService = commentDomainService;
+        this.notificationRepository = notificationRepository;
+        this.notificationDomainService = notificationDomainService;
+        this.realtimePublisher = realtimePublisher;
+    }
 
     @Transactional
     public CommentResponseDtos.MessageResponse execute(String requesterId, String commentId) {

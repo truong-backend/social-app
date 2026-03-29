@@ -12,8 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@RequiredArgsConstructor
+
 public class GetProfileUseCase {
 
     private final UserRepository        userRepository;
@@ -21,6 +20,14 @@ public class GetProfileUseCase {
     private final FriendRepository      friendRepository;
     private final FriendRequestRepository friendRequestRepository;
     private final UserDomainService     userDomainService;
+
+    public GetProfileUseCase(UserRepository userRepository, BlockRepository blockRepository, FriendRepository friendRepository, FriendRequestRepository friendRequestRepository, UserDomainService userDomainService) {
+        this.userRepository = userRepository;
+        this.blockRepository = blockRepository;
+        this.friendRepository = friendRepository;
+        this.friendRequestRepository = friendRequestRepository;
+        this.userDomainService = userDomainService;
+    }
 
     @Transactional(readOnly = true)
     public UserProfileResponse execute(String requesterId, String targetId) {

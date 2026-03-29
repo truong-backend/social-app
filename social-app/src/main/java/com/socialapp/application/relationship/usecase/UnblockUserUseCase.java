@@ -9,13 +9,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@RequiredArgsConstructor
 public class UnblockUserUseCase {
 
     private final UserRepository            userRepository;
     private final BlockRepository           blockRepository;
     private final RelationshipDomainService domainService;
+
+    public UnblockUserUseCase(UserRepository userRepository, BlockRepository blockRepository, RelationshipDomainService domainService) {
+        this.userRepository = userRepository;
+        this.blockRepository = blockRepository;
+        this.domainService = domainService;
+    }
 
     @Transactional
     public MessageResponse execute(String blockerId, String blockedId) {

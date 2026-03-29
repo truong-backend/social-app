@@ -10,12 +10,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@RequiredArgsConstructor
 public class ConfirmEmailUseCase {
 
     private final AccountRepository accountRepository;
     private final TokenProvider     tokenProvider;
+
+    public ConfirmEmailUseCase(AccountRepository accountRepository, TokenProvider tokenProvider) {
+        this.accountRepository = accountRepository;
+        this.tokenProvider = tokenProvider;
+    }
 
     @Transactional
     public AuthResponse execute(String accountId, ConfirmEmailRequest request) {

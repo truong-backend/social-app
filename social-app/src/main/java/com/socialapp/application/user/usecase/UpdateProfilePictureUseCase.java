@@ -12,13 +12,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-@Service
-@RequiredArgsConstructor
+
 public class UpdateProfilePictureUseCase {
 
     private final UserRepository userRepository;
     private final FileStorage fileStorage;
     private final FileRepository fileRepository;
+
+    public UpdateProfilePictureUseCase(UserRepository userRepository, FileStorage fileStorage, FileRepository fileRepository) {
+        this.userRepository = userRepository;
+        this.fileStorage = fileStorage;
+        this.fileRepository = fileRepository;
+    }
 
     @Transactional
     public UserResponseDtos.MessageResponse execute(String userId, MultipartFile file) {

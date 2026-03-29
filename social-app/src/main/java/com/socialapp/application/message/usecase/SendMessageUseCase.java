@@ -18,8 +18,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
 public class SendMessageUseCase {
 
     private final ChatRepository chatRepository;
@@ -27,6 +25,14 @@ public class SendMessageUseCase {
     private final FileStorage fileStorage;
     private final FileRepository fileRepository;
     private final RealtimePublisher realtimePublisher;
+
+    public SendMessageUseCase(ChatRepository chatRepository, MessageRepository messageRepository, FileStorage fileStorage, FileRepository fileRepository, RealtimePublisher realtimePublisher) {
+        this.chatRepository = chatRepository;
+        this.messageRepository = messageRepository;
+        this.fileStorage = fileStorage;
+        this.fileRepository = fileRepository;
+        this.realtimePublisher = realtimePublisher;
+    }
 
     @Transactional
     public MessageResponseDtos.MessageResponse execute(String senderId, String targetId,

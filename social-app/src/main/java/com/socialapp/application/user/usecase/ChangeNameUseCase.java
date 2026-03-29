@@ -11,12 +11,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@RequiredArgsConstructor
+
 public class ChangeNameUseCase {
 
     private final UserRepository    userRepository;
     private final UserDomainService userDomainService;
+
+    public ChangeNameUseCase(UserRepository userRepository, UserDomainService userDomainService) {
+        this.userRepository = userRepository;
+        this.userDomainService = userDomainService;
+    }
 
     @Transactional
     public MessageResponse execute(String userId, ChangeNameRequest request) {

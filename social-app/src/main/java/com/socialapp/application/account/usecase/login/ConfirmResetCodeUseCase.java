@@ -10,11 +10,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@RequiredArgsConstructor
+
 public class ConfirmResetCodeUseCase {
 
     private final AccountRepository accountRepository;
+
+    public ConfirmResetCodeUseCase(AccountRepository accountRepository) {
+        this.accountRepository = accountRepository;
+    }
 
     @Transactional
     public MessageResponse execute(String accountId, ConfirmResetCodeRequest request) {

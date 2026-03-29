@@ -15,13 +15,18 @@ import org.springframework.transaction.annotation.Transactional;
 
 // ── UpdateMessageUseCase ─────────────────────────────────────────────────────
 
-@Service
-@RequiredArgsConstructor
+
 public class UpdateMessageUseCase {
 
     private final MessageRepository messageRepository;
     private final ChatRepository    chatRepository;
     private final RealtimePublisher realtimePublisher;
+
+    public UpdateMessageUseCase(MessageRepository messageRepository, ChatRepository chatRepository, RealtimePublisher realtimePublisher) {
+        this.messageRepository = messageRepository;
+        this.chatRepository = chatRepository;
+        this.realtimePublisher = realtimePublisher;
+    }
 
     @Transactional
     public MessageResponse execute(String requesterId, String messageId,

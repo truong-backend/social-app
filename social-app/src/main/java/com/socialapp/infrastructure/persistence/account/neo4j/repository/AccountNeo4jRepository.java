@@ -1,5 +1,6 @@
-package com.socialapp.infrastructure.persistence.account.neo4j;
+package com.socialapp.infrastructure.persistence.account.neo4j.repository;
 
+import com.socialapp.infrastructure.persistence.account.neo4j.node.AccountNode;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.data.neo4j.repository.query.Query;
 import org.springframework.stereotype.Repository;

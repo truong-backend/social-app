@@ -1,9 +1,9 @@
-package com.socialapp.infrastructure.persistence.comment;
+package com.socialapp.infrastructure.persistence.comment.neo4j;
 
 import com.socialapp.domain.comment.entity.Comment;
 import com.socialapp.domain.comment.repository.CommentRepository;
 import com.socialapp.infrastructure.persistence.comment.mapper.CommentMapper;
-import com.socialapp.infrastructure.persistence.comment.neo4j.CommentNeo4jRepository;
+import com.socialapp.infrastructure.persistence.comment.neo4j.repository.CommentNeo4jRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

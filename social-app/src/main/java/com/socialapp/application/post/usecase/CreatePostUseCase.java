@@ -16,13 +16,18 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
+
 public class CreatePostUseCase {
 
     private final PostRepository postRepository;
     private final FileStorage    fileStorage;
     private final FileRepository fileRepository;
+
+    public CreatePostUseCase(PostRepository postRepository, FileStorage fileStorage, FileRepository fileRepository) {
+        this.postRepository = postRepository;
+        this.fileStorage = fileStorage;
+        this.fileRepository = fileRepository;
+    }
 
     @Transactional
     public PostResponse execute(String authorId,

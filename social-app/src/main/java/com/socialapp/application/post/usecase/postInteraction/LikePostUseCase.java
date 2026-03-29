@@ -13,8 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@RequiredArgsConstructor
 public class LikePostUseCase {
 
     private final PostRepository postRepository;
@@ -22,6 +20,14 @@ public class LikePostUseCase {
     private final NotificationRepository notificationRepository;
     private final NotificationDomainService notificationDomainService;
     private final RealtimePublisher realtimePublisher;
+
+    public LikePostUseCase(PostRepository postRepository, PostDomainService postDomainService, NotificationRepository notificationRepository, NotificationDomainService notificationDomainService, RealtimePublisher realtimePublisher) {
+        this.postRepository = postRepository;
+        this.postDomainService = postDomainService;
+        this.notificationRepository = notificationRepository;
+        this.notificationDomainService = notificationDomainService;
+        this.realtimePublisher = realtimePublisher;
+    }
 
     @Transactional
     public PostResponseDtos.MessageResponse execute(String requesterId, String postId) {

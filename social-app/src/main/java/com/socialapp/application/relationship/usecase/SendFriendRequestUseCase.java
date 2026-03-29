@@ -17,8 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@RequiredArgsConstructor
+
 public class SendFriendRequestUseCase {
 
     private final UserRepository userRepository;
@@ -29,6 +28,17 @@ public class SendFriendRequestUseCase {
     private final NotificationRepository notificationRepository;
     private final NotificationDomainService notificationDomainService;
     private final RealtimePublisher realtimePublisher;
+
+    public SendFriendRequestUseCase(UserRepository userRepository, FriendRepository friendRepository, FriendRequestRepository friendRequestRepository, BlockRepository blockRepository, RelationshipDomainService domainService, NotificationRepository notificationRepository, NotificationDomainService notificationDomainService, RealtimePublisher realtimePublisher) {
+        this.userRepository = userRepository;
+        this.friendRepository = friendRepository;
+        this.friendRequestRepository = friendRequestRepository;
+        this.blockRepository = blockRepository;
+        this.domainService = domainService;
+        this.notificationRepository = notificationRepository;
+        this.notificationDomainService = notificationDomainService;
+        this.realtimePublisher = realtimePublisher;
+    }
 
     @Transactional
     public MessageResponse execute(String senderId, String receiverId) {

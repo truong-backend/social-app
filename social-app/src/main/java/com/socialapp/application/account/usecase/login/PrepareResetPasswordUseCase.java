@@ -13,13 +13,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@RequiredArgsConstructor
 public class PrepareResetPasswordUseCase {
 
     private final AccountRepository    accountRepository;
     private final AccountDomainService accountDomainService;
     private final EmailSender          emailSender;
+
+    public PrepareResetPasswordUseCase(AccountRepository accountRepository, AccountDomainService accountDomainService, EmailSender emailSender) {
+        this.accountRepository = accountRepository;
+        this.accountDomainService = accountDomainService;
+        this.emailSender = emailSender;
+    }
 
     @Transactional
     public MessageResponse execute(PrepareResetPasswordRequest request) {

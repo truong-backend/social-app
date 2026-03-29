@@ -14,11 +14,14 @@ import java.time.LocalDate;
 
 // ── ChangeBirthdateUseCase ──────────────────────────────────────────────────
 
-@Service
-@RequiredArgsConstructor
+
 public class ChangeBirthdateUseCase {
 
     private final UserRepository userRepository;
+
+    public ChangeBirthdateUseCase(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     @Transactional
     public MessageResponse execute(String userId, ChangeBirthdateRequest request) {

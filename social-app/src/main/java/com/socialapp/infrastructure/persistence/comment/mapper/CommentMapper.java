@@ -1,7 +1,7 @@
 package com.socialapp.infrastructure.persistence.comment.mapper;
 
 import com.socialapp.domain.comment.entity.Comment;
-import com.socialapp.infrastructure.persistence.comment.neo4j.CommentNode;
+import com.socialapp.infrastructure.persistence.comment.neo4j.node.CommentNode;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;

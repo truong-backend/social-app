@@ -13,14 +13,19 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@RequiredArgsConstructor
 public class DeleteMessageUseCase {
 
     private final MessageRepository messageRepository;
     private final FileStorage fileStorage;
     private final FileRepository fileRepository;
     private final RealtimePublisher realtimePublisher;
+
+    public DeleteMessageUseCase(MessageRepository messageRepository, FileStorage fileStorage, FileRepository fileRepository, RealtimePublisher realtimePublisher) {
+        this.messageRepository = messageRepository;
+        this.fileStorage = fileStorage;
+        this.fileRepository = fileRepository;
+        this.realtimePublisher = realtimePublisher;
+    }
 
     @Transactional
     public MessageResponseDtos.SimpleMessageResponse execute(String requesterId, String messageId,

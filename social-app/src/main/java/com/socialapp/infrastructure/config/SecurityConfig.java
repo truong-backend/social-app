@@ -37,7 +37,19 @@ public class SecurityConfig {
                                 "/api/auth/prepare-reset-password",
                                 "/api/auth/confirm-reset-code",
                                 "/api/auth/update-password"
+
                         ).permitAll()
+
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/swagger-ui/index.html",
+                                "/api-docs",
+                                "/api-docs/swagger-config"
+                        ).permitAll()
+
+
                         // Admin only
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         // Everything else requires auth

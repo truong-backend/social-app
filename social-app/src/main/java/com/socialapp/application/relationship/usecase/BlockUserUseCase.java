@@ -13,8 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@RequiredArgsConstructor
+
 public class BlockUserUseCase {
 
     private final UserRepository userRepository;
@@ -22,6 +21,14 @@ public class BlockUserUseCase {
     private final FriendRepository friendRepository;
     private final FriendRequestRepository friendRequestRepository;
     private final RelationshipDomainService domainService;
+
+    public BlockUserUseCase(UserRepository userRepository, BlockRepository blockRepository, FriendRepository friendRepository, FriendRequestRepository friendRequestRepository, RelationshipDomainService domainService) {
+        this.userRepository = userRepository;
+        this.blockRepository = blockRepository;
+        this.friendRepository = friendRepository;
+        this.friendRequestRepository = friendRequestRepository;
+        this.domainService = domainService;
+    }
 
     @Transactional
     public MessageResponse execute(String blockerId, String blockedId) {

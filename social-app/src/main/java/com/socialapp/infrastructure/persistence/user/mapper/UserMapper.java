@@ -2,7 +2,7 @@ package com.socialapp.infrastructure.persistence.user.mapper;
 
 import com.socialapp.domain.user.entity.User;
 import com.socialapp.domain.user.valueobject.*;
-import com.socialapp.infrastructure.persistence.user.neo4j.UserNode;
+import com.socialapp.infrastructure.persistence.user.neo4j.node.UserNode;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;

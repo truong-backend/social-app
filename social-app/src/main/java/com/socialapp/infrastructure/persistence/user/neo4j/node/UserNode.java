@@ -1,4 +1,4 @@
-package com.socialapp.infrastructure.persistence.user.neo4j;
+package com.socialapp.infrastructure.persistence.user.neo4j.node;
 
 import lombok.*;
 import org.springframework.data.neo4j.core.schema.*;

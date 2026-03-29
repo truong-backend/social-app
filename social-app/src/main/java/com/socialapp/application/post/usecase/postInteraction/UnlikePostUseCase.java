@@ -13,12 +13,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 // ── UnlikePostUseCase ───────────────────────────────────────────────────────
 
-@Service
-@RequiredArgsConstructor
 public class UnlikePostUseCase {
 
     private final PostRepository    postRepository;
     private final PostDomainService postDomainService;
+
+    public UnlikePostUseCase(PostRepository postRepository, PostDomainService postDomainService) {
+        this.postRepository = postRepository;
+        this.postDomainService = postDomainService;
+    }
 
     @Transactional
     public MessageResponse execute(String requesterId, String postId) {

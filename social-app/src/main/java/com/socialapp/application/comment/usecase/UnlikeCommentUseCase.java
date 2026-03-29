@@ -9,12 +9,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@RequiredArgsConstructor
 public class UnlikeCommentUseCase {
 
     private final CommentRepository    commentRepository;
     private final CommentDomainService commentDomainService;
+
+    public UnlikeCommentUseCase(CommentRepository commentRepository, CommentDomainService commentDomainService) {
+        this.commentRepository = commentRepository;
+        this.commentDomainService = commentDomainService;
+    }
 
     @Transactional
     public MessageResponse execute(String requesterId, String commentId) {

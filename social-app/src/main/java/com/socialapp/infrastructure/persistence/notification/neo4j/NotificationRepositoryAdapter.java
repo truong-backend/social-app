@@ -1,12 +1,12 @@
-package com.socialapp.infrastructure.persistence.notification;
+package com.socialapp.infrastructure.persistence.notification.neo4j;
 
 import com.socialapp.domain.notification.entity.Notification;
 import com.socialapp.domain.notification.repository.NotificationRepository;
 import com.socialapp.domain.notification.valueobject.NotificationAction;
 import com.socialapp.domain.notification.valueobject.NotificationTarget;
 import com.socialapp.domain.notification.valueobject.NotificationTargetType;
-import com.socialapp.infrastructure.persistence.notification.neo4j.NotificationNeo4jRepository;
-import com.socialapp.infrastructure.persistence.notification.neo4j.NotificationNode;
+import com.socialapp.infrastructure.persistence.notification.neo4j.repository.NotificationNeo4jRepository;
+import com.socialapp.infrastructure.persistence.notification.neo4j.node.NotificationNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

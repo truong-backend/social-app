@@ -22,8 +22,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
 public class ReplyCommentUseCase {
 
     private final CommentRepository commentRepository;
@@ -34,6 +32,17 @@ public class ReplyCommentUseCase {
     private final NotificationRepository notificationRepository;
     private final NotificationDomainService notificationDomainService;
     private final RealtimePublisher realtimePublisher;
+
+    public ReplyCommentUseCase(CommentRepository commentRepository, PostRepository postRepository, CommentDomainService commentDomainService, FileStorage fileStorage, FileRepository fileRepository, NotificationRepository notificationRepository, NotificationDomainService notificationDomainService, RealtimePublisher realtimePublisher) {
+        this.commentRepository = commentRepository;
+        this.postRepository = postRepository;
+        this.commentDomainService = commentDomainService;
+        this.fileStorage = fileStorage;
+        this.fileRepository = fileRepository;
+        this.notificationRepository = notificationRepository;
+        this.notificationDomainService = notificationDomainService;
+        this.realtimePublisher = realtimePublisher;
+    }
 
     @Transactional
     public CommentResponseDtos.CommentResponse execute(String authorId, String postId,

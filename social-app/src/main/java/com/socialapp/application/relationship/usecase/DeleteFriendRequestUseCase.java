@@ -9,13 +9,18 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@RequiredArgsConstructor
+
 public class DeleteFriendRequestUseCase {
 
     private final UserRepository userRepository;
     private final FriendRequestRepository friendRequestRepository;
     private final RelationshipDomainService domainService;
+
+    public DeleteFriendRequestUseCase(UserRepository userRepository, FriendRequestRepository friendRequestRepository, RelationshipDomainService domainService) {
+        this.userRepository = userRepository;
+        this.friendRequestRepository = friendRequestRepository;
+        this.domainService = domainService;
+    }
 
     @Transactional
     public MessageResponse execute(String requesterId, String targetId) {

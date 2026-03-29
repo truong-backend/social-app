@@ -11,12 +11,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@RequiredArgsConstructor
 public class SharePostUseCase {
 
     private final PostRepository postRepository;
     private final PostDomainService postDomainService;
+
+    public SharePostUseCase(PostRepository postRepository, PostDomainService postDomainService) {
+        this.postRepository = postRepository;
+        this.postDomainService = postDomainService;
+    }
 
     @Transactional
     public PostResponseDtos.PostResponse execute(String requesterId, String originalPostId,

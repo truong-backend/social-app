@@ -11,12 +11,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
 public class GetChatUseCase {
 
     private final ChatRepository chatRepository;
     private final MessageRepository messageRepository;
+
+    public GetChatUseCase(ChatRepository chatRepository, MessageRepository messageRepository) {
+        this.chatRepository = chatRepository;
+        this.messageRepository = messageRepository;
+    }
 
     @Transactional(readOnly = true)
     public List<MessageResponseDtos.MessageResponse> execute(String requesterId, String chatId,
