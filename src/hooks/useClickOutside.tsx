@@ -1,40 +1,21 @@
-import type { ButtonHTMLAttributes } from 'react'
-import { clsx } from 'clsx'
-import { Spinner } from '@components/feedback/Spinner'
+import { useEffect, type RefObject } from 'react'
 
-type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost'
-type ButtonSize    = 'sm' | 'md' | 'lg'
+export const useClickOutside = <T extends HTMLElement>(
+  ref: RefObject<T>,
+  handler: () => void,
+) => {
+  useEffect(() => {
+    const listener = (event: MouseEvent | TouchEvent) => {
+      if (!ref.current || ref.current.contains(event.target as Node)) return
+      handler()
+    }
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?:   ButtonVariant
-  size?:      ButtonSize
-  isLoading?: boolean
-  fullWidth?: boolean
-}
+    document.addEventListener('mousedown', listener)
+    document.addEventListener('touchstart', listener)
 
-export const Button = ({
-  children,
-  variant    = 'primary',
-  size       = 'md',
-  isLoading  = false,
-  fullWidth  = false,
-  disabled,
-  className,
-  ...rest
-}: ButtonProps) => {
-  return (
-    <button
-      className={clsx(
-        'btn',
-        `btn--${variant}`,
-        `btn--${size}`,
-        fullWidth && 'btn--full-width',
-        className,
-      )}
-      disabled={disabled || isLoading}
-      {...rest}
-    >
-      {isLoading ? <Spinner size="sm" /> : children}
-    </button>
-  )
+    return () => {
+      document.removeEventListener('mousedown', listener)
+      document.removeEventListener('touchstart', listener)
+    }
+  }, [ref, handler])
 }

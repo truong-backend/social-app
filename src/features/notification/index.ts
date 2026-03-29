@@ -1,5 +1,5 @@
 export { NotificationBell } from './components/NotificationBell'
-export { NotificationDropdown } from './components/Notificationdropdown'
+export { NotificationDropdown } from './components/NotificationDropdown'
 export { useNotifications } from './hooks/useNotifications'
 export { useNotificationWebSocket } from './hooks/useNotificationWebSocket'
 export { useNotificationStore } from './store/notification.store'

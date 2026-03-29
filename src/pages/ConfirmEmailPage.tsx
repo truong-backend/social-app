@@ -2,7 +2,8 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation } from '@tanstack/react-query'
-import { useNavigate, useLocation } from 'react-router-dom'
+// import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { confirmEmailApi } from '@features/auth/api/auth.api'
 import { useSessionStore } from '@stores/session.store'
@@ -18,7 +19,7 @@ type ConfirmFormValues = z.infer<typeof confirmSchema>
 
 export const ConfirmEmailPage = () => {
   const navigate  = useNavigate()
-  const location  = useLocation()
+  // const location  = useLocation()
   const setSession = useSessionStore((state) => state.setSession)
 
   const confirm = useMutation({

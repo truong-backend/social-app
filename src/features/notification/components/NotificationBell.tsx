@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNotificationStore } from '../store/notification.store'
-import { NotificationDropdown } from './Notificationdropdown'
+import { NotificationDropdown } from './NotificationDropdown'
 
 export const NotificationBell = () => {
   const [isOpen, setIsOpen] = useState(false)
