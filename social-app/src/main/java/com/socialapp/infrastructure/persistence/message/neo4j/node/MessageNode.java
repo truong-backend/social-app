@@ -3,8 +3,14 @@ package com.socialapp.infrastructure.persistence.message.neo4j.node;
 import lombok.*;
 import org.springframework.data.neo4j.core.schema.*;
 
-import java.util.List;
-
+/**
+ * Relationships (managed externally via MessageNeo4jRepository):
+ *   (Chat)-[:HAS_MESSAGE]→(Message)
+ *   (User)-[:SENT]→(Message)
+ *   (Message)-[:ATTACH_FILE]→(File)
+ *
+ * Giữ deletedForEveryoneAt + deletedForSenderAt (chi tiết hơn tài liệu, logic cần thiết).
+ */
 @Node("Message")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor @Builder
@@ -13,17 +19,8 @@ public class MessageNode {
     @Id
     private String id;
 
-    @Property("senderId")
-    private String senderId;
-
-    @Property("chatId")
-    private String chatId;
-
     @Property("content")
     private String content;
-
-    @Property("attachedFilePaths")
-    private List<String> attachedFilePaths;
 
     @Property("isRead")
     private Boolean isRead;

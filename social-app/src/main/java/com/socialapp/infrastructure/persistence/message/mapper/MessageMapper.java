@@ -7,14 +7,29 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * MessageNode không còn lưu: senderId, chatId, attachedFilePaths.
+ * Các giá trị đó được quản lý hoàn toàn qua relationship:
+ *   (User)-[:SENT]→(Message)
+ *   (Chat)-[:HAS_MESSAGE]→(Message)
+ *   (Message)-[:ATTACH_FILE]→(File)
+ *
+ * Khi toDomain(), các field này được truyền vào từ MessageRepositoryAdapter.
+ */
 @Component
 public class MessageMapper {
 
-    public Message toDomain(MessageNode n) {
+    /**
+     * Map đầy đủ khi adapter đã resolve senderId, chatId, attachedFilePaths từ graph.
+     */
+    public Message toDomain(MessageNode n, String senderId, String chatId,
+                            List<String> attachedFilePaths) {
         return Message.reconstitute(
-                n.getId(), n.getSenderId(), n.getChatId(),
+                n.getId(),
+                senderId,
+                chatId,
                 n.getContent(),
-                n.getAttachedFilePaths() != null ? n.getAttachedFilePaths() : List.of(),
+                attachedFilePaths != null ? attachedFilePaths : List.of(),
                 Boolean.TRUE.equals(n.getIsRead()),
                 parse(n.getDeletedForEveryoneAt()),
                 parse(n.getDeletedForSenderAt()),
@@ -26,10 +41,7 @@ public class MessageMapper {
     public MessageNode toNode(Message m) {
         return MessageNode.builder()
                 .id(m.getId())
-                .senderId(m.getSenderId())
-                .chatId(m.getChatId())
                 .content(m.getContent())
-                .attachedFilePaths(m.getAttachedFilePaths())
                 .isRead(m.isRead())
                 .deletedForEveryoneAt(str(m.getDeletedForEveryoneAt()))
                 .deletedForSenderAt(str(m.getDeletedForSenderAt()))

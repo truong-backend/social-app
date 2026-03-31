@@ -1,5 +1,7 @@
 package com.socialapp.presentation.controller;
 
+import com.socialapp.application.comment.dto.response.CommentResponseDtos;
+import com.socialapp.application.comment.usecase.GetCommentsUseCase;
 import com.socialapp.application.post.dto.request.PostRequestDtos.*;
 import com.socialapp.application.post.dto.response.PostResponseDtos.*;
 import com.socialapp.application.post.usecase.*;
@@ -37,11 +39,22 @@ public class PostController {
     private final LikePostUseCase likePostUseCase;
     private final UnlikePostUseCase unlikePostUseCase;
     private final SharePostUseCase sharePostUseCase;
+    private final GetCommentsUseCase getCommentsUseCase;
     private final AccountRepository         accountRepository;
 
     private String resolveUserId() {
         return accountRepository.findById(SecurityUtil.currentAccountId())
                 .orElseThrow().getUserId();
+    }
+
+    /** GET /api/posts/{postId}/comments?skip=0&limit=10 */
+    @GetMapping("/{postId}/comments")
+    public ApiResponse<List<CommentResponseDtos.CommentResponse>> getComments(
+            @PathVariable String postId,
+            @RequestParam(defaultValue = "0")  int skip,
+            @RequestParam(defaultValue = "10") int limit) {
+        return ApiResponse.ok(
+                getCommentsUseCase.execute(resolveUserId(), postId, skip, limit));
     }
 
     /** GET /api/posts/feed?skip=0&limit=10 */
@@ -51,6 +64,7 @@ public class PostController {
             @RequestParam(defaultValue = "10") int limit) {
         return ApiResponse.ok(getFeedUseCase.execute(resolveUserId(), skip, limit));
     }
+
 
     /** GET /api/posts/author/{authorId}?viewerId=&skip=0&limit=10 */
     @GetMapping("/author/{authorId}")

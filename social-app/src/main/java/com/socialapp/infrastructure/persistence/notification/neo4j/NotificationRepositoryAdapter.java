@@ -5,8 +5,8 @@ import com.socialapp.domain.notification.repository.NotificationRepository;
 import com.socialapp.domain.notification.valueobject.NotificationAction;
 import com.socialapp.domain.notification.valueobject.NotificationTarget;
 import com.socialapp.domain.notification.valueobject.NotificationTargetType;
-import com.socialapp.infrastructure.persistence.notification.neo4j.repository.NotificationNeo4jRepository;
 import com.socialapp.infrastructure.persistence.notification.neo4j.node.NotificationNode;
+import com.socialapp.infrastructure.persistence.notification.neo4j.repository.NotificationNeo4jRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -22,13 +22,22 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
 
     @Override
     public Optional<Notification> findById(String id) {
-        return neo4j.findById(id).map(this::toDomain);
+        return neo4j.findById(id).map(node -> {
+            // byUserId lấy qua relationship BY_USER
+            String byUserId = neo4j.findByUserIdByNotifId(node.getId());
+            return toDomain(node, byUserId);
+        });
     }
 
     @Override
     public List<Notification> findByOwnerId(String ownerId, int skip, int limit) {
         return neo4j.findByOwnerId(ownerId, skip, limit)
-                .stream().map(this::toDomain).toList();
+                .stream()
+                .map(node -> {
+                    String byUserId = neo4j.findByUserIdByNotifId(node.getId());
+                    return toDomain(node, byUserId);
+                })
+                .toList();
     }
 
     @Override
@@ -38,7 +47,15 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
 
     @Override
     public Notification save(Notification notification) {
-        return toDomain(neo4j.save(toNode(notification)));
+        NotificationNode saved = neo4j.save(toNode(notification));
+
+        // (User)-[:HAS_NOTIFICATION]→(Notification)
+        neo4j.linkOwnerToNotification(notification.getOwnerId(), saved.getId());
+
+        // (Notification)-[:BY_USER]→(User)
+        neo4j.linkNotificationByUser(saved.getId(), notification.getByUserId());
+
+        return toDomain(saved, notification.getByUserId());
     }
 
     @Override
@@ -46,9 +63,15 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
         neo4j.deleteById(id);
     }
 
-    private Notification toDomain(NotificationNode n) {
+    // ── Mapper helpers ───────────────────────────────────────
+
+    private Notification toDomain(NotificationNode n, String byUserId) {
+        // ownerId resolve qua HAS_NOTIFICATION (owner → notif), không lưu trong node
+        // Để tái tạo domain, ownerId được truyền từ context hoặc query riêng nếu cần
         return Notification.reconstitute(
-                n.getId(), n.getOwnerId(), n.getByUserId(),
+                n.getId(),
+                null,           // ownerId không lưu trong node — set từ caller nếu cần
+                byUserId,
                 NotificationAction.valueOf(n.getAction()),
                 NotificationTarget.of(
                         NotificationTargetType.valueOf(n.getTargetType()),
@@ -62,8 +85,6 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
     private NotificationNode toNode(Notification n) {
         return NotificationNode.builder()
                 .id(n.getId())
-                .ownerId(n.getOwnerId())
-                .byUserId(n.getByUserId())
                 .action(n.getAction().name())
                 .targetType(n.getTarget().getType().name())
                 .targetId(n.getTarget().getTargetId())

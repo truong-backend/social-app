@@ -3,26 +3,22 @@ package com.socialapp.infrastructure.persistence.account.mapper;
 import com.socialapp.domain.account.entity.Account;
 import com.socialapp.domain.account.valueobject.HashedPassword;
 import com.socialapp.domain.account.valueobject.Role;
-import com.socialapp.domain.account.valueobject.VerifyCode;
 import com.socialapp.domain.shared.valueobject.Email;
 import com.socialapp.infrastructure.persistence.account.neo4j.node.AccountNode;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
-
+/**
+ * VerifyCode không còn được lưu trong AccountNode.
+ * Việc load VerifyCode từ VerifyCodeNode được xử lý
+ * hoàn toàn trong AccountRepositoryAdapter qua relationship HAS_VERIFY_CODE.
+ */
 @Component
 public class AccountMapper {
 
     public Account toDomain(AccountNode node) {
-        VerifyCode verifyCode = null;
-        if (node.getVerifyCode() != null) {
-            verifyCode = VerifyCode.of(
-                    node.getVerifyCode(),
-                    Boolean.TRUE.equals(node.getVerifyCodeIsVerified()),
-                    LocalDateTime.parse(node.getVerifyCodeExpiryTime())
-            );
-        }
 
+
+        // verifyCode = null — AccountRepositoryAdapter sẽ tự resolve qua VerifyCodeNode nếu cần
         return Account.reconstitute(
                 node.getId(),
                 Email.of(node.getEmail()),
@@ -30,12 +26,12 @@ public class AccountMapper {
                 Role.valueOf(node.getRole()),
                 Boolean.TRUE.equals(node.getIsVerified()),
                 node.getUserId(),
-                verifyCode
+                null
         );
     }
 
     public AccountNode toNode(Account account) {
-        AccountNode node = AccountNode.builder()
+        return AccountNode.builder()
                 .id(account.getId())
                 .email(account.getEmail().getValue())
                 .password(account.getPassword().getValue())
@@ -43,13 +39,5 @@ public class AccountMapper {
                 .isVerified(account.isVerified())
                 .userId(account.getUserId())
                 .build();
-
-        if (account.getVerifyCode() != null) {
-            node.setVerifyCode(account.getVerifyCode().getCode());
-            node.setVerifyCodeIsVerified(account.getVerifyCode().isVerified());
-            node.setVerifyCodeExpiryTime(account.getVerifyCode().getExpiryTime().toString());
-        }
-
-        return node;
     }
 }

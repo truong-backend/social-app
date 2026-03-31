@@ -3,8 +3,15 @@ package com.socialapp.infrastructure.persistence.post.neo4j.node;
 import lombok.*;
 import org.springframework.data.neo4j.core.schema.*;
 
-import java.util.List;
-
+/**
+ * Relationships (managed externally via PostNeo4jRepository):
+ *   (User)-[:POSTED]→(Post)
+ *   (User)-[:LIKED]→(Post)
+ *   (Post)-[:SHARE]→(Post)
+ *   (Post)-[:ATTACH_FILE]→(File)
+ *   (Post)-[:HAS_COMMENT]→(Comment)
+ *   (Post)-[:HAS_KEYWORD]→(Keyword)
+ */
 @Node("Post")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor @Builder
@@ -22,9 +29,6 @@ public class PostNode {
     @Property("privacy")
     private String privacy;
 
-    @Property("sharedFromPostId")
-    private String sharedFromPostId;
-
     @Property("likeCount")
     private Integer likeCount;
 
@@ -33,12 +37,6 @@ public class PostNode {
 
     @Property("commentCount")
     private Integer commentCount;
-
-    @Property("attachedFilePaths")
-    private List<String> attachedFilePaths;
-
-    @Property("keywords")
-    private List<String> keywords;
 
     @Property("createdAt")
     private String createdAt;

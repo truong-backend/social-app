@@ -4,6 +4,7 @@ import com.socialapp.domain.user.entity.User;
 import com.socialapp.domain.user.repository.UserRepository;
 import com.socialapp.domain.user.valueobject.Username;
 import com.socialapp.infrastructure.persistence.user.mapper.UserMapper;
+import com.socialapp.infrastructure.persistence.user.neo4j.node.UserNode;
 import com.socialapp.infrastructure.persistence.user.neo4j.repository.UserNeo4jRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -18,29 +19,31 @@ public class UserRepositoryAdapter implements UserRepository {
     private final UserNeo4jRepository neo4jRepository;
     private final UserMapper          mapper;
 
-    @Override
-    public Optional<User> findById(String id) {
+    @Override public Optional<User> findById(String id) {
         return neo4jRepository.findById(id).map(mapper::toDomain);
     }
 
-    @Override
-    public Optional<User> findByUsername(Username username) {
+    @Override public Optional<User> findByUsername(Username username) {
         return neo4jRepository.findByUsername(username.getValue()).map(mapper::toDomain);
     }
 
-    @Override
-    public boolean existsByUsername(Username username) {
+    @Override public boolean existsByUsername(Username username) {
         return neo4jRepository.existsByUsername(username.getValue());
     }
 
-    @Override
-    public List<User> searchByKeyword(String keyword, String requesterId) {
+    @Override public List<User> searchByKeyword(String keyword, String requesterId) {
         return neo4jRepository.searchByKeyword(keyword, requesterId, 0, 20)
                 .stream().map(mapper::toDomain).toList();
     }
 
-    @Override
-    public User save(User user) {
-        return mapper.toDomain(neo4jRepository.save(mapper.toNode(user)));
+    @Override public User save(User user) {
+        UserNode saved = neo4jRepository.save(mapper.toNode(user));
+
+        // (User)-[:HAS_PROFILE_PICTURE]→(File)
+        if (user.getProfilePicturePath() != null) {
+            neo4jRepository.linkProfilePicture(saved.getId(), user.getProfilePicturePath());
+        }
+
+        return mapper.toDomain(saved);
     }
 }

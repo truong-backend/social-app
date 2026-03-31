@@ -3,6 +3,7 @@ package com.socialapp.presentation.controller;
 import com.socialapp.application.comment.dto.request.CommentRequestDtos.*;
 import com.socialapp.application.comment.dto.response.CommentResponseDtos.*;
 import com.socialapp.application.comment.usecase.*;
+import com.socialapp.application.user.dto.response.UserResponseDtos;
 import com.socialapp.domain.account.repository.AccountRepository;
 import com.socialapp.presentation.util.ApiResponse;
 import com.socialapp.presentation.util.SecurityUtil;
@@ -88,4 +89,10 @@ public class CommentController {
         var res = unlikeCommentUseCase.execute(resolveUserId(), commentId);
         return ApiResponse.ok(res.message());
     }
+
+//    @GetMapping("/api/posts/{postId}/comments")
+//    public ApiResponse<List<>> getComments (@PathVariable String postId) {
+//        var res = unlikeCommentUseCase.execute(resolveUserId(), postId);
+//        return ApiResponse.ok(res.message());
+//    }
 }

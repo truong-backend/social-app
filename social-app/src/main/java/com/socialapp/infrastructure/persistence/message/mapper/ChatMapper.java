@@ -7,13 +7,21 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * ChatNode không còn lưu memberIds.
+ * memberIds được quản lý hoàn toàn qua relationship (User)-[:IS_MEMBER_OF]→(Chat).
+ * Khi toDomain(), memberIds được truyền vào từ ChatRepositoryAdapter.
+ */
 @Component
 public class ChatMapper {
 
-    public Chat toDomain(ChatNode n) {
+    /**
+     * Map đầy đủ khi adapter đã resolve memberIds từ graph.
+     */
+    public Chat toDomain(ChatNode n, List<String> memberIds) {
         return Chat.reconstitute(
                 n.getId(),
-                n.getMemberIds() != null ? n.getMemberIds() : List.of(),
+                memberIds != null ? memberIds : List.of(),
                 parse(n.getCreatedAt())
         );
     }
@@ -21,7 +29,6 @@ public class ChatMapper {
     public ChatNode toNode(Chat c) {
         return ChatNode.builder()
                 .id(c.getId())
-                .memberIds(c.getMemberIds())
                 .createdAt(str(c.getCreatedAt()))
                 .build();
     }

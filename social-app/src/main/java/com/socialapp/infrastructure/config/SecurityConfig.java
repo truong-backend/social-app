@@ -96,6 +96,7 @@ public class SecurityConfig {
                                 "/api/users/me/profile-picture"
                         ).authenticated()
 
+
                         // ── Posts ──────────────────────────────────────────────────────────
                         .requestMatchers(HttpMethod.POST,   "/api/posts").authenticated()
                         .requestMatchers(HttpMethod.GET,    "/api/posts/{postId}").authenticated()
@@ -111,6 +112,8 @@ public class SecurityConfig {
                                 "/api/posts/{postId}/comments",
                                 "/api/posts/{postId}/comments/{commentId}/replies"
                         ).authenticated()
+
+
                         .requestMatchers(HttpMethod.PUT,    "/api/comments/{commentId}").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/comments/{commentId}").authenticated()
                         .requestMatchers(HttpMethod.POST,   "/api/comments/{commentId}/like").authenticated()

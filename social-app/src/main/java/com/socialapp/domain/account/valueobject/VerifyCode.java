@@ -13,7 +13,7 @@ public final class VerifyCode {
     private final boolean isVerified;
     private final LocalDateTime expiryTime;
 
-    private VerifyCode(String code, boolean isVerified, LocalDateTime expiryTime) {
+    public VerifyCode(String code, boolean isVerified, LocalDateTime expiryTime) {
         if (code == null || code.isBlank())
             throw new IllegalArgumentException("VerifyCode must not be blank");
         if (expiryTime == null)

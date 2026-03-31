@@ -53,6 +53,7 @@ public class ApplicationConfig {
         return new UserDomainService();
     }
 
+
     @Bean
     public NotificationDomainService notificationDomainService() {
         return new NotificationDomainService();
@@ -80,6 +81,12 @@ public class ApplicationConfig {
     }
 
     // ==================== ACCOUNT USE CASES ====================
+
+    @Bean
+    public GetCommentsUseCase getCommentsUseCase(CommentRepository commentRepository, PostRepository postRepository) {
+        return new GetCommentsUseCase(commentRepository, postRepository);
+    }
+
 
     @Bean
     public RegisterUseCase registerUseCase(

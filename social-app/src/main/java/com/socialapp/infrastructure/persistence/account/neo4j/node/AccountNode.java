@@ -3,6 +3,11 @@ package com.socialapp.infrastructure.persistence.account.neo4j.node;
 import lombok.*;
 import org.springframework.data.neo4j.core.schema.*;
 
+/**
+ * Relationships (managed externally via AccountNeo4jRepository):
+ *   (Account)-[:HAS_VERIFY_CODE]→(VerifyCode)
+ *   (Account)-[:HAS_INFO]→(User)
+ */
 @Node("Account")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor @Builder
@@ -25,14 +30,4 @@ public class AccountNode {
 
     @Property("userId")
     private String userId;
-
-    // VerifyCode được nhúng trực tiếp vào node (không cần separate node)
-    @Property("verifyCode")
-    private String verifyCode;
-
-    @Property("verifyCodeIsVerified")
-    private Boolean verifyCodeIsVerified;
-
-    @Property("verifyCodeExpiryTime")
-    private String verifyCodeExpiryTime;   // ISO string → parse ở mapper
 }

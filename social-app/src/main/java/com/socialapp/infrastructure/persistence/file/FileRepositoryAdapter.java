@@ -15,7 +15,7 @@ import java.util.Optional;
 public class FileRepositoryAdapter implements FileRepository {
 
     private final FileNeo4jRepository neo4j;
-    private final FileMapper mapper;
+    private final FileMapper          mapper;
 
     @Override
     public Optional<FileNode> findByPath(String path) {
@@ -31,6 +31,17 @@ public class FileRepositoryAdapter implements FileRepository {
     @Override
     public FileNode save(FileNode fileNode) {
         return mapper.toDomain(neo4j.save(mapper.toNode(fileNode)));
+    }
+
+    /**
+     * Lưu file và tạo relationship (User)-[:UPLOAD_FILE]->(File)
+     * Dùng method này thay cho save() khi biết uploaderId.
+     */
+    public FileNode saveWithUploader(FileNode fileNode, String uploaderId) {
+        FileNode saved = save(fileNode);
+        // (User)-[:UPLOAD_FILE]->(File)
+        neo4j.linkUploadFile(uploaderId, saved.getPath());
+        return saved;
     }
 
     @Override
