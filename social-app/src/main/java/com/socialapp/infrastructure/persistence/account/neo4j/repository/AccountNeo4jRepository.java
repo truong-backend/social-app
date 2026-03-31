@@ -1,5 +1,6 @@
 package com.socialapp.infrastructure.persistence.account.neo4j.repository;
 
+import com.socialapp.domain.account.entity.Account;
 import com.socialapp.infrastructure.persistence.account.neo4j.node.AccountNode;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.data.neo4j.repository.query.Query;
@@ -15,4 +16,7 @@ public interface AccountNeo4jRepository extends Neo4jRepository<AccountNode, Str
 
     @Query("MATCH (a:Account {email: $email}) RETURN count(a) > 0")
     boolean existsByEmail(String email);
+
+    @Query("MATCH (a:Account {verifyCode: $verifyCode}) RETURN a")
+    Optional<AccountNode> findByVerifyCode(String verifyCode);
 }

@@ -11,6 +11,8 @@ import java.util.Optional;
  */
 public interface AccountRepository {
 
+    Optional<Account> findByVerifyCode(String verifyCode);
+
     Optional<Account> findById(String id);
 
     Optional<Account> findByEmail(Email email);

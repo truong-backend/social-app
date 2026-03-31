@@ -18,6 +18,11 @@ public class AccountRepositoryAdapter implements AccountRepository {
     private final AccountMapper          mapper;
 
     @Override
+    public Optional<Account> findByVerifyCode(String verifyCode) {
+        return neo4jRepository.findByVerifyCode(verifyCode).map(mapper::toDomain);
+    }
+
+    @Override
     public Optional<Account> findById(String id) {
         return neo4jRepository.findById(id).map(mapper::toDomain);
     }

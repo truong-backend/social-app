@@ -41,8 +41,9 @@ public class AuthController {
     @PostMapping("/confirm-email")
     public ApiResponse<AuthResponse> confirmEmail(
             @Valid @RequestBody ConfirmEmailRequest request) {
-        String accountId = SecurityUtil.currentAccountId();
-        return ApiResponse.ok(confirmEmailUseCase.execute(accountId, request));
+//        String accountId = SecurityUtil.currentAccountId();
+//        return ApiResponse.ok(confirmEmailUseCase.execute(accountId, request));
+        return ApiResponse.ok(confirmEmailUseCase.execute( request));
     }
 
     /** POST /api/auth/login */
@@ -73,8 +74,9 @@ public class AuthController {
     @PostMapping("/confirm-reset-code")
     public ApiResponse<Void> confirmResetCode(
             @Valid @RequestBody ConfirmResetCodeRequest request) {
-        String accountId = SecurityUtil.currentAccountId();
-        var res = confirmResetCodeUseCase.execute(accountId, request);
+//        String accountId = SecurityUtil.currentAccountId();
+//        var res = confirmResetCodeUseCase.execute(accountId, request);
+        var res = confirmResetCodeUseCase.execute( request);
         return ApiResponse.ok(res.message());
     }
 

@@ -20,9 +20,10 @@ public class ConfirmResetCodeUseCase {
     }
 
     @Transactional
-    public MessageResponse execute(String accountId, ConfirmResetCodeRequest request) {
+//    public MessageResponse execute(String accountId, ConfirmResetCodeRequest request) {
+    public MessageResponse execute(ConfirmResetCodeRequest request) {
 
-        Account account = accountRepository.findById(accountId)
+        Account account = accountRepository.findByVerifyCode(request.code())
                 .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
 
         // Reuse confirmEmail logic — cùng flow xác nhận code

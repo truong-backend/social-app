@@ -1,0 +1,38 @@
+package com.socialapp.application.post.usecase;
+
+import com.socialapp.application.post.dto.response.PostResponseDtos.PostResponse;
+import com.socialapp.domain.post.entity.Post;
+import com.socialapp.domain.post.repository.PostRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class SearchPostsUseCase {
+
+    private final PostRepository postRepository;
+
+    @Transactional(readOnly = true)
+    public List<PostResponse> execute(String keyword, String requesterId) {
+        return postRepository.searchByKeyword(keyword, requesterId)
+                .stream()
+                .map(post -> toResponse(post, postRepository.isLikedByUser(requesterId, post.getId())))
+                .toList();
+    }
+
+    private PostResponse toResponse(Post post, boolean isLiked) {
+        return new PostResponse(
+                post.getId(), post.getAuthorId(), null, null,
+                post.getContent(), post.getPrivacy().name(),
+                post.getCounts().getLikeCount(),
+                post.getCounts().getShareCount(),
+                post.getCounts().getCommentCount(),
+                isLiked, post.isShared(), post.getSharedFromPostId(),
+                post.getAttachedFilePaths(),
+                post.getCreatedAt(), post.getUpdatedAt()
+        );
+    }
+}

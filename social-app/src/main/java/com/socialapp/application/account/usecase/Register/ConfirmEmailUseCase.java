@@ -21,11 +21,10 @@ public class ConfirmEmailUseCase {
     }
 
     @Transactional
-    public AuthResponse execute(String accountId, ConfirmEmailRequest request) {
-
-
+//    public AuthResponse execute(String accountId, ConfirmEmailRequest request) {
+    public AuthResponse execute(ConfirmEmailRequest request) {
         // 1. Load account
-        Account account = accountRepository.findById(accountId)
+        Account account = accountRepository.findByVerifyCode(request.code())
                 .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
 
         // 2. Domain thực hiện xác thực (throws nếu sai / hết hạn)
