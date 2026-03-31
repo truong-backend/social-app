@@ -25,7 +25,8 @@ public class UserResponseDtos {
             String familyName,
             String givenName,
             String profilePictureUrl
-    ) {}
+    ) {
+    }
 
     public record MessageResponse(String message) {}
 }
