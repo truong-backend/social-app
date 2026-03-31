@@ -4,6 +4,7 @@ import { ChatWindow } from '@features/chat/components/ChatWindow'
 import { useChatStore } from '@features/chat/store/chat.store'
 import { useEffect } from 'react'
 
+
 export const MessagesPage = () => {
   const { chatId: chatIdFromParams } = useParams<{ chatId?: string }>()
   const { activeChatId, setActiveChatId } = useChatStore()
@@ -19,6 +20,8 @@ export const MessagesPage = () => {
 
   return (
     <div className="messages-page">
+
+      
       <ChatSidebar />
 
       <div className="messages-page__main">
