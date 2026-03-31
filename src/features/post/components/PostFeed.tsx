@@ -3,6 +3,7 @@ import { useInView } from 'react-intersection-observer'
 import { useInfiniteFeed } from '../hooks/useInfiniteFeed'
 import { PostCard } from './PostCard'
 import { useSessionStore } from '@stores/session.store'
+import './PostFeed.module.scss'
 
 export const PostFeed = () => {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteFeed()

@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { useCreatePost } from '../hooks/useCreatePost'
 import type { Privacy } from '@/types/api.types'
+import './CreatePostForm.module.scss'
 
 export const CreatePostForm = () => {
   const [content, setContent] = useState('')

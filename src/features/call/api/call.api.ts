@@ -42,5 +42,6 @@ export const endCallApi = async (callId: string): Promise<void> => {
  */
 export const getStringeeTokenApi = async (): Promise<string> => {
   const response = await axiosInstance.get('/api/messages/calls/stringee-token')
-  return unwrapData<string>(response) ?? ''
+  // return unwrapData<string>(response) ?? ''
+  return response.data
 }

@@ -1,0 +1,475 @@
+// ─── Design Tokens (map từ Tailwind config của HTML mẫu) ───────────────────────
+$surface: #faf4ff;
+$surface-bright: #faf4ff;
+$surface-container-low: #f4eeff;
+$surface-container: #ece4ff;
+$surface-container-high: #e6deff;
+$surface-container-highest: #e1d8ff;
+$surface-dim: #d8ceff;
+
+$primary: #4647d3;
+$primary-container: #9396ff;
+$on-primary: #f4f1ff;
+
+$secondary: #b00d6a;
+$secondary-container: #ffc1d6;
+$tertiary: #963776;
+
+$on-surface: #302950;
+$on-surface-variant: #5e5680;
+$outline-variant: #b0a7d6;
+
+$font-headline: 'Plus Jakarta Sans', sans-serif;
+$font-body: 'Inter', sans-serif;
+
+// ─── Page Layout ───────────────────────────────────────────────────────────────
+
+.feed-page {
+  background-color: $surface;
+  min-height: 100vh;
+  font-family: $font-body;
+  color: $on-surface;
+
+  &__container {
+    max-width: 672px; // ~max-w-2xl
+    margin: 0 auto;
+    padding: 2rem 1rem;
+
+    @media (min-width: 768px) {
+      padding: 2rem 0;
+    }
+
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+}
+
+// ─── Shared Card Base ──────────────────────────────────────────────────────────
+
+%card {
+  border-radius: 0.75rem; // rounded-xl
+  padding: 1rem;
+  box-shadow: 0 1px 4px 0 rgba(48, 41, 80, 0.06);
+  overflow: hidden;
+}
+
+// ─── CreatePostForm ────────────────────────────────────────────────────────────
+// Nếu component này nằm trong file riêng, import token rồi dùng lại
+
+.create-post {
+  @extend %card;
+  background-color: $surface-container-low;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  &__avatar {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 9999px;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 3px solid $surface-container-high;
+  }
+
+  &__input {
+    flex: 1;
+    background: $surface-container;
+    border: none;
+    border-radius: 9999px;
+    padding: 0.65rem 1.25rem;
+    font-family: $font-body;
+    font-size: 0.9375rem;
+    color: $on-surface;
+    outline: none;
+    transition: box-shadow 0.2s ease;
+
+    &::placeholder {
+      color: $on-surface-variant;
+    }
+
+    &:focus {
+      box-shadow: 0 0 0 2.5px rgba($primary, 0.22);
+    }
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  &__icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 9999px;
+    border: none;
+    background: transparent;
+    color: $on-surface-variant;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+
+    &:hover {
+      background: $surface-container;
+      color: $primary;
+      transform: scale(1.1);
+    }
+  }
+
+  &__submit {
+    padding: 0.5rem 1.25rem;
+    border-radius: 9999px;
+    border: none;
+    background: linear-gradient(135deg, $primary, $primary-container);
+    color: $on-primary;
+    font-family: $font-headline;
+    font-weight: 700;
+    font-size: 0.875rem;
+    cursor: pointer;
+    box-shadow: 0 4px 14px 0 rgba($primary, 0.3);
+    transition: opacity 0.2s, transform 0.15s;
+
+    &:hover {
+      opacity: 0.92;
+    }
+    &:active {
+      transform: scale(0.96);
+    }
+  }
+}
+
+// ─── PostFeed ──────────────────────────────────────────────────────────────────
+
+.post-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+// ─── Post Article (shared) ─────────────────────────────────────────────────────
+
+.post {
+  @extend %card;
+
+  // ── Header ──
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+
+  &__user {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  &__avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 9999px;
+    object-fit: cover;
+
+    // avatar chữ cái (fallback)
+    &--letter {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: $primary;
+      color: $on-primary;
+      font-family: $font-headline;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+  }
+
+  &__username {
+    font-family: $font-headline;
+    font-weight: 700;
+    font-size: 0.9375rem;
+    color: $on-surface;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+
+    .verified {
+      font-size: 0.875rem;
+      color: $primary;
+    }
+  }
+
+  &__meta {
+    font-size: 0.6875rem;
+    color: $on-surface-variant;
+    margin-top: 0.1rem;
+  }
+
+  &__more-btn {
+    background: none;
+    border: none;
+    color: $on-surface-variant;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 0.25rem;
+    border-radius: 9999px;
+    transition: background 0.15s;
+
+    &:hover {
+      background: $surface-container;
+    }
+  }
+
+  // ── Media ──
+  &__image {
+    width: 100%;
+    border-radius: 0.75rem;
+    object-fit: cover;
+    display: block;
+  }
+
+  &__image-wrapper {
+    position: relative;
+
+    &--single .post__image {
+      height: 450px;
+    }
+  }
+
+  &__image-counter {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(8px);
+    padding: 0.2rem 0.75rem;
+    border-radius: 9999px;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  // ── Grid layout (editorial 2-col) ──
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    height: 300px;
+    margin-bottom: 1rem;
+
+    &-left .post__image {
+      width: 100%;
+      height: 100%;
+    }
+
+    &-right {
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+      gap: 0.75rem;
+
+      .post__image {
+        width: 100%;
+        height: 100%;
+      }
+    }
+  }
+
+  // ── Actions ──
+  &__actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1rem;
+  }
+
+  &__action-group {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  &__action-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-family: $font-body;
+    color: $on-surface-variant;
+    border-radius: 9999px;
+    padding: 0.3rem 0.5rem;
+    transition: color 0.15s, transform 0.15s, background 0.15s;
+
+    &:hover {
+      transform: scale(1.1);
+      background: $surface-container;
+    }
+
+    &--like {
+      color: $secondary;
+      &:hover { color: darken($secondary, 8%); }
+    }
+
+    &--comment {
+      color: $primary;
+      &:hover { color: darken($primary, 8%); }
+    }
+
+    &--repost,
+    &--views {
+      color: $on-surface-variant;
+    }
+  }
+
+  &__save-btn {
+    @extend .post__action-btn;
+    color: $on-surface-variant;
+  }
+
+  // ── Caption / Body text ──
+  &__caption {
+    margin-top: 1rem;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: $on-surface;
+
+    strong {
+      font-weight: 700;
+      margin-right: 0.4rem;
+    }
+  }
+
+  // ── Text-only post (status style) ──
+  &--text {
+    background-color: $surface-container-highest;
+    padding: 2rem;
+
+    .post__header {
+      margin-bottom: 0;
+    }
+  }
+
+  &__live-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.75rem;
+    background: $surface-container-low;
+    border-radius: 9999px;
+
+    &-dot {
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: 9999px;
+      background: $secondary;
+      animation: pulse 1.4s infinite;
+      box-shadow: 0 0 8px rgba($secondary, 0.6);
+    }
+
+    &-label {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: $secondary;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+  }
+
+  &__quote {
+    margin-top: 1.5rem;
+    font-size: 1.25rem;
+    font-weight: 500;
+    line-height: 1.55;
+    color: $on-surface;
+    font-family: $font-headline;
+  }
+
+  &__stats-row {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba($outline-variant, 0.2);
+  }
+
+  // ── Editorial / Sponsored post extras ──
+  &__title {
+    font-family: $font-headline;
+    font-weight: 700;
+    font-size: 1.125rem;
+    color: $on-surface;
+    margin-bottom: 0.5rem;
+  }
+
+  &__excerpt {
+    font-size: 0.875rem;
+    color: $on-surface-variant;
+    line-height: 1.6;
+  }
+
+  &__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1.5rem;
+  }
+
+  &__read-btn {
+    padding: 0.5rem 1.5rem;
+    border-radius: 9999px;
+    border: none;
+    background: $surface-container-highest;
+    color: $primary;
+    font-weight: 700;
+    font-size: 0.875rem;
+    font-family: $font-body;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s;
+
+    &:hover {
+      background: $surface-dim;
+      transform: scale(0.98);
+    }
+  }
+
+  &__footer-icons {
+    display: flex;
+    gap: 1rem;
+    color: $on-surface-variant;
+
+    span {
+      cursor: pointer;
+      transition: color 0.15s, transform 0.15s;
+      &:hover {
+        color: $primary;
+        transform: scale(1.15);
+      }
+    }
+  }
+
+  // ── Image-only variant ──
+  &--image {
+    background-color: $surface-container-low;
+  }
+
+  // ── Editorial variant ──
+  &--editorial {
+    background-color: $surface-container-low;
+  }
+}
+
+// ─── Pulse animation ───────────────────────────────────────────────────────────
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
