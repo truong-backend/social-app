@@ -33,7 +33,7 @@ export const useLikeComment = (postId: string) => {
   const like = useMutation({
     mutationFn: (commentId: string) => likeCommentApi(commentId),
     onMutate:   (commentId) => optimisticToggle(commentId, false),
-    onError:    (error, commentId, context) => {
+    onError:    (error, _commentId, context) => {
       if (context?.snapshot) {
         queryClient.setQueryData(COMMENT_QUERY_KEYS.byPost(postId), context.snapshot)
       }
@@ -47,7 +47,7 @@ export const useLikeComment = (postId: string) => {
   const unlike = useMutation({
     mutationFn: (commentId: string) => unlikeCommentApi(commentId),
     onMutate:   (commentId) => optimisticToggle(commentId, true),
-    onError:    (error, commentId, context) => {
+    onError:    (error, _commentId, context) => {
       if (context?.snapshot) {
         queryClient.setQueryData(COMMENT_QUERY_KEYS.byPost(postId), context.snapshot)
       }

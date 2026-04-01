@@ -11,8 +11,8 @@ export const useInitiateCall = () => {
   const { setOutgoingCall, setCallEnded, clearSession } = useCallStore()
   const { makeCall, hangUp } = useStringeeClient()
 
-  const localVideoRef  = useRef<HTMLVideoElement>(null)
-  const remoteVideoRef = useRef<HTMLVideoElement>(null)
+  const localVideoRef  = useRef<HTMLVideoElement>(null as unknown as HTMLVideoElement)
+  const remoteVideoRef = useRef<HTMLVideoElement>(null as unknown as HTMLVideoElement)
 
   const startCall = useCallback(
     async (

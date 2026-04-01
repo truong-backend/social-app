@@ -9,8 +9,8 @@ export const useAnswerCall = () => {
   const { setCallStatus, setCallEnded, clearSession } = useCallStore()
   const { answerCall, hangUp } = useStringeeClient()
 
-  const localVideoRef  = useRef<HTMLVideoElement>(null)
-  const remoteVideoRef = useRef<HTMLVideoElement>(null)
+  const localVideoRef  = useRef<HTMLVideoElement>(null as unknown as HTMLVideoElement)
+  const remoteVideoRef = useRef<HTMLVideoElement>(null as unknown as HTMLVideoElement)
 
   const acceptCall = useCallback(async () => {
     const session = useCallStore.getState().session
