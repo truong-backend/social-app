@@ -1,64 +1,60 @@
-import { axiosInstance } from '@services/axios.instance'
-import { unwrapData } from '@utils/api-response'
-import type {
-  Chat,
-  Message,
-  SendMessageRequest,
-  UpdateMessageRequest,
-  DeleteMessageRequest,
-} from '../types/chat.types'
+import { create } from 'zustand'
+import { immer } from 'zustand/middleware/immer'
+import type { Message } from '../types/chat.types'
 
-export const getChatListApi = async (): Promise<Chat[]> => {
-  const response = await axiosInstance.get('/api/messages/chats')
-  return unwrapData(response) ?? []
+interface ChatState {
+  activeChatId: string | null
+  messagesByChatId: Record<string, Message[]>
+
+  setActiveChatId: (chatId: string | null) => void
+  appendMessage: (chatId: string, message: Message) => void
+  updateMessage: (chatId: string, updatedMessage: Message) => void
+  removeMessage: (chatId: string, messageId: string) => void
+  setMessages: (chatId: string, messages: Message[]) => void
 }
 
-export const getChatMessagesApi = async (
-  chatId: string,
-  skip = 0,
-  limit = 20,
-): Promise<Message[]> => {
-  const response = await axiosInstance.get(`/api/messages/chats/${chatId}`, {
-    params: { skip, limit },
-  })
-  return unwrapData(response) ?? []
-}
+export const useChatStore = create<ChatState>()(
+  immer((set) => ({
+    activeChatId: null,
+    messagesByChatId: {},
 
-export const sendMessageApi = async (
-  targetUserId: string,
-  payload: SendMessageRequest,
-  files?: File[],
-): Promise<Message> => {
-  const formData = new FormData()
-  formData.append('data', new Blob([JSON.stringify(payload)], { type: 'application/json' }))
-  files?.forEach((file) => formData.append('files', file))
+    setActiveChatId: (chatId: string | null) =>
+      set((state) => {
+        state.activeChatId = chatId
+      }),
 
-  const response = await axiosInstance.post(
-    `/api/messages/chats/${targetUserId}`,
-    formData,
-    { headers: { 'Content-Type': 'multipart/form-data' } },
-  )
-  return unwrapData(response)
-}
+    appendMessage: (chatId: string, message: Message) =>
+      set((state) => {
+        if (!state.messagesByChatId[chatId]) {
+          state.messagesByChatId[chatId] = []
+        }
+        // Tránh duplicate nếu optimistic update đã thêm
+        const exists = state.messagesByChatId[chatId].some((m: Message) => m.id === message.id)
+        if (!exists) {
+          state.messagesByChatId[chatId].push(message)
+        }
+      }),
 
-export const updateMessageApi = async (
-  messageId: string,
-  payload: UpdateMessageRequest,
-): Promise<Message> => {
-  const response = await axiosInstance.put(`/api/messages/${messageId}`, payload)
-  return unwrapData(response)
-}
+    updateMessage: (chatId: string, updatedMessage: Message) =>
+      set((state) => {
+        const messages = state.messagesByChatId[chatId]
+        if (!messages) return
+        const index = messages.findIndex((m: Message) => m.id === updatedMessage.id)
+        if (index !== -1) {
+          messages[index] = updatedMessage
+        }
+      }),
 
-export const deleteMessageApi = async (
-  messageId: string,
-  payload: DeleteMessageRequest,
-): Promise<void> => {
-  await axiosInstance.delete(`/api/messages/${messageId}`, { data: payload })
-}
+    removeMessage: (chatId: string, messageId: string) =>
+      set((state) => {
+        const messages = state.messagesByChatId[chatId]
+        if (!messages) return
+        state.messagesByChatId[chatId] = messages.filter((m: Message) => m.id !== messageId)
+      }),
 
-export const searchChatsApi = async (query: string): Promise<Chat[]> => {
-  const response = await axiosInstance.get('/api/messages/chats/search', {
-    params: { q: query },
-  })
-  return unwrapData(response) ?? []
-}
+    setMessages: (chatId: string, messages: Message[]) =>
+      set((state) => {
+        state.messagesByChatId[chatId] = messages
+      }),
+  })),
+)
