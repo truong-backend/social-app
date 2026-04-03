@@ -99,9 +99,9 @@ public class SecurityConfig {
                                 "/api/users/me/profile-picture"
                         ).authenticated()
 
-                        .requestMatchers(HttpMethod.POST, "/api/messages/calls").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/messages/calls/*/answer").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/messages/calls/*/end").authenticated()
+                        
+                        
+                        
 
 
                         // ── Posts ──────────────────────────────────────────────────────────
@@ -126,9 +126,17 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST,   "/api/comments/{commentId}/like").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/comments/{commentId}/like").authenticated()
 
-                        // ── Messages ──────────────────────────────────────────────────────
-                        .requestMatchers(HttpMethod.GET, "/api/messages/calls/stringee-token").authenticated()
+                        // ── Stringee Webhooks (Stringee server goi -- khong can JWT) ────
+                        .requestMatchers(HttpMethod.GET,  "/api/stringee/answer").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/stringee/event").permitAll()
 
+                        // ── Calls ──────────────────────────────────────────────────
+                        .requestMatchers(HttpMethod.GET,  "/api/calls/stringee-token").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/calls").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/calls/**").authenticated()
+
+                        // ── Messages ──────────────────────────────────────────────
+                        .requestMatchers("/api/messages/**").authenticated()
                         // ── Notifications ─────────────────────────────────────────────────
                         .requestMatchers("/api/notifications/**").authenticated()
 

@@ -5,7 +5,7 @@ import com.socialapp.application.comment.usecase.GetCommentsUseCase;
 import com.socialapp.application.post.dto.request.PostRequestDtos.*;
 import com.socialapp.application.post.dto.response.PostResponseDtos.*;
 import com.socialapp.application.post.usecase.*;
-import com.socialapp.application.post.usecase.SearchPostsUseCase;
+import com.socialapp.application.post.usecase.postMutation.SearchPostsUseCase;
 import com.socialapp.application.post.usecase.postInteraction.LikePostUseCase;
 import com.socialapp.application.post.usecase.postInteraction.SharePostUseCase;
 import com.socialapp.application.post.usecase.postInteraction.UnlikePostUseCase;

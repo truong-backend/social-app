@@ -1,4 +1,4 @@
-package com.socialapp.application.post.usecase;
+package com.socialapp.application.post.usecase.postMutation;
 
 import com.socialapp.application.post.dto.response.PostResponseDtos.PostResponse;
 import com.socialapp.domain.post.entity.Post;

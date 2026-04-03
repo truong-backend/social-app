@@ -8,36 +8,29 @@ import com.socialapp.presentation.util.ApiResponse;
 import com.socialapp.presentation.util.SecurityUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.List;
 
+/**
+ * Controller cho messaging (chat & messages).
+ * Call endpoints đã được chuyển sang CallController.
+ * Stringee webhook đã được chuyển sang StringeeWebhookController.
+ */
 @RestController
 @RequestMapping("/api/messages")
 @RequiredArgsConstructor
 public class MessageController {
 
-    private final SendMessageUseCase sendMessageUseCase;
+    private final SendMessageUseCase   sendMessageUseCase;
     private final UpdateMessageUseCase updateMessageUseCase;
     private final DeleteMessageUseCase deleteMessageUseCase;
-    private final GetChatListUseCase getChatListUseCase;
-    private final GetChatUseCase getChatUseCase;
-    private final SearchChatUseCase searchChatUseCase;
-    private final AccountRepository accountRepository;
-    private final SimpMessagingTemplate messagingTemplate; // ← thêm
-
-    @Value("${STRINGEE_API_KEY_SID:}")
-    private String stringeeApiKeySid;
-
-    @Value("${STRINGEE_API_KEY_SECRET:}")
-    private String stringeeApiKeySecret;
+    private final GetChatListUseCase   getChatListUseCase;
+    private final GetChatUseCase       getChatUseCase;
+    private final SearchChatUseCase    searchChatUseCase;
+    private final AccountRepository    accountRepository;
 
     private String resolveUserId() {
         return accountRepository.findById(SecurityUtil.currentAccountId())
@@ -96,140 +89,4 @@ public class MessageController {
         var res = deleteMessageUseCase.execute(resolveUserId(), messageId, request);
         return ApiResponse.ok(res.message());
     }
-
-    @GetMapping("/calls/stringee-token")
-    public ApiResponse<String> getStringeeToken() {
-        String userId = resolveUserId();
-        String token = buildStringeeToken(userId);
-        return new ApiResponse<>(true, null, token);
-    }
-
-    // ── Call endpoints ─────────────────────────────────────────
-
-    /**
-     * POST /api/messages/calls — khởi tạo cuộc gọi
-     * Push WebSocket incoming_call đến receiver để hiện modal
-     */
-    @PostMapping("/calls")
-    @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<InitiateCallResponse> initiateCall(
-            @Valid @RequestBody InitiateCallRequest request) {
-
-        String callerId  = resolveUserId();
-        String callerName = callerId;
-
-        // ← Lookup accountId của receiver
-        String targetAccountId = accountRepository.findByUserId(request.targetUserId())
-                .orElseThrow(() -> new RuntimeException("Target user not found"))
-                .getId();
-
-        System.out.println("=== CALL DEBUG ===");
-        System.out.println("callerId (userId): " + callerId);
-        System.out.println("targetUserId from request: " + request.targetUserId());
-
-
-        String callId    = "call-" + UUID.randomUUID();
-        String messageId = "msg-"  + UUID.randomUUID();
-        String chatId    = "chat-" + UUID.randomUUID();
-
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("callId",      callId);
-        payload.put("messageId",   messageId);
-        payload.put("chatId",      chatId);
-        payload.put("callerId",    callerId);
-        payload.put("callerName",  callerName);
-        payload.put("isVideoCall", request.isVideoCall());
-
-        // ← Push theo accountId thay vì userId
-        messagingTemplate.convertAndSendToUser(
-                targetAccountId,
-                "/queue/incoming_call",
-                payload
-        );
-
-        System.out.println("Push done to: " + request.targetUserId());
-
-        return ApiResponse.ok(new InitiateCallResponse(callId, messageId, chatId));
-    }
-
-    /** POST /api/messages/calls/{callId}/answer */
-    @PostMapping("/calls/{callId}/answer")
-    public ApiResponse<Void> answerCall(@PathVariable String callId) {
-        return ApiResponse.ok(null);
-    }
-
-    /** POST /api/messages/calls/{callId}/end — push call_ended đến bên kia */
-    @PostMapping("/calls/{callId}/end")
-    public ApiResponse<Void> endCall(
-            @PathVariable String callId,
-            @RequestBody(required = false) EndCallRequest request) {
-
-        if (request != null && request.targetUserId() != null) {
-            // ← Lookup accountId của receiver
-            String targetAccountId = accountRepository.findByUserId(request.targetUserId())
-                    .orElseThrow(() -> new RuntimeException("Target user not found"))
-                    .getId();
-
-            System.out.println("targetAccountId: " + targetAccountId);
-
-            Map<String, Object> payload = new HashMap<>();
-            payload.put("callId", callId);
-
-            System.out.println("=== CALL DEBUG ===");
-            System.out.println("callerId (userId): " + callId);
-            System.out.println("targetUserId from request: " + request.targetUserId());
-
-            // ← Push theo accountId
-            messagingTemplate.convertAndSendToUser(
-                    targetAccountId,
-                    "/queue/call_ended",
-                    payload
-            );
-            System.out.println("Push done to: " + request.targetUserId());
-        }
-        return ApiResponse.ok(null);
-    }
-    // ── JWT builder ────────────────────────────────────────────
-
-    private String buildStringeeToken(String userId) {
-        if (stringeeApiKeySid == null || stringeeApiKeySid.isBlank()
-                || stringeeApiKeySecret == null || stringeeApiKeySecret.isBlank()) {
-            throw new RuntimeException("Missing Stringee API credentials");
-        }
-        try {
-            long now = System.currentTimeMillis() / 1000;
-            long exp = now + 3600;
-            String headerJson  = "{\"typ\":\"JWT\",\"alg\":\"HS256\"}";
-            String header      = base64Url(headerJson);
-            String payloadJson = String.format(
-                    "{\"jti\":\"%s-%d\",\"iss\":\"%s\",\"exp\":%d,\"userId\":\"%s\"}",
-                    UUID.randomUUID(), now, stringeeApiKeySid, exp, userId);
-            String payload     = base64Url(payloadJson);
-            String data        = header + "." + payload;
-            return data + "." + signHmacSHA256(data, stringeeApiKeySecret);
-        } catch (Exception e) {
-            throw new RuntimeException("Cannot generate Stringee token", e);
-        }
-    }
-
-    // ── Utils ──────────────────────────────────────────────────
-
-    private String base64Url(String input) {
-        return Base64.getUrlEncoder()
-                .withoutPadding()
-                .encodeToString(input.getBytes(StandardCharsets.UTF_8));
-    }
-
-    private String signHmacSHA256(String data, String secret) throws Exception {
-        Mac mac = Mac.getInstance("HmacSHA256");
-        mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
-        byte[] raw = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(raw);
-    }
-
-    // ── DTOs ───────────────────────────────────────────────────
-
-    public record InitiateCallRequest(String targetUserId, boolean isVideoCall) {}
-    public record InitiateCallResponse(String callId, String messageId, String chatId) {}
-    public record EndCallRequest(String targetUserId) {}
 }
