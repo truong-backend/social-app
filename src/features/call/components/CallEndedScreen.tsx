@@ -9,8 +9,11 @@ export const CallEndedScreen = () => {
   if (session?.status !== 'ended') return null
 
   return (
-    <div className="call-ended-screen">
-      <p className="call-ended-screen__message">Cuộc gọi đã kết thúc</p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-inverse-surface/80 backdrop-blur-sm">
+      <div className="flex flex-col items-center gap-3 px-8 py-6 rounded-2xl bg-surface-container-lowest shadow-2xl">
+        <span className="text-4xl">📵</span>
+        <p className="text-base font-semibold text-on-surface">Cuộc gọi đã kết thúc</p>
+      </div>
     </div>
   )
 }

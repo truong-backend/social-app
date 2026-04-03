@@ -7,23 +7,21 @@ export const NotificationBell = () => {
   const unreadCount = useNotificationStore((state) => state.unreadCount)
 
   return (
-    <div className="notification-bell">
+    <div className="relative">
       <button
-        className="notification-bell__btn"
-        onClick={() => setIsOpen((prev) => !prev)}
-        aria-label={`Thông báo${unreadCount > 0 ? ` (${unreadCount} chưa đọc)` : ''}`}
+        onClick={() => setIsOpen(p => !p)}
+        className="relative p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors"
+        aria-label={`Thông báo${unreadCount > 0 ? ` (${unreadCount})` : ''}`}
       >
-        🔔
+        <span className="material-symbols-outlined">notifications</span>
         {unreadCount > 0 && (
-          <span className="notification-bell__badge">
+          <span className="absolute top-1 right-1 min-w-[18px] h-[18px] bg-secondary text-on-secondary text-[10px] font-bold rounded-full flex items-center justify-center px-1">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
       </button>
 
-      {isOpen && (
-        <NotificationDropdown onClose={() => setIsOpen(false)} />
-      )}
+      {isOpen && <NotificationDropdown onClose={() => setIsOpen(false)} />}
     </div>
   )
 }

@@ -15,23 +15,23 @@ export const CallButton = ({ targetUserId, targetName }: CallButtonProps) => {
     : 'Bạn'
 
   return (
-    <div className="call-button-group">
+    <div className="flex items-center gap-2">
       <button
-        className="call-button call-button--voice"
+        className="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 duration-200"
         onClick={() => startCall(targetUserId, targetName, false, myName)}
         aria-label="Gọi thoại"
         title="Gọi thoại"
       >
-        📞
+        <span className="material-symbols-outlined">call</span>
       </button>
 
       <button
-        className="call-button call-button--video"
+        className="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 duration-200"
         onClick={() => startCall(targetUserId, targetName, true, myName)}
         aria-label="Gọi video"
         title="Gọi video"
       >
-        📹
+        <span className="material-symbols-outlined">videocam</span>
       </button>
     </div>
   )

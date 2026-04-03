@@ -4,145 +4,130 @@ import type { Post } from '../types/post.types'
 import { useDeletePost } from '../hooks/useDeletePost'
 import { useLikePost } from '@features/like/hooks/useLikePost'
 import { formatRelativeTime } from '@utils/date.formatter'
-import { POST_PRIVACY_LABELS } from '../constants/post.constants'
 import { CommentList } from '@features/comment/components/CommentList'
 import { SharePostModal } from './SharePostModal'
 
 interface PostCardProps {
-  post:          Post
+  post: Post
   currentUserId: string
 }
 
 export const PostCard = ({ post, currentUserId }: PostCardProps) => {
   const [showComments, setShowComments] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
-
-  const isOwner  = post.authorId === currentUserId
+  const isOwner = post.authorId === currentUserId
   const likePost = useLikePost()
   const deletePost = useDeletePost()
 
-  const handleLike = () => {
-    likePost.toggle(post.id, post.isLiked)
-  }
-
-  const handleDelete = () => {
-    if (window.confirm('Bạn có chắc muốn xóa bài viết này?')) {
-      deletePost.mutate(post.id)
-    }
-  }
-
   return (
-    <article className="post-card">
-      {/* ── Header ─────────────────────────────────────── */}
-      <header className="post-card__header">
-        <Link to={`/profile/${post.authorId}`} className="post-card__author-link">
+    <article className="bg-surface-container-low rounded-xl p-4 shadow-sm mb-6">
+
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <Link to={`/profile/${post.authorId}`} className="flex items-center gap-3">
           <img
             src={post.authorProfilePic ?? '/default-avatar.png'}
             alt={post.authorUsername ?? 'User'}
-            className="post-card__avatar"
+            className="w-10 h-10 rounded-full object-cover"
           />
-          <div className="post-card__meta">
-            <span className="post-card__author">
-              {post.authorUsername ?? 'Unknown'}
-            </span>
-            <span className="post-card__time">
+          <div>
+            <h4 className="font-bold text-on-surface">{post.authorUsername ?? 'Unknown'}</h4>
+            <span className="text-[0.6875rem] text-on-surface-variant">
               {formatRelativeTime(post.createdAt)}
-            </span>
-            <span className="post-card__privacy">
-              {POST_PRIVACY_LABELS[post.privacy]}
             </span>
           </div>
         </Link>
-
         {isOwner && (
           <button
-            className="post-card__delete-btn"
-            onClick={handleDelete}
+            onClick={() => window.confirm('Xóa bài viết?') && deletePost.mutate(post.id)}
             disabled={deletePost.isPending}
-            aria-label="Xóa bài viết"
+            className="text-on-surface-variant hover:text-error transition-colors"
           >
-            ✕
+            <span className="material-symbols-outlined">more_horiz</span>
           </button>
         )}
-      </header>
+      </div>
 
-      {/* ── Shared indicator ───────────────────────────── */}
+      {/* Shared label */}
       {post.isShared && post.sharedFromPostId && (
-        <p className="post-card__shared-label">
-          Đã chia sẻ bài viết{' '}
-          <Link to={`/posts/${post.sharedFromPostId}`} className="post-card__shared-link">
-            gốc
+        <p className="text-sm text-on-surface-variant mb-2">
+          Đã chia sẻ{' '}
+          <Link to={`/posts/${post.sharedFromPostId}`} className="text-primary underline">
+            bài viết gốc
           </Link>
         </p>
       )}
 
-      {/* ── Content ────────────────────────────────────── */}
-      <Link to={`/posts/${post.id}`} className="post-card__content-link">
-        <p className="post-card__content">{post.content}</p>
+      {/* Content */}
+      <Link to={`/posts/${post.id}`}>
+        <p className="text-on-surface leading-relaxed mb-4">{post.content}</p>
       </Link>
 
-      {/* ── Attached media ─────────────────────────────── */}
+      {/* Media */}
       {post.attachedFileUrls.length > 0 && (
-        <div className="post-card__media-grid">
+        <div className={`grid gap-2 mb-4 rounded-xl overflow-hidden ${
+          post.attachedFileUrls.length === 1 ? 'grid-cols-1' : 'grid-cols-2'
+        }`}>
           {post.attachedFileUrls.map((url) => (
-            <img
-              key={url}
-              src={url}
-              alt="attachment"
-              className="post-card__media-item"
-            />
+            <img key={url} src={url} alt="attachment" className="w-full h-64 object-cover" />
           ))}
         </div>
       )}
 
-      {/* ── Actions ────────────────────────────────────── */}
-      <footer className="post-card__footer">
-        {/* Like */}
-        <button
-          className={`post-card__action-btn ${
-            post.isLiked ? 'post-card__action-btn--active' : ''
-          }`}
-          onClick={handleLike}
-          disabled={likePost.isPending}
-          aria-label={post.isLiked ? 'Bỏ thích' : 'Thích'}
-        >
-          {post.isLiked ? '❤️' : '🤍'} {post.likeCount}
-        </button>
+      {/* Actions */}
+      <div className="flex items-center justify-between mt-2">
+        <div className="flex items-center gap-6">
+          {/* Like */}
+          <button
+            onClick={() => likePost.toggle(post.id, post.isLiked)}
+            disabled={likePost.isPending}
+            className={`flex items-center gap-1.5 hover:scale-110 transition-transform ${
+              post.isLiked ? 'text-secondary' : 'text-on-surface-variant'
+            }`}
+          >
+            <span
+              className="material-symbols-outlined"
+              style={post.isLiked ? { fontVariationSettings: "'FILL' 1" } : undefined}
+            >
+              favorite
+            </span>
+            <span className="font-semibold text-sm">{post.likeCount}</span>
+          </button>
 
-        {/* Comment — toggle hiện CommentList */}
-        <button
-          className={`post-card__action-btn ${
-            showComments ? 'post-card__action-btn--active' : ''
-          }`}
-          onClick={() => setShowComments((prev) => !prev)}
-          aria-label="Bình luận"
-        >
-          💬 {post.commentCount}
-        </button>
+          {/* Comment */}
+          <button
+            onClick={() => setShowComments(p => !p)}
+            className="flex items-center gap-1.5 text-primary hover:scale-110 transition-transform"
+          >
+            <span className="material-symbols-outlined">chat_bubble</span>
+            <span className="font-semibold text-sm">{post.commentCount}</span>
+          </button>
 
-        {/* Share */}
-        <button
-          className="post-card__action-btn"
-          onClick={() => setShowShareModal(true)}
-          aria-label="Chia sẻ"
-        >
-          ↗ {post.shareCount}
-        </button>
-      </footer>
+          {/* Share */}
+          <button
+            onClick={() => setShowShareModal(true)}
+            className="flex items-center gap-1.5 text-on-surface-variant hover:scale-110 transition-transform"
+          >
+            <span className="material-symbols-outlined">share</span>
+            <span className="font-semibold text-sm">{post.shareCount}</span>
+          </button>
+        </div>
 
-      {/* ── Inline comment section ─────────────────────── */}
+        <button className="text-on-surface-variant hover:scale-110 transition-transform">
+          <span className="material-symbols-outlined">bookmark</span>
+        </button>
+      </div>
+
+      {/* Comments */}
       {showComments && (
-        <div className="post-card__comments">
+        <div className="mt-4 pt-4 border-t border-outline-variant/20">
           <CommentList postId={post.id} />
         </div>
       )}
 
-      {/* ── Share modal ────────────────────────────────── */}
+      {/* Share Modal */}
       {showShareModal && (
-        <SharePostModal
-          originalPostId={post.id}
-          onClose={() => setShowShareModal(false)}
-        />
+        <SharePostModal originalPostId={post.id} onClose={() => setShowShareModal(false)} />
       )}
     </article>
   )

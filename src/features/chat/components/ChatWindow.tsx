@@ -17,11 +17,10 @@ interface ChatWindowProps {
 export const ChatWindow = ({ chatId, targetUserId, targetUsername }: ChatWindowProps) => {
   const [inputContent, setInputContent] = useState('')
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
-  const bottomRef  = useRef<HTMLDivElement>(null)
+  const bottomRef    = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const userId            = useSessionStore((state) => state.userId) ?? ''
-  // FIX: useShallow để Zustand so sánh shallow thay vì tạo array mới [] mỗi render
   const messagesFromStore = useChatStore(
     useShallow((state) => state.messagesByChatId[chatId] ?? [])
   )
@@ -50,22 +49,45 @@ export const ChatWindow = ({ chatId, targetUserId, targetUsername }: ChatWindowP
   )
 
   return (
-    <div className="chat-window">
-      <header className="chat-window__header">
-        <h2 className="chat-window__title">{targetUsername}</h2>
+    <div className="flex flex-col flex-1 h-full bg-surface-container-low">
+      {/* Header */}
+      <header className="h-20 flex items-center justify-between px-8 bg-surface-bright/70 backdrop-blur-xl sticky top-0 z-10 border-b border-outline-variant/10">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary-container text-on-primary flex items-center justify-center font-bold text-sm">
+            {targetUsername.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <h2 className="font-bold text-on-surface leading-tight">{targetUsername}</h2>
+            <p className="text-[11px] text-primary font-semibold flex items-center gap-1">
+              <span className="w-1.5 h-1.5 bg-secondary rounded-full" />
+              Đang hoạt động
+            </p>
+          </div>
+        </div>
+
         {targetUserId && (
           <CallButton targetUserId={targetUserId} targetName={targetUsername} />
         )}
       </header>
 
-      <div className="chat-window__messages">
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto px-8 py-6 space-y-4">
         {hasNextPage && (
-          <button className="chat-window__load-more" onClick={() => fetchNextPage()}>
-            Tải tin nhắn cũ hơn
-          </button>
+          <div className="flex justify-center">
+            <button
+              className="px-4 py-2 rounded-full bg-surface-container-low text-primary text-xs font-bold hover:bg-surface-container-high transition-colors"
+              onClick={() => fetchNextPage()}
+            >
+              Tải tin nhắn cũ hơn
+            </button>
+          </div>
         )}
+
         {isLoading ? (
-          <div className="chat-window__loading">Đang tải...</div>
+          <div className="flex items-center justify-center py-12 text-on-surface-variant text-sm gap-2">
+            <span className="w-5 h-5 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+            Đang tải...
+          </div>
         ) : (
           allMessages.map((message) => (
             <MessageBubble
@@ -78,27 +100,64 @@ export const ChatWindow = ({ chatId, targetUserId, targetUsername }: ChatWindowP
         <div ref={bottomRef} />
       </div>
 
-      <form className="chat-window__form" onSubmit={handleSend}>
+      {/* Input area */}
+      <footer className="p-6 bg-surface-bright border-t border-outline-variant/10">
+        {/* File previews */}
         {selectedFiles.length > 0 && (
-          <div className="chat-window__file-preview">
+          <div className="flex flex-wrap gap-2 mb-3">
             {selectedFiles.map((file, index) => (
-              <span key={index} className="chat-window__file-tag">
+              <span
+                key={index}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-container-high text-on-surface text-xs rounded-full font-medium"
+              >
+                <span className="material-symbols-outlined text-sm text-primary">attach_file</span>
                 {file.name}
                 <button
                   type="button"
+                  className="ml-1 text-on-surface-variant hover:text-error transition-colors"
                   onClick={() => setSelectedFiles((prev) => prev.filter((_, i) => i !== index))}
-                >✕</button>
+                >
+                  <span className="material-symbols-outlined text-sm">close</span>
+                </button>
               </span>
             ))}
           </div>
         )}
-        <div className="chat-window__input-row">
-          <button type="button" className="chat-window__attach-btn"
-            onClick={() => fileInputRef.current?.click()}>📎</button>
-          <input ref={fileInputRef} type="file" multiple className="chat-window__file-input"
-            onChange={(e) => setSelectedFiles((prev) => [...prev, ...Array.from(e.target.files ?? [])])} />
+
+        <form
+          className="flex items-center gap-3 bg-surface-container-low p-2 rounded-2xl"
+          onSubmit={handleSend}
+        >
+          {/* Attach */}
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              className="w-10 h-10 flex items-center justify-center text-primary hover:bg-surface-container-high rounded-xl transition-colors"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <span className="material-symbols-outlined">add_circle</span>
+            </button>
+            <button
+              type="button"
+              className="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-colors"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <span className="material-symbols-outlined">image</span>
+            </button>
+          </div>
+
           <input
-            className="chat-window__text-input"
+            ref={fileInputRef}
+            type="file"
+            multiple
+            className="hidden"
+            onChange={(e) =>
+              setSelectedFiles((prev) => [...prev, ...Array.from(e.target.files ?? [])])
+            }
+          />
+
+          <input
+            className="flex-1 bg-transparent border-none focus:ring-0 text-sm text-on-surface placeholder:text-on-surface-variant/60 outline-none"
             type="text"
             placeholder="Nhập tin nhắn..."
             value={inputContent}
@@ -110,13 +169,24 @@ export const ChatWindow = ({ chatId, targetUserId, targetUsername }: ChatWindowP
               }
             }}
           />
-          <button
-            type="submit"
-            className="chat-window__send-btn"
-            disabled={sendMessage.isPending || (!inputContent.trim() && selectedFiles.length === 0)}
-          >Gửi</button>
-        </div>
-      </form>
+
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              className="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-colors"
+            >
+              <span className="material-symbols-outlined">sentiment_satisfied</span>
+            </button>
+            <button
+              type="submit"
+              className="w-10 h-10 flex items-center justify-center bg-primary text-on-primary rounded-xl shadow-md shadow-primary/20 active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none"
+              disabled={sendMessage.isPending || (!inputContent.trim() && selectedFiles.length === 0)}
+            >
+              <span className="material-symbols-outlined">send</span>
+            </button>
+          </div>
+        </form>
+      </footer>
     </div>
   )
 }

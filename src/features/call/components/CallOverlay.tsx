@@ -2,7 +2,6 @@ import { useCallStore } from '../store/call.store'
 import { IncomingCallModal } from './IncomingCallModal'
 import { CallScreen } from './CallScreen'
 import { CallEndedScreen } from './CallEndedScreen'
-import '../components/call.css'
 
 export const CallOverlay = () => {
   const status = useCallStore((state) => state.session?.status ?? 'idle')
