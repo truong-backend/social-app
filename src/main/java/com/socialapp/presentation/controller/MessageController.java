@@ -174,7 +174,7 @@ public class MessageController {
             payload.put("callId", callId);
 
             System.out.println("=== CALL DEBUG ===");
-            System.out.println("callerId (userId): " + callerId);
+            System.out.println("callerId (userId): " + callId);
             System.out.println("targetUserId from request: " + request.targetUserId());
 
             // ← Push theo accountId
