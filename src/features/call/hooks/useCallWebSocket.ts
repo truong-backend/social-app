@@ -10,8 +10,10 @@ import type {
 import toast from "react-hot-toast";
 
 export const useCallWebSocket = () => {
-  const userId = useSessionStore((state) => state.userId);
+  // Backend JWT filter sets accountId as principal name → convertAndSendToUser dùng accountId
+  // Nên phải subscribe theo accountId, KHÔNG phải userId
   const accountId = useSessionStore((state) => state.accountId);
+  const userId    = useSessionStore((state) => state.userId);
   const { setIncomingCall, setCallEnded, clearSession } = useCallStore();
 
   const sessionRef = useRef(useCallStore.getState().session);
@@ -22,13 +24,17 @@ export const useCallWebSocket = () => {
   }, []);
 
   useEffect(() => {
-    if (!userId) return;
+    // Cần accountId để subscribe đúng topic WebSocket
+    if (!accountId || !userId) return;
 
+    console.log("[WS] accountId (principal):", accountId);
     console.log("[WS] userId:", userId);
-    console.log("[WS] accountId:", accountId);
 
-    const incomingTopic = `/user/${userId}/queue/${CALL_WEBSOCKET_EVENTS.INCOMING_CALL}`;
-    const endedTopic = `/user/${userId}/queue/${CALL_WEBSOCKET_EVENTS.CALL_ENDED}`;
+    // Backend publishToUser(accountId, "incoming_call", ...) →
+    // Spring convertAndSendToUser(accountId, "/queue/incoming_call", ...)
+    // → broker delivers to /user/{accountId}/queue/incoming_call
+    const incomingTopic = `/user/${accountId}/queue/${CALL_WEBSOCKET_EVENTS.INCOMING_CALL}`;
+    const endedTopic    = `/user/${accountId}/queue/${CALL_WEBSOCKET_EVENTS.CALL_ENDED}`;
 
     websocketService.subscribe(incomingTopic, (frame) => {
       console.log("[WS] incoming_call frame received:", frame.body);
@@ -36,11 +42,10 @@ export const useCallWebSocket = () => {
       console.log("[WS] parsed payload:", payload);
       const session = sessionRef.current;
 
-      // FIX: thêm 'incoming' vào busy guard
-      // tránh trường hợp đang có modal incoming mà người khác gọi override session
+      // Busy guard: đang có call thì thông báo bận
       if (
         session?.status === "connected" ||
-        session?.status === "outgoing" ||
+        session?.status === "outgoing"  ||
         session?.status === "incoming"
       ) {
         toast(`${payload.callerName} đang gọi nhưng bạn đang bận`, {
@@ -49,6 +54,7 @@ export const useCallWebSocket = () => {
         return;
       }
 
+      // userId là identity của current user để điền vào CallSession.receiverId
       setIncomingCall(payload, userId, "");
       console.log(
         "[WS] setIncomingCall called, store:",
@@ -61,7 +67,6 @@ export const useCallWebSocket = () => {
       const session = sessionRef.current;
 
       if (session?.callId === payload.callId) {
-        // FIX: thông báo rõ lý do tắt cho bên gọi
         if (session.status === "outgoing") {
           toast("Không có ai bắt máy", { icon: "📵" });
         }
@@ -74,5 +79,5 @@ export const useCallWebSocket = () => {
       websocketService.unsubscribe(incomingTopic);
       websocketService.unsubscribe(endedTopic);
     };
-  }, [userId, setIncomingCall, setCallEnded, clearSession]);
+  }, [accountId, userId, setIncomingCall, setCallEnded, clearSession]);
 };

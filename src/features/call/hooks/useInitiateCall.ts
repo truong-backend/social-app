@@ -18,14 +18,12 @@ export const useInitiateCall = () => {
     myName: string,
   ) => {
     try {
-      // 1. Gọi BE
-      const { callId, messageId, chatId } = await initiateCallApi(targetUserId, isVideoCall)
+      // 1. Gọi BE — nhận callId tạm
+      const { callId } = await initiateCallApi(targetUserId, isVideoCall)
 
       // 2. Update store TRƯỚC khi makeCall → CallScreen hiện ngay
       setOutgoingCall({
         callId,
-        messageId,
-        chatId,
         callerId: userId,
         callerName: myName,
         receiverId: targetUserId,

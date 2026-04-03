@@ -6,9 +6,7 @@ export type CallStatus =
   | 'ended'        // cuộc gọi kết thúc
 
 export interface CallSession {
-  callId:        string       // ID từ Stringee API
-  messageId:     string       // ID của Message (Call entity)
-  chatId:        string
+  callId:        string       // ID tạm từ BE (call-UUID), Stringee sẽ có callId thực
   callerId:      string       // userId người gọi
   callerName:    string
   receiverId:    string       // userId người nhận
@@ -20,18 +18,16 @@ export interface CallSession {
 }
 
 // Payload WebSocket push khi có cuộc gọi đến
+// Khớp với backend IncomingCallPayload record
 export interface IncomingCallPayload {
   callId:      string
-  messageId:   string
-  chatId:      string
   callerId:    string
   callerName:  string
   isVideoCall: boolean
 }
 
 // Payload WebSocket push khi cuộc gọi kết thúc
+// Khớp với backend CallEndedPayload record
 export interface CallEndedPayload {
-  callId:   string
-  chatId:   string
-  endedAt:  string
+  callId: string
 }

@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { answerCallApi, endCallApi } from '../api/call.api'
+import { endCallApi } from '../api/call.api'
 import { useCallStore } from '../store/call.store'
 import { useStringeeClient } from './useStringeeClient'
 import { extractErrorMessage } from '@utils/api-response'
@@ -14,9 +14,8 @@ export const useAnswerCall = () => {
     if (!session) return
 
     try {
-      // KHÔNG set 'connected' thủ công ở đây
-      // signalingstate code=3 sẽ tự gọi setCallStarted() → render CallScreen đúng lúc
-      await answerCallApi(session.callId)
+      // Không gọi BE để "answer" — không có endpoint đó.
+      // Stringee SDK tự xử lý: signalingstate code=3 → setCallStarted()
       answerCall()
     } catch (error) {
       toast.error(extractErrorMessage(error))
@@ -30,7 +29,9 @@ export const useAnswerCall = () => {
     if (!session) return
 
     hangUp()
-    await endCallApi(session.callId).catch(() => {})
+    // Push call_ended đến caller qua BE
+    // Backend RejectCallUseCase: POST /api/calls/{callId}/reject?callerUserId=xxx
+    await endCallApi(session.callId, session.callerId).catch(() => {})
   }, [hangUp])
 
   return { acceptCall, rejectCall }

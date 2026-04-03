@@ -13,8 +13,6 @@ interface CallState {
   setIncomingCall:   (payload: IncomingCallPayload, currentUserId: string, currentUserName: string) => void
   setOutgoingCall:   (params: {
     callId:       string
-    messageId:    string
-    chatId:       string
     callerId:     string
     callerName:   string
     receiverId:   string
@@ -43,8 +41,6 @@ export const useCallStore = create<CallState>()(
       set((state) => {
         state.session = {
           callId:       payload.callId,
-          messageId:    payload.messageId,
-          chatId:       payload.chatId,
           callerId:     payload.callerId,
           callerName:   payload.callerName,
           receiverId:   currentUserId,
