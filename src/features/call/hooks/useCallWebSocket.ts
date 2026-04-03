@@ -7,10 +7,9 @@ import type { IncomingCallPayload, CallEndedPayload } from '../types/call.types'
 import toast from 'react-hot-toast'
 
 export const useCallWebSocket = () => {
-  const userId        = useSessionStore((state) => state.userId)
+  const userId = useSessionStore((state) => state.userId)
   const { setIncomingCall, setCallEnded, clearSession } = useCallStore()
 
-  // Dùng ref để đọc session mới nhất trong callback mà không cần re-subscribe
   const sessionRef = useRef(useCallStore.getState().session)
   useEffect(() => {
     return useCallStore.subscribe((state) => {
@@ -30,8 +29,13 @@ export const useCallWebSocket = () => {
       console.log('[WS] parsed payload:', payload)
       const session = sessionRef.current
 
-      // Đang bận → thông báo và bỏ qua
-      if (session?.status === 'connected' || session?.status === 'outgoing') {
+      // FIX: thêm 'incoming' vào busy guard
+      // tránh trường hợp đang có modal incoming mà người khác gọi override session
+      if (
+        session?.status === 'connected' ||
+        session?.status === 'outgoing'  ||
+        session?.status === 'incoming'
+      ) {
         toast(`${payload.callerName} đang gọi nhưng bạn đang bận`, { icon: '📵' })
         return
       }
@@ -45,6 +49,10 @@ export const useCallWebSocket = () => {
       const session = sessionRef.current
 
       if (session?.callId === payload.callId) {
+        // FIX: thông báo rõ lý do tắt cho bên gọi
+        if (session.status === 'outgoing') {
+          toast('Không có ai bắt máy', { icon: '📵' })
+        }
         setCallEnded()
         setTimeout(clearSession, 2000)
       }
@@ -54,7 +62,5 @@ export const useCallWebSocket = () => {
       websocketService.unsubscribe(incomingTopic)
       websocketService.unsubscribe(endedTopic)
     }
-  // Chỉ re-subscribe khi userId thay đổi (login/logout)
-  // session được đọc qua ref → không cần trong deps
   }, [userId, setIncomingCall, setCallEnded, clearSession])
 }

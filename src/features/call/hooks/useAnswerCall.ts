@@ -6,8 +6,7 @@ import { extractErrorMessage } from '@utils/api-response'
 import toast from 'react-hot-toast'
 
 export const useAnswerCall = () => {
-  const { setCallStatus, setCallEnded, clearSession } = useCallStore()
-  // FIX: dùng answerCall và hangUp từ useStringeeClient (đã có callRef đúng)
+  const { setCallEnded, clearSession } = useCallStore()
   const { answerCall, hangUp } = useStringeeClient()
 
   const acceptCall = useCallback(async () => {
@@ -15,16 +14,16 @@ export const useAnswerCall = () => {
     if (!session) return
 
     try {
-      setCallStatus('connected')
+      // KHÔNG set 'connected' thủ công ở đây
+      // signalingstate code=3 sẽ tự gọi setCallStarted() → render CallScreen đúng lúc
       await answerCallApi(session.callId)
-      // FIX: answerCall không cần truyền ref nữa, ref được quản lý trong useStringeeClient
       answerCall()
     } catch (error) {
       toast.error(extractErrorMessage(error))
       setCallEnded()
       setTimeout(clearSession, 2000)
     }
-  }, [setCallStatus, setCallEnded, clearSession, answerCall])
+  }, [setCallEnded, clearSession, answerCall])
 
   const rejectCall = useCallback(async () => {
     const session = useCallStore.getState().session
