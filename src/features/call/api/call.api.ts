@@ -32,8 +32,10 @@ export const answerCallApi = async (callId: string): Promise<void> => {
 /**
  * Thông báo BE kết thúc cuộc gọi (cả 2 phía đều có thể gọi).
  */
-export const endCallApi = async (callId: string): Promise<void> => {
-  await axiosInstance.post(`/api/messages/calls/${callId}/end`)
+// Sửa trong call.api.ts
+
+export const endCallApi = async (callId: string, targetUserId?: string): Promise<void> => {
+  await axiosInstance.post(`/api/messages/calls/${callId}/end`, { targetUserId })
 }
 
 /**
@@ -42,6 +44,6 @@ export const endCallApi = async (callId: string): Promise<void> => {
  */
 export const getStringeeTokenApi = async (): Promise<string> => {
   const response = await axiosInstance.get('/api/messages/calls/stringee-token')
-  // return unwrapData<string>(response) ?? ''
-  return response.data
+  return unwrapData<string>(response) ?? ''
+  // return response.data
 }

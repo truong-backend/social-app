@@ -25,7 +25,7 @@ export const useNotificationStore = create<NotificationState>()(
 
     markAsRead: (notificationId) =>
       set((state) => {
-        const notification = state.notifications.find((n) => n.id === notificationId)
+        const notification = state.notifications.find((n: Notification) => n.id === notificationId)
         if (notification && !notification.isRead) {
           notification.isRead = true
           state.unreadCount = Math.max(0, state.unreadCount - 1)
@@ -34,14 +34,14 @@ export const useNotificationStore = create<NotificationState>()(
 
     markAllAsRead: () =>
       set((state) => {
-        state.notifications.forEach((n) => { n.isRead = true })
+        state.notifications.forEach((n: Notification) => { n.isRead = true })
         state.unreadCount = 0
       }),
 
     setNotifications: (notifications) =>
       set((state) => {
         state.notifications = notifications
-        state.unreadCount = notifications.filter((n) => !n.isRead).length
+        state.unreadCount = notifications.filter((n: Notification) => !n.isRead).length
       }),
   })),
 )

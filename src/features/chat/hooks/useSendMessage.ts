@@ -4,20 +4,14 @@ import { sendMessageApi } from '../api/chat.api'
 import { CHAT_QUERY_KEYS } from '../constants/chat.constants'
 import { useChatStore } from '../store/chat.store'
 import { extractErrorMessage } from '@utils/api-response'
-import type { SendMessageRequest } from '../types/chat.types'
+import type { Message, SendMessageRequest } from '../types/chat.types'
 
 export const useSendMessage = (targetUserId: string, chatId: string | null) => {
   const queryClient = useQueryClient()
   const appendMessage = useChatStore((state) => state.appendMessage)
 
-  return useMutation({
-    mutationFn: ({
-      payload,
-      files,
-    }: {
-      payload: SendMessageRequest
-      files?: File[]
-    }) => sendMessageApi(targetUserId, payload, files),
+  return useMutation<Message, Error, { payload: SendMessageRequest; files?: File[] }>({
+    mutationFn: ({ payload, files }) => sendMessageApi(targetUserId, payload, files),
 
     onSuccess: (newMessage) => {
       const resolvedChatId = chatId ?? newMessage.chatId

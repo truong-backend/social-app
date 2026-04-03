@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useCallback } from 'react'
 import { answerCallApi, endCallApi } from '../api/call.api'
 import { useCallStore } from '../store/call.store'
 import { useStringeeClient } from './useStringeeClient'
@@ -7,10 +7,8 @@ import toast from 'react-hot-toast'
 
 export const useAnswerCall = () => {
   const { setCallStatus, setCallEnded, clearSession } = useCallStore()
+  // FIX: dùng answerCall và hangUp từ useStringeeClient (đã có callRef đúng)
   const { answerCall, hangUp } = useStringeeClient()
-
-  const localVideoRef  = useRef<HTMLVideoElement>(null as unknown as HTMLVideoElement)
-  const remoteVideoRef = useRef<HTMLVideoElement>(null as unknown as HTMLVideoElement)
 
   const acceptCall = useCallback(async () => {
     const session = useCallStore.getState().session
@@ -19,7 +17,8 @@ export const useAnswerCall = () => {
     try {
       setCallStatus('connected')
       await answerCallApi(session.callId)
-      answerCall(localVideoRef, remoteVideoRef)
+      // FIX: answerCall không cần truyền ref nữa, ref được quản lý trong useStringeeClient
+      answerCall()
     } catch (error) {
       toast.error(extractErrorMessage(error))
       setCallEnded()
@@ -33,9 +32,7 @@ export const useAnswerCall = () => {
 
     hangUp()
     await endCallApi(session.callId).catch(() => {})
-    setCallEnded()
-    setTimeout(clearSession, 1500)
-  }, [hangUp, setCallEnded, clearSession])
+  }, [hangUp])
 
-  return { acceptCall, rejectCall, localVideoRef, remoteVideoRef }
+  return { acceptCall, rejectCall }
 }

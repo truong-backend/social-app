@@ -1,201 +1,161 @@
-// import { useEffect, useRef, useCallback } from 'react'
-import { useRef, useCallback } from 'react'
-import { useCallStore } from '../store/call.store'
+import { useCallback } from 'react'
 import { getStringeeTokenApi } from '../api/call.api'
+import { useCallStore } from '../store/call.store'
+import { StringeeSingleton, attachLocalStream, attachRemoteStream } from '../services/stringee.singleton'
+import type { StringeeCallInstance } from '../types/stringee.types'
 
-// Stringee SDK được load qua <script> trong index.html
-// Tham chiếu qua window để tránh TypeScript lỗi
-declare global {
-  interface Window {
-    StringeeClient: new () => StringeeClientInstance
-    StringeeCall:   new (client: StringeeClientInstance, from: string, to: string, isVideoCall: boolean) => StringeeCallInstance
-    StringeeCall2:  new (client: StringeeClientInstance, from: string, to: string[], isVideoCall: boolean) => StringeeCallInstance
-  }
+// Module-level flag — tồn tại suốt lifetime app, không bị reset khi re-render
+let _initCalled = false
+
+const getSDK = () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const SDK = (window as any).StringeeClient
+  if (!SDK) throw new Error('[Stringee] SDK chưa được load — kiểm tra index.html')
+  return SDK
 }
 
-interface StringeeClientInstance {
-  connect:            (token: string) => void
-  disconnect:         () => void
-  on:                 (event: string, handler: (...args: unknown[]) => void) => void
-}
-
-interface StringeeCallInstance {
-  makeCall:           (callback: (result: { r: number; message: string; callId: string }) => void) => void
-  answer:             (callback: (result: { r: number }) => void) => void
-  hangup:             (callback: (result: { r: number }) => void) => void
-  mute:               (muted: boolean) => void
-  enableVideo:        (enabled: boolean) => void
-  on:                 (event: string, handler: (...args: unknown[]) => void) => void
-  localStream:        MediaStream | null
-  remoteStream:       MediaStream | null
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getCallSDK = () => (window as any).StringeeCall
 
 export const useStringeeClient = () => {
-  const clientRef = useRef<StringeeClientInstance | null>(null)
-  const callRef   = useRef<StringeeCallInstance | null>(null)
-
   const { setStringeeToken, setCallStarted, setCallEnded, clearSession } = useCallStore()
 
-  // ── Initialise client ────────────────────────────────────────
-  const initClient = useCallback(async () => {
-    if (!window.StringeeClient) {
-      console.error('[Stringee] SDK not loaded. Check <script> tag in index.html')
-      return
-    }
-
-    const token = await getStringeeTokenApi()
-    setStringeeToken(token)
-
-    const client = new window.StringeeClient()
-    clientRef.current = client
-
-    client.on('connect', () => {
-      console.log('[Stringee] Client connected')
-    })
-
-    client.on('authen', (result: unknown) => {
-      const res = result as { r: number; message: string }
-      if (res.r !== 0) {
-        console.error('[Stringee] Auth failed:', res.message)
-      }
-    })
-
-    client.on('disconnect', () => {
-      console.log('[Stringee] Client disconnected')
-    })
-
-    client.connect(token)
-  }, [setStringeeToken])
-
-  // ── Make outgoing call ────────────────────────────────────────
-  const makeCall = useCallback(
-    (
-      fromUserId: string,
-      toUserId:   string,
-      isVideoCall: boolean,
-      localVideoRef:  React.RefObject<HTMLVideoElement>,
-      remoteVideoRef: React.RefObject<HTMLVideoElement>,
-    ): Promise<string> => {
-      return new Promise((resolve, reject) => {
-        if (!clientRef.current) {
-          reject(new Error('Stringee client not initialised'))
-          return
-        }
-
-        const call = new window.StringeeCall(
-          clientRef.current,
-          fromUserId,
-          toUserId,
-          isVideoCall,
-        )
-        callRef.current = call
-
-        bindCallEvents(call, localVideoRef, remoteVideoRef)
-
-        call.makeCall((result) => {
-          if (result.r !== 0) {
-            reject(new Error(result.message))
-          } else {
-            resolve(result.callId)
-          }
-        })
-      })
-    },
-    [],
-  )
-
-  // ── Answer incoming call ──────────────────────────────────────
-  const answerCall = useCallback(
-    (
-      localVideoRef:  React.RefObject<HTMLVideoElement>,
-      remoteVideoRef: React.RefObject<HTMLVideoElement>,
-    ) => {
-      const call = callRef.current
-      if (!call) return
-
-      bindCallEvents(call, localVideoRef, remoteVideoRef)
-
-      call.answer((result) => {
-        if (result.r === 0) {
-          setCallStarted()
-        }
-      })
-    },
-    [setCallStarted],
-  )
-
-  // ── Hang up ───────────────────────────────────────────────────
-  const hangUp = useCallback(() => {
-    callRef.current?.hangup(() => {
-      setCallEnded()
-      setTimeout(clearSession, 2000)
-    })
-  }, [setCallEnded, clearSession])
-
-  // ── Mute / Camera ─────────────────────────────────────────────
-  const setMuted = useCallback((muted: boolean) => {
-    callRef.current?.mute(muted)
-  }, [])
-
-  const setVideoEnabled = useCallback((enabled: boolean) => {
-    callRef.current?.enableVideo(enabled)
-  }, [])
-
-  // ── Attach inbound call (from WebSocket) ──────────────────────
-  const attachIncomingCall = useCallback((stringeeCallObject: StringeeCallInstance) => {
-    callRef.current = stringeeCallObject
-  }, [])
-
-  // ── Disconnect ────────────────────────────────────────────────
-  const disconnectClient = useCallback(() => {
-    clientRef.current?.disconnect()
-    clientRef.current = null
-    callRef.current   = null
-  }, [])
-
-  // ── Bind call events ─────────────────────────────────────────
-  const bindCallEvents = (
-    call:           StringeeCallInstance,
-    localVideoRef:  React.RefObject<HTMLVideoElement>,
-    remoteVideoRef: React.RefObject<HTMLVideoElement>,
-  ) => {
+  // ── Bind events lên call object ──────────────────────────────
+  const _bindCallEvents = useCallback((call: StringeeCallInstance) => {
     call.on('addlocalstream', (stream: unknown) => {
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream as MediaStream
-      }
+      console.log('[Stringee] local stream')
+      attachLocalStream(stream as MediaStream)
     })
 
     call.on('addremotestream', (stream: unknown) => {
-      if (remoteVideoRef.current) {
-        remoteVideoRef.current.srcObject = stream as MediaStream
-      }
-      setCallStarted()
+      console.log('[Stringee] remote stream')
+      attachRemoteStream(stream as MediaStream)
     })
 
-    call.on('signalingstate', (state: unknown) => {
-      const s = state as { code: number; reason: string }
-      // code 6 = ended / busy / rejected
-      if (s.code === 6 || s.code === 5 || s.code === 3) {
+    call.on('signalingstate', (...args: unknown[]) => {
+      const state = args[0] as { code: number; reason: string }
+      console.log('[Stringee] signalingstate:', state.code, state.reason)
+      if (state.code === 3) {
+        // answered
+        setCallStarted()
+      } else if (state.code === 4 || state.code === 5 || state.code === 6) {
+        // ended / busy / not found
         setCallEnded()
+        StringeeSingleton.setCall(null)
         setTimeout(clearSession, 2000)
       }
     })
 
-    call.on('mediastate', (state: unknown) => {
-      console.log('[Stringee] Media state:', state)
+    call.on('mediastate', (...args: unknown[]) => {
+      const state = args[0] as { code: number }
+      console.log('[Stringee] mediastate:', state.code)
     })
-  }
 
-  return {
-    initClient,
-    makeCall,
-    answerCall,
-    hangUp,
-    setMuted,
-    setVideoEnabled,
-    attachIncomingCall,
-    disconnectClient,
-    clientRef,
-    callRef,
-  }
+    call.on('otherdevice', (data: unknown) => {
+      console.log('[Stringee] otherdevice:', data)
+    })
+  }, [setCallStarted, setCallEnded, clearSession])
+
+  // ── Init client — chỉ chạy 1 lần duy nhất ───────────────────
+  const initClient = useCallback(async () => {
+    // Double-check: cả module flag lẫn singleton
+    if (_initCalled) return
+    if (StringeeSingleton.getClient()) return
+    _initCalled = true
+
+    try {
+      const token = await getStringeeTokenApi()
+      setStringeeToken(token)
+
+      const StringeeClient = getSDK()
+      const client = new StringeeClient()
+      StringeeSingleton.setClient(client)
+
+      client.on('connect', () => console.log('[Stringee] connected'))
+
+      client.on('authen', (...args: unknown[]) => {
+        const res = args[0] as { r: number; userId: string }
+        if (res.r === 0) console.log('[Stringee] Auth OK:', res.userId)
+        else console.error('[Stringee] Auth failed:', res)
+      })
+
+      client.on('disconnect', () => {
+        console.log('[Stringee] disconnected')
+        // Reset flag để có thể reconnect nếu cần
+        _initCalled = false
+        StringeeSingleton.setClient(null)
+      })
+
+      // Lưu call object khi có cuộc gọi đến qua Stringee SDK
+      // UI được điều khiển bởi WebSocket (useCallWebSocket)
+      client.on('incomingcall', (...args: unknown[]) => {
+        const incomingCall = args[0] as StringeeCallInstance
+        console.log('[Stringee] incomingcall — lưu call object vào Singleton')
+        StringeeSingleton.setCall(incomingCall)
+        _bindCallEvents(incomingCall)
+      })
+
+      client.connect(token)
+    } catch (err) {
+      console.error('[Stringee] initClient failed:', err)
+      _initCalled = false
+    }
+  }, [setStringeeToken, _bindCallEvents])
+
+  // ── Disconnect ───────────────────────────────────────────────
+  const disconnectClient = useCallback(() => {
+    StringeeSingleton.getClient()?.disconnect()
+    StringeeSingleton.setClient(null)
+    StringeeSingleton.setCall(null)
+    _initCalled = false
+  }, [])
+
+  // ── Make call (caller) ───────────────────────────────────────
+  const makeCall = useCallback(async (
+    fromUserId: string,
+    toUserId: string,
+    isVideoCall: boolean,
+  ) => {
+    const client = StringeeSingleton.getClient()
+    if (!client) throw new Error('[Stringee] Client chưa init')
+
+    const StringeeCall = getCallSDK()
+    if (!StringeeCall) throw new Error('[Stringee] StringeeCall SDK chưa load')
+
+    const call: StringeeCallInstance = new StringeeCall(client, fromUserId, toUserId, isVideoCall)
+    StringeeSingleton.setCall(call)
+    _bindCallEvents(call)
+
+    return new Promise<void>((resolve, reject) => {
+      call.makeCall((res) => {
+        if (res.r === 0) {
+          console.log('[Stringee] makeCall OK:', res.callId)
+          resolve()
+        } else {
+          reject(new Error(res.message))
+        }
+      })
+    })
+  }, [_bindCallEvents])
+
+  // ── Answer call (receiver) ───────────────────────────────────
+  const answerCall = useCallback(() => {
+    const call = StringeeSingleton.getCall()
+    if (!call) { console.warn('[Stringee] answerCall — không có call object'); return }
+    call.answer((res) => console.log('[Stringee] answer:', res.r))
+  }, [])
+
+  // ── Hang up ──────────────────────────────────────────────────
+  const hangUp = useCallback(() => {
+    const call = StringeeSingleton.getCall()
+    if (!call) return
+    call.hangup((res) => console.log('[Stringee] hangup:', res.r))
+    StringeeSingleton.setCall(null)
+  }, [])
+
+  // ── Mute / Video ─────────────────────────────────────────────
+  const setMuted        = useCallback((muted: boolean)   => { StringeeSingleton.getCall()?.mute(muted) }, [])
+  const setVideoEnabled = useCallback((enabled: boolean) => { StringeeSingleton.getCall()?.enableVideo(enabled) }, [])
+
+  return { initClient, disconnectClient, makeCall, answerCall, hangUp, setMuted, setVideoEnabled }
 }

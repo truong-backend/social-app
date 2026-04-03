@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useShallow } from 'zustand/react/shallow'
 import { useChatMessages } from '../hooks/useChatMessages'
 import { useSendMessage } from '../hooks/useSendMessage'
 import { useChatWebSocket } from '../hooks/useChatWebSocket'
@@ -20,7 +21,10 @@ export const ChatWindow = ({ chatId, targetUserId, targetUsername }: ChatWindowP
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const userId            = useSessionStore((state) => state.userId) ?? ''
-  const messagesFromStore = useChatStore((state) => state.messagesByChatId[chatId] ?? [])
+  // FIX: useShallow để Zustand so sánh shallow thay vì tạo array mới [] mỗi render
+  const messagesFromStore = useChatStore(
+    useShallow((state) => state.messagesByChatId[chatId] ?? [])
+  )
 
   useChatWebSocket(chatId)
 
@@ -49,7 +53,6 @@ export const ChatWindow = ({ chatId, targetUserId, targetUsername }: ChatWindowP
     <div className="chat-window">
       <header className="chat-window__header">
         <h2 className="chat-window__title">{targetUsername}</h2>
-        {/* Call buttons */}
         {targetUserId && (
           <CallButton targetUserId={targetUserId} targetName={targetUsername} />
         )}

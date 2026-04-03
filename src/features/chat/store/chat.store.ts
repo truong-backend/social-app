@@ -26,8 +26,7 @@ export const useChatStore = create<ChatState>()(
         if (!state.messagesByChatId[chatId]) {
           state.messagesByChatId[chatId] = []
         }
-        // Avoid duplicate if optimistic update already added it
-        const exists = state.messagesByChatId[chatId].some((m) => m.id === message.id)
+        const exists = state.messagesByChatId[chatId].some((m: Message) => m.id === message.id)
         if (!exists) {
           state.messagesByChatId[chatId].push(message)
         }
@@ -37,7 +36,7 @@ export const useChatStore = create<ChatState>()(
       set((state) => {
         const messages = state.messagesByChatId[chatId]
         if (!messages) return
-        const index = messages.findIndex((m) => m.id === updatedMessage.id)
+        const index = messages.findIndex((m: Message) => m.id === updatedMessage.id)
         if (index !== -1) messages[index] = updatedMessage
       }),
 
@@ -45,7 +44,7 @@ export const useChatStore = create<ChatState>()(
       set((state) => {
         if (!state.messagesByChatId[chatId]) return
         state.messagesByChatId[chatId] = state.messagesByChatId[chatId].filter(
-          (m) => m.id !== messageId,
+          (m: Message) => m.id !== messageId,
         )
       }),
 
