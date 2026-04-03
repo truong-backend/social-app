@@ -27,10 +27,10 @@ export const EditProfilePage = () => {
   const { data: profile, isLoading } = useMyProfile()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const changeName    = useChangeName()
+  const changeName     = useChangeName()
   const changeUsername = useChangeUsername()
-  const changeBio     = useChangeBio()
-  const updatePicture = useUpdateProfilePicture()
+  const changeBio      = useChangeBio()
+  const updatePicture  = useUpdateProfilePicture()
 
   const { register, handleSubmit, formState: { errors } } = useForm<EditProfileFormValues>({
     resolver: zodResolver(editProfileSchema),
@@ -55,35 +55,60 @@ export const EditProfilePage = () => {
   }
 
   if (isLoading) {
-    return <div className="edit-profile-page__loading"><Spinner size="lg" /></div>
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Spinner size="lg" />
+      </div>
+    )
   }
 
   const isSaving = changeName.isPending || changeUsername.isPending || changeBio.isPending
 
   return (
-    <div className="edit-profile-page">
-      <h1 className="edit-profile-page__title">Chỉnh sửa trang cá nhân</h1>
-
-      {/* Avatar upload */}
-      <div className="edit-profile-page__avatar-section">
-        <img
-          src={profile?.profilePictureUrl ?? '/default-avatar.png'}
-          alt={profile?.username}
-          className="edit-profile-page__current-avatar"
-        />
-        <Button
-          variant="secondary"
-          size="sm"
-          isLoading={updatePicture.isPending}
-          onClick={() => fileInputRef.current?.click()}
+    <div className="max-w-2xl mx-auto px-4 py-8 pb-24 md:pb-8 flex flex-col gap-8">
+      {/* Header */}
+      <div>
+        <h1
+          className="text-3xl font-extrabold tracking-tight text-on-surface"
+          style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
         >
-          Đổi ảnh đại diện
-        </Button>
+          Chỉnh sửa trang cá nhân
+        </h1>
+        <p className="mt-1 text-sm text-on-surface-variant">Cập nhật thông tin của bạn</p>
+      </div>
+
+      {/* Avatar section */}
+      <div className="flex items-center gap-6 p-6 bg-surface-container-low rounded-2xl">
+        <div className="relative flex-shrink-0">
+          <img
+            src={profile?.profilePictureUrl ?? '/default-avatar.png'}
+            alt={profile?.username}
+            className="w-24 h-24 rounded-full object-cover border-4 border-surface shadow-lg"
+          />
+          {updatePicture.isPending && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full">
+              <Spinner size="sm" />
+            </div>
+          )}
+        </div>
+        <div className="flex flex-col gap-2">
+          <p className="font-bold text-on-surface">Ảnh đại diện</p>
+          <p className="text-xs text-on-surface-variant">JPG, PNG tối đa 5MB</p>
+          <Button
+            variant="secondary"
+            size="sm"
+            isLoading={updatePicture.isPending}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <span className="material-symbols-outlined text-sm mr-1">photo_camera</span>
+            Đổi ảnh
+          </Button>
+        </div>
         <input
           ref={fileInputRef}
           type="file"
           accept="image/*"
-          className="edit-profile-page__file-input"
+          className="hidden"
           onChange={(e) => {
             const file = e.target.files?.[0]
             if (file) updatePicture.mutate(file)
@@ -91,8 +116,9 @@ export const EditProfilePage = () => {
         />
       </div>
 
-      <form className="edit-profile-page__form" onSubmit={handleSubmit(onSubmit)}>
-        <div className="edit-profile-page__name-row">
+      {/* Form */}
+      <form className="flex flex-col gap-5" onSubmit={handleSubmit(onSubmit)}>
+        <div className="grid grid-cols-2 gap-3">
           <Input
             label="Họ"
             errorMessage={errors.familyName?.message}

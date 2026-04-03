@@ -10,11 +10,11 @@ interface StatEntry {
 }
 
 interface Statistics {
-  commonStats:    StatEntry[]
-  weekStats:      StatEntry[]
-  monthStats:     StatEntry[]
-  yearStats:      StatEntry[]
-  allTimeStats:   StatEntry[]
+  commonStats:  StatEntry[]
+  weekStats:    StatEntry[]
+  monthStats:   StatEntry[]
+  yearStats:    StatEntry[]
+  allTimeStats: StatEntry[]
 }
 
 const ADMIN_QUERY_KEYS = {
@@ -22,21 +22,78 @@ const ADMIN_QUERY_KEYS = {
   postStats: ['admin', 'stats', 'posts'] as const,
 }
 
+const PERIOD_COLORS: Record<string, string> = {
+  'Tuần này':       'text-primary',
+  'Tháng này':      'text-secondary',
+  'Năm nay':        'text-tertiary',
+  'Toàn thời gian': 'text-on-surface',
+  'Tổng quan':      'text-on-surface-variant',
+}
+
 const StatCard = ({ label, count, period }: StatEntry) => (
-  <div className="stat-card">
-    <p className="stat-card__period">{period}</p>
-    <p className="stat-card__label">{label}</p>
-    <p className="stat-card__count">{count.toLocaleString('vi-VN')}</p>
+  <div className="flex flex-col gap-2 p-5 bg-surface-container-low rounded-2xl hover:bg-surface-container-high transition-colors">
+    <p className={`text-[0.6875rem] font-bold uppercase tracking-widest ${PERIOD_COLORS[period] ?? 'text-on-surface-variant'}`}>
+      {period}
+    </p>
+    <p className="text-sm text-on-surface-variant font-medium">{label}</p>
+    <p
+      className="text-3xl font-extrabold text-on-surface"
+      style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+    >
+      {count.toLocaleString('vi-VN')}
+    </p>
   </div>
 )
 
-const StatSection = ({ title, entries }: { title: string; entries: StatEntry[] }) => (
-  <section className="admin-page__stat-section">
-    <h3 className="admin-page__stat-section-title">{title}</h3>
-    <div className="admin-page__stat-grid">
-      {entries.map((entry, i) => <StatCard key={i} {...entry} />)}
+const StatSection = ({ title, entries }: { title: string; entries: StatEntry[] }) => {
+  if (!entries.length) return null
+  return (
+    <div className="flex flex-col gap-3">
+      <h3 className="text-sm font-bold text-on-surface-variant uppercase tracking-widest">{title}</h3>
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+        {entries.map((entry, i) => <StatCard key={i} {...entry} />)}
+      </div>
     </div>
-  </section>
+  )
+}
+
+const SectionBlock = ({
+  title,
+  icon,
+  data,
+}: {
+  title: string
+  icon:  string
+  data:  Statistics | undefined
+}) => (
+  <div className="flex flex-col gap-5">
+    <div className="flex items-center gap-3">
+      <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
+        <span className="material-symbols-outlined text-primary">{icon}</span>
+      </div>
+      <h2
+        className="text-2xl font-extrabold text-on-surface"
+        style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+      >
+        {title}
+      </h2>
+    </div>
+
+    {data ? (
+      <div className="flex flex-col gap-6">
+        <StatSection title="Tổng quan"      entries={data.commonStats ?? []} />
+        <StatSection title="Tuần này"       entries={data.weekStats ?? []} />
+        <StatSection title="Tháng này"      entries={data.monthStats ?? []} />
+        <StatSection title="Năm nay"        entries={data.yearStats ?? []} />
+        <StatSection title="Toàn thời gian" entries={data.allTimeStats ?? []} />
+      </div>
+    ) : (
+      <div className="flex items-center gap-3 px-4 py-3 bg-error/10 rounded-xl text-error text-sm font-medium">
+        <span className="material-symbols-outlined text-sm">warning</span>
+        Không tải được dữ liệu
+      </div>
+    )}
+  </div>
 )
 
 export const AdminPage = () => {
@@ -57,44 +114,32 @@ export const AdminPage = () => {
   })
 
   if (userStats.isLoading || postStats.isLoading) {
-    return <div className="admin-page__loading"><Spinner size="lg" /></div>
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Spinner size="lg" />
+      </div>
+    )
   }
 
   return (
-    <div className="admin-page">
-      <h1 className="admin-page__title">Thống kê hệ thống</h1>
-
-      {/* User statistics */}
-      <div className="admin-page__section">
-        <h2 className="admin-page__section-title">👥 Người dùng</h2>
-        {userStats.data ? (
-          <>
-            <StatSection title="Tổng quan"      entries={userStats.data.commonStats ?? []} />
-            <StatSection title="Tuần này"       entries={userStats.data.weekStats ?? []} />
-            <StatSection title="Tháng này"      entries={userStats.data.monthStats ?? []} />
-            <StatSection title="Năm nay"        entries={userStats.data.yearStats ?? []} />
-            <StatSection title="Toàn thời gian" entries={userStats.data.allTimeStats ?? []} />
-          </>
-        ) : (
-          <p className="admin-page__error">Không tải được dữ liệu</p>
-        )}
+    <div className="max-w-5xl mx-auto px-4 py-8 pb-24 md:pb-8 flex flex-col gap-10">
+      {/* Header */}
+      <div>
+        <h1
+          className="text-4xl font-extrabold tracking-tight text-on-surface"
+          style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+        >
+          Thống kê hệ thống
+        </h1>
+        <p className="mt-1 text-on-surface-variant text-sm">Tổng quan hoạt động của nền tảng</p>
       </div>
 
-      {/* Post statistics */}
-      <div className="admin-page__section">
-        <h2 className="admin-page__section-title">📝 Bài viết</h2>
-        {postStats.data ? (
-          <>
-            <StatSection title="Tổng quan"      entries={postStats.data.commonStats ?? []} />
-            <StatSection title="Tuần này"       entries={postStats.data.weekStats ?? []} />
-            <StatSection title="Tháng này"      entries={postStats.data.monthStats ?? []} />
-            <StatSection title="Năm nay"        entries={postStats.data.yearStats ?? []} />
-            <StatSection title="Toàn thời gian" entries={postStats.data.allTimeStats ?? []} />
-          </>
-        ) : (
-          <p className="admin-page__error">Không tải được dữ liệu</p>
-        )}
-      </div>
+      {/* Divider */}
+      <div className="h-px bg-outline-variant/30" />
+
+      <SectionBlock title="Người dùng" icon="group"   data={userStats.data} />
+      <div className="h-px bg-outline-variant/20" />
+      <SectionBlock title="Bài viết"   icon="article" data={postStats.data} />
     </div>
   )
 }

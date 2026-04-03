@@ -12,12 +12,9 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     const textareaId = id ?? label?.toLowerCase().replace(/\s+/g, '-')
 
     return (
-      <div className="flex flex-col gap-1.5">
+      <div className="textarea-wrapper">
         {label && (
-          <label
-            className="text-sm font-semibold text-on-surface"
-            htmlFor={textareaId}
-          >
+          <label className="textarea-wrapper__label" htmlFor={textareaId}>
             {label}
           </label>
         )}
@@ -26,10 +23,8 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           ref={ref}
           id={textareaId}
           className={clsx(
-            'w-full px-4 py-3 rounded-xl bg-surface-container-low border-none',
-            'text-sm text-on-surface placeholder:text-on-surface-variant/60',
-            'focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none',
-            errorMessage && 'ring-2 ring-error',
+            'textarea-wrapper__textarea',
+            errorMessage && 'textarea-wrapper__textarea--error',
             className,
           )}
           aria-invalid={!!errorMessage}
@@ -37,13 +32,13 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         />
 
         {errorMessage && (
-          <span className="text-xs text-error font-medium" role="alert">
+          <span className="textarea-wrapper__error" role="alert">
             {errorMessage}
           </span>
         )}
 
         {helperText && !errorMessage && (
-          <span className="text-xs text-on-surface-variant">{helperText}</span>
+          <span className="textarea-wrapper__helper">{helperText}</span>
         )}
       </div>
     )

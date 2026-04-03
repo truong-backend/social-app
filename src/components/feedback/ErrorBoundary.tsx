@@ -28,16 +28,13 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     if (this.state.hasError) {
       return (
         this.props.fallback ?? (
-          <div className="flex flex-col items-center justify-center gap-4 p-10 rounded-2xl bg-surface-container-low text-center">
-            <span className="text-4xl">⚠️</span>
-            <h2 className="text-lg font-bold text-on-surface font-headline">
-              Đã xảy ra lỗi
-            </h2>
-            <p className="text-sm text-on-surface-variant max-w-xs">
+          <div className="error-boundary">
+            <h2 className="error-boundary__title">Đã xảy ra lỗi</h2>
+            <p className="error-boundary__message">
               {this.state.error?.message ?? 'Lỗi không xác định'}
             </p>
             <button
-              className="px-6 py-2.5 rounded-full bg-gradient-to-br from-primary to-primary-container text-on-primary text-sm font-bold shadow-md shadow-primary/20 active:scale-95 transition-all"
+              className="error-boundary__retry-btn"
               onClick={() => this.setState({ hasError: false, error: null })}
             >
               Thử lại

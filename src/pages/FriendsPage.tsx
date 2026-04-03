@@ -10,6 +10,13 @@ import { Link } from 'react-router-dom'
 
 type FriendsTab = 'friends' | 'received' | 'sent' | 'blocked'
 
+const TAB_META: { key: FriendsTab; label: string; icon: string }[] = [
+  { key: 'friends',  label: 'Bạn bè',          icon: 'group' },
+  { key: 'received', label: 'Lời mời nhận',     icon: 'person_add' },
+  { key: 'sent',     label: 'Đã gửi',           icon: 'schedule_send' },
+  { key: 'blocked',  label: 'Đã chặn',          icon: 'block' },
+]
+
 export const FriendsPage = () => {
   const [activeTab, setActiveTab] = useState<FriendsTab>('friends')
 
@@ -23,31 +30,43 @@ export const FriendsPage = () => {
   const unfriend      = useUnfriend()
   const unblock       = useUnblockUser()
 
-  const tabs: { key: FriendsTab; label: string; count?: number }[] = [
-    { key: 'friends',  label: 'Bạn bè',            count: friends.data?.length },
-    { key: 'received', label: 'Lời mời nhận',       count: receivedRequests.data?.length },
-    { key: 'sent',     label: 'Lời mời đã gửi',     count: sentRequests.data?.length },
-    { key: 'blocked',  label: 'Đã chặn',            count: blockedUsers.data?.length },
-  ]
+  const counts: Record<FriendsTab, number | undefined> = {
+    friends:  friends.data?.length,
+    received: receivedRequests.data?.length,
+    sent:     sentRequests.data?.length,
+    blocked:  blockedUsers.data?.length,
+  }
 
   const renderList = (
     ids:       string[],
     isLoading: boolean,
     actions:   (id: string) => React.ReactNode,
+    emptyIcon: string,
     emptyText: string,
   ) => {
-    if (isLoading) return <div className="friends-page__loading"><Spinner size="md" /></div>
-    if (ids.length === 0) return <p className="friends-page__empty">{emptyText}</p>
-
+    if (isLoading) {
+      return <div className="flex justify-center py-12"><Spinner size="md" /></div>
+    }
+    if (ids.length === 0) {
+      return (
+        <div className="flex flex-col items-center py-16 gap-3">
+          <span className="material-symbols-outlined text-on-surface-variant text-4xl">{emptyIcon}</span>
+          <p className="text-sm text-on-surface-variant">{emptyText}</p>
+        </div>
+      )
+    }
     return (
-      <div className="friends-page__list">
+      <div className="flex flex-col gap-2">
         {ids.map((id) => (
-          <div key={id} className="friends-page__item">
-            <Link to={`/profile/${id}`} className="friends-page__item-link">
+          <div
+            key={id}
+            className="flex items-center justify-between p-4 bg-surface-container-low rounded-2xl hover:bg-surface-container-high transition-colors"
+          >
+            <Link to={`/profile/${id}`} className="flex items-center gap-4 min-w-0">
               <Avatar src={null} alt={id} size="md" />
-              <span className="friends-page__item-id">{id}</span>
+              <span className="font-semibold text-on-surface text-sm truncate">{id}</span>
             </Link>
-            <div className="friends-page__item-actions">{actions(id)}</div>
+            <div className="flex gap-2 flex-shrink-0">{actions(id)}</div>
           </div>
         ))}
       </div>
@@ -55,27 +74,50 @@ export const FriendsPage = () => {
   }
 
   return (
-    <div className="friends-page">
-      <h1 className="friends-page__title">Bạn bè</h1>
+    <div className="max-w-2xl mx-auto px-4 py-8 pb-24 md:pb-8 flex flex-col gap-6">
+      <h1
+        className="text-3xl font-extrabold tracking-tight text-on-surface"
+        style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+      >
+        Bạn bè
+      </h1>
 
-      <div className="friends-page__tabs" role="tablist">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            role="tab"
-            aria-selected={activeTab === tab.key}
-            className={`friends-page__tab ${activeTab === tab.key ? 'friends-page__tab--active' : ''}`}
-            onClick={() => setActiveTab(tab.key)}
-          >
-            {tab.label}
-            {!!tab.count && tab.count > 0 && (
-              <span className="friends-page__tab-badge">{tab.count}</span>
-            )}
-          </button>
-        ))}
+      {/* Tabs */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2" role="tablist">
+        {TAB_META.map(({ key, label, icon }) => {
+          const count = counts[key]
+          const isActive = activeTab === key
+          return (
+            <button
+              key={key}
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => setActiveTab(key)}
+              className={`relative flex flex-col items-center gap-1 px-3 py-4 rounded-2xl transition-all duration-200 ${
+                isActive
+                  ? 'bg-surface-container-highest text-primary'
+                  : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high'
+              }`}
+            >
+              <span
+                className="material-symbols-outlined text-xl"
+                style={isActive ? { fontVariationSettings: "'FILL' 1" } : undefined}
+              >
+                {icon}
+              </span>
+              <span className="text-xs font-bold">{label}</span>
+              {!!count && count > 0 && (
+                <span className="absolute top-2 right-2 min-w-[18px] h-[18px] flex items-center justify-center bg-secondary text-on-secondary rounded-full text-[10px] font-bold px-1">
+                  {count}
+                </span>
+              )}
+            </button>
+          )
+        })}
       </div>
 
-      <div className="friends-page__content">
+      {/* Content */}
+      <div>
         {activeTab === 'friends' && renderList(
           friends.data ?? [], friends.isLoading,
           (id) => (
@@ -84,7 +126,7 @@ export const FriendsPage = () => {
               Hủy kết bạn
             </Button>
           ),
-          'Chưa có bạn bè nào',
+          'group_off', 'Chưa có bạn bè nào',
         )}
 
         {activeTab === 'received' && renderList(
@@ -101,7 +143,7 @@ export const FriendsPage = () => {
               </Button>
             </>
           ),
-          'Không có lời mời kết bạn nào',
+          'person_add_disabled', 'Không có lời mời kết bạn nào',
         )}
 
         {activeTab === 'sent' && renderList(
@@ -112,7 +154,7 @@ export const FriendsPage = () => {
               Hủy lời mời
             </Button>
           ),
-          'Chưa gửi lời mời nào',
+          'schedule_send', 'Chưa gửi lời mời nào',
         )}
 
         {activeTab === 'blocked' && renderList(
@@ -123,7 +165,7 @@ export const FriendsPage = () => {
               Bỏ chặn
             </Button>
           ),
-          'Chưa chặn ai',
+          'block', 'Chưa chặn ai',
         )}
       </div>
     </div>

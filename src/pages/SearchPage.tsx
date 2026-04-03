@@ -7,7 +7,6 @@ import { axiosInstance } from '@services/axios.instance'
 import { unwrapData } from '@utils/api-response'
 import { PostCard } from '@features/post/components/PostCard'
 import { Avatar } from '@components/ui/Avatar'
-import { Input } from '@components/ui/Input'
 import { Spinner } from '@components/feedback/Spinner'
 import { useSessionStore } from '@stores/session.store'
 import type { Post } from '@features/post/types/post.types'
@@ -15,10 +14,10 @@ import type { Post } from '@features/post/types/post.types'
 type SearchTab = 'users' | 'posts'
 
 export const SearchPage = () => {
-  const [keyword, setKeyword]   = useState('')
+  const [keyword, setKeyword]     = useState('')
   const [activeTab, setActiveTab] = useState<SearchTab>('users')
-  const debouncedKeyword        = useDebounce(keyword, 400)
-  const currentUserId           = useSessionStore((state) => state.userId) ?? ''
+  const debouncedKeyword          = useDebounce(keyword, 400)
+  const currentUserId             = useSessionStore((state) => state.userId) ?? ''
 
   const showResults = debouncedKeyword.trim().length >= 2
 
@@ -37,69 +36,80 @@ export const SearchPage = () => {
   })
 
   return (
-    <div className="search-page">
-      <div className="search-page__header">
-        <Input
-          label="Tìm kiếm"
+    <div className="flex flex-col gap-4">
+      {/* Search input */}
+      <div className="relative">
+        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">
+          search
+        </span>
+        <input
           type="search"
-          placeholder="Tìm người dùng hoặc bài viết..."
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
-          className="search-page__input"
+          placeholder="Tìm người dùng hoặc bài viết..."
+          className="w-full pl-12 pr-4 py-3 bg-surface-container-low border-none rounded-full text-sm focus:ring-2 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all outline-none placeholder:text-on-surface-variant/60"
         />
       </div>
 
       {/* Tabs */}
-      <div className="search-page__tabs" role="tablist">
-        {(['users', 'posts'] as const).map((tab) => (
-          <button
-            key={tab}
-            role="tab"
-            aria-selected={activeTab === tab}
-            className={`search-page__tab ${activeTab === tab ? 'search-page__tab--active' : ''}`}
-            onClick={() => setActiveTab(tab)}
-          >
-            {tab === 'users' ? 'Người dùng' : 'Bài viết'}
-          </button>
-        ))}
-      </div>
+      {showResults && (
+        <div className="flex gap-2" role="tablist">
+          {(['users', 'posts'] as const).map((tab) => (
+            <button
+              key={tab}
+              role="tab"
+              aria-selected={activeTab === tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-5 py-2 rounded-full text-sm font-bold transition-all ${
+                activeTab === tab
+                  ? 'bg-surface-container-highest text-primary'
+                  : 'text-on-surface-variant hover:bg-surface-container-low'
+              }`}
+            >
+              {tab === 'users' ? 'Người dùng' : 'Bài viết'}
+            </button>
+          ))}
+        </div>
+      )}
 
       {!showResults && (
-        <p className="search-page__hint">Nhập ít nhất 2 ký tự để tìm kiếm</p>
+        <p className="text-sm text-on-surface-variant px-1">Nhập ít nhất 2 ký tự để tìm kiếm</p>
       )}
 
       {/* Users tab */}
       {showResults && activeTab === 'users' && (
-        <div className="search-page__results">
+        <div className="flex flex-col gap-2">
           {usersLoading ? (
-            <Spinner size="md" />
+            <div className="flex justify-center py-8"><Spinner size="md" /></div>
           ) : !users?.length ? (
-            <p className="search-page__empty">Không tìm thấy người dùng nào</p>
+            <p className="text-center text-on-surface-variant py-8 text-sm">Không tìm thấy người dùng nào</p>
           ) : (
-            <div className="search-page__user-list">
-              {users.map((user) => (
-                <Link key={user.id} to={`/profile/${user.id}`} className="search-page__user-item">
-                  <Avatar src={user.profilePictureUrl} alt={user.username} size="md" />
-                  <div className="search-page__user-info">
-                    <span className="search-page__user-name">
-                      {user.familyName} {user.givenName}
-                    </span>
-                    <span className="search-page__user-username">@{user.username}</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
+            users.map((user) => (
+              <Link
+                key={user.id}
+                to={`/profile/${user.id}`}
+                className="flex items-center gap-4 p-4 bg-surface-container-low rounded-xl hover:bg-surface-container-high transition-colors"
+              >
+                <Avatar src={user.profilePictureUrl} alt={user.username} size="md" />
+                <div>
+                  <p className="font-bold text-on-surface text-sm">
+                    {user.familyName} {user.givenName}
+                  </p>
+                  <p className="text-xs text-on-surface-variant">@{user.username}</p>
+                </div>
+              </Link>
+            ))
           )}
         </div>
       )}
 
       {/* Posts tab */}
       {showResults && activeTab === 'posts' && (
-        <div className="search-page__results">
+        <div className="flex flex-col gap-4">
           {postsLoading ? (
-            <Spinner size="md" />
+            <div className="flex justify-center py-8"><Spinner size="md" /></div>
           ) : !posts?.length ? (
-            <p className="search-page__empty">Không tìm thấy bài viết nào</p>
+            <p className="text-center text-on-surface-variant py-8 text-sm">Không tìm thấy bài viết nào</p>
           ) : (
             posts.map((post) => (
               <PostCard key={post.id} post={post} currentUserId={currentUserId} />

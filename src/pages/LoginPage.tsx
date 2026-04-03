@@ -17,19 +17,23 @@ type LoginFormValues = z.infer<typeof loginSchema>
 export const LoginPage = () => {
   const login = useLogin()
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginFormValues>({
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
   })
 
   return (
-    <div className="login-page">
-      <h2 className="login-page__title">Đăng nhập</h2>
+    <div className="flex flex-col gap-6">
+      <div>
+        <h2
+          className="text-3xl font-extrabold tracking-tight text-on-surface"
+          style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+        >
+          Đăng nhập
+        </h2>
+        <p className="mt-1 text-sm text-on-surface-variant">Chào mừng trở lại ✨</p>
+      </div>
 
-      <form className="login-page__form" onSubmit={handleSubmit((data) => login.mutate(data))}>
+      <form className="flex flex-col gap-4" onSubmit={handleSubmit((data) => login.mutate(data))}>
         <Input
           label="Email"
           type="email"
@@ -46,21 +50,23 @@ export const LoginPage = () => {
           {...register('password')}
         />
 
-        <Button
-          type="submit"
-          fullWidth
-          isLoading={login.isPending}
-        >
+        <Button type="submit" fullWidth isLoading={login.isPending}>
           Đăng nhập
         </Button>
       </form>
 
-      <div className="login-page__links">
-        <Link to="/reset-password" className="login-page__link">
+      <div className="flex items-center justify-center gap-3 text-sm">
+        <Link
+          to="/reset-password"
+          className="text-primary font-semibold hover:underline transition-colors"
+        >
           Quên mật khẩu?
         </Link>
-        <span className="login-page__separator">·</span>
-        <Link to="/register" className="login-page__link">
+        <span className="text-outline-variant">·</span>
+        <Link
+          to="/register"
+          className="text-primary font-semibold hover:underline transition-colors"
+        >
           Tạo tài khoản mới
         </Link>
       </div>

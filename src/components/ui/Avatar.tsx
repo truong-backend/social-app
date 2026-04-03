@@ -8,23 +8,18 @@ interface AvatarProps {
 }
 
 const SIZE_CLASSES = {
-  xs: 'w-6 h-6 text-[10px]',
-  sm: 'w-8 h-8 text-xs',
-  md: 'w-10 h-10 text-sm',
-  lg: 'w-14 h-14 text-base',
-  xl: 'w-24 h-24 text-2xl',
+  xs: 'avatar--xs',
+  sm: 'avatar--sm',
+  md: 'avatar--md',
+  lg: 'avatar--lg',
+  xl: 'avatar--xl',
 }
 
 export const Avatar = ({ src, alt, size = 'md', className }: AvatarProps) => {
   if (!src) {
     return (
       <div
-        className={clsx(
-          'rounded-full flex items-center justify-center font-bold',
-          'bg-gradient-to-br from-primary to-primary-container text-on-primary',
-          SIZE_CLASSES[size],
-          className,
-        )}
+        className={clsx('avatar', 'avatar--placeholder', SIZE_CLASSES[size], className)}
         aria-label={alt}
       >
         {alt.charAt(0).toUpperCase()}
@@ -36,11 +31,7 @@ export const Avatar = ({ src, alt, size = 'md', className }: AvatarProps) => {
     <img
       src={src}
       alt={alt}
-      className={clsx(
-        'rounded-full object-cover',
-        SIZE_CLASSES[size],
-        className,
-      )}
+      className={clsx('avatar', SIZE_CLASSES[size], className)}
     />
   )
 }

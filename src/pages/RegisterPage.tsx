@@ -22,23 +22,27 @@ type RegisterFormValues = z.infer<typeof registerSchema>
 export const RegisterPage = () => {
   const register_ = useRegister()
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<RegisterFormValues>({
+  const { register, handleSubmit, formState: { errors } } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
   })
 
   return (
-    <div className="register-page">
-      <h2 className="register-page__title">Tạo tài khoản</h2>
+    <div className="flex flex-col gap-6">
+      <div>
+        <h2
+          className="text-3xl font-extrabold tracking-tight text-on-surface"
+          style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+        >
+          Tạo tài khoản
+        </h2>
+        <p className="mt-1 text-sm text-on-surface-variant">Bắt đầu hành trình của bạn 🎨</p>
+      </div>
 
       <form
-        className="register-page__form"
+        className="flex flex-col gap-4"
         onSubmit={handleSubmit((data) => register_.mutate(data))}
       >
-        <div className="register-page__name-row">
+        <div className="grid grid-cols-2 gap-3">
           <Input
             label="Họ"
             autoComplete="family-name"
@@ -76,18 +80,14 @@ export const RegisterPage = () => {
           {...register('birthdate')}
         />
 
-        <Button
-          type="submit"
-          fullWidth
-          isLoading={register_.isPending}
-        >
+        <Button type="submit" fullWidth isLoading={register_.isPending}>
           Đăng ký
         </Button>
       </form>
 
-      <p className="register-page__login-link">
+      <p className="text-center text-sm text-on-surface-variant">
         Đã có tài khoản?{' '}
-        <Link to="/login" className="register-page__link">
+        <Link to="/login" className="text-primary font-semibold hover:underline">
           Đăng nhập
         </Link>
       </p>
