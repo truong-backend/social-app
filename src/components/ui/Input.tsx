@@ -12,9 +12,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     const inputId = id ?? label?.toLowerCase().replace(/\s+/g, '-')
 
     return (
-      <div className="input-wrapper">
+      <div className="flex flex-col gap-1.5">
         {label && (
-          <label className="input-wrapper__label" htmlFor={inputId}>
+          <label
+            className="text-sm font-semibold text-on-surface"
+            htmlFor={inputId}
+          >
             {label}
           </label>
         )}
@@ -23,8 +26,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           id={inputId}
           className={clsx(
-            'input-wrapper__input',
-            errorMessage && 'input-wrapper__input--error',
+            'w-full px-4 py-3 rounded-xl bg-surface-container-low border-none',
+            'text-sm text-on-surface placeholder:text-on-surface-variant/60',
+            'focus:ring-2 focus:ring-primary/20 outline-none transition-all',
+            errorMessage && 'ring-2 ring-error',
             className,
           )}
           aria-invalid={!!errorMessage}
@@ -33,13 +38,17 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         />
 
         {errorMessage && (
-          <span id={`${inputId}-error`} className="input-wrapper__error" role="alert">
+          <span
+            id={`${inputId}-error`}
+            className="text-xs text-error font-medium"
+            role="alert"
+          >
             {errorMessage}
           </span>
         )}
 
         {helperText && !errorMessage && (
-          <span className="input-wrapper__helper">{helperText}</span>
+          <span className="text-xs text-on-surface-variant">{helperText}</span>
         )}
       </div>
     )
