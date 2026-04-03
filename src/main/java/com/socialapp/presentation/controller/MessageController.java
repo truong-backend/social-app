@@ -123,6 +123,11 @@ public class MessageController {
                 .orElseThrow(() -> new RuntimeException("Target user not found"))
                 .getId();
 
+        System.out.println("=== CALL DEBUG ===");
+        System.out.println("callerId (userId): " + callerId);
+        System.out.println("targetUserId from request: " + request.targetUserId());
+
+
         String callId    = "call-" + UUID.randomUUID();
         String messageId = "msg-"  + UUID.randomUUID();
         String chatId    = "chat-" + UUID.randomUUID();
@@ -141,6 +146,8 @@ public class MessageController {
                 "/queue/incoming_call",
                 payload
         );
+
+        System.out.println("Push done to: " + request.targetUserId());
 
         return ApiResponse.ok(new InitiateCallResponse(callId, messageId, chatId));
     }
@@ -166,14 +173,18 @@ public class MessageController {
             Map<String, Object> payload = new HashMap<>();
             payload.put("callId", callId);
 
+            System.out.println("=== CALL DEBUG ===");
+            System.out.println("callerId (userId): " + callerId);
+            System.out.println("targetUserId from request: " + request.targetUserId());
+
             // ← Push theo accountId
             messagingTemplate.convertAndSendToUser(
                     targetAccountId,
                     "/queue/call_ended",
                     payload
             );
+            System.out.println("Push done to: " + request.targetUserId());
         }
-
         return ApiResponse.ok(null);
     }
     // ── JWT builder ────────────────────────────────────────────
