@@ -170,6 +170,8 @@ public class MessageController {
                     .orElseThrow(() -> new RuntimeException("Target user not found"))
                     .getId();
 
+            System.out.println("targetAccountId: " + targetAccountId);
+
             Map<String, Object> payload = new HashMap<>();
             payload.put("callId", callId);
 
