@@ -116,7 +116,11 @@ public class MessageController {
             @Valid @RequestBody InitiateCallRequest request) {
 
         String callerId   = resolveUserId();
-        String callerName = callerId; // TODO: đổi thành display name nếu có
+            String callerName = callerId; // TODO: đổi thành display name nếu có
+
+        System.out.println("=== CALL DEBUG ===");
+        System.out.println("callerId (userId): " + callerId);
+        System.out.println("targetUserId from request: " + request.targetUserId());
 
         String callId    = "call-" + UUID.randomUUID();
         String messageId = "msg-"  + UUID.randomUUID();
@@ -137,6 +141,7 @@ public class MessageController {
                 payload
         );
 
+        System.out.println("Push done to: " + request.targetUserId());
         System.out.println("Push done");
 
         return ApiResponse.ok(new InitiateCallResponse(callId, messageId, chatId));
