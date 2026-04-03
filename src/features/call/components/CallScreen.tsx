@@ -56,7 +56,7 @@ export const CallScreen = () => {
       ? session.receiverName
       : session.callerName
 
-  const isConnected = session.status === 'connected'
+  // const isConnected = session.status === 'connected'
   const isIncoming  = session.status === 'incoming'
 
   return (
