@@ -8,6 +8,7 @@ import { CallEndedScreen } from './CallEndedScreen'
 
 export const CallOverlay = () => {
   const status = useCallStore((state) => state.session?.status ?? 'idle')
+  console.log('[CallOverlay] status:', status)
   const { initClient, disconnectClient } = useStringeeClient()
 
   useEffect(() => {
