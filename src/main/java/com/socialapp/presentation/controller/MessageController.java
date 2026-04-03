@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -30,6 +31,7 @@ public class MessageController {
     private final GetChatUseCase getChatUseCase;
     private final SearchChatUseCase searchChatUseCase;
     private final AccountRepository accountRepository;
+    private final SimpMessagingTemplate messagingTemplate; // ← thêm
 
     @Value("${STRINGEE_API_KEY_SID:}")
     private String stringeeApiKeySid;
@@ -95,60 +97,101 @@ public class MessageController {
         return ApiResponse.ok(res.message());
     }
 
-
-    // ================== STRINGEE TOKEN ==================
     @GetMapping("/calls/stringee-token")
-    public ResponseEntity<String> getStringeeToken() {
+    public ApiResponse<String> getStringeeToken() {
         String userId = resolveUserId();
         String token = buildStringeeToken(userId);
-        return ResponseEntity.ok(token);  // just return the raw string
+        return new ApiResponse<>(true, null, token);
     }
 
-    /**
-     * Build JWT chuẩn cho Stringee
-     */
-    private String buildStringeeToken(String userId) {
+    // ── Call endpoints ─────────────────────────────────────────
 
+    /**
+     * POST /api/messages/calls — khởi tạo cuộc gọi
+     * Push WebSocket incoming_call đến receiver để hiện modal
+     */
+    @PostMapping("/calls")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponse<InitiateCallResponse> initiateCall(
+            @Valid @RequestBody InitiateCallRequest request) {
+
+        String callerId   = resolveUserId();
+        String callerName = callerId; // TODO: đổi thành display name nếu có
+
+        String callId    = "call-" + UUID.randomUUID();
+        String messageId = "msg-"  + UUID.randomUUID();
+        String chatId    = "chat-" + UUID.randomUUID();
+
+        // Push WebSocket đến receiver — FE subscribe /user/{userId}/queue/incoming_call
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("callId",      callId);
+        payload.put("messageId",   messageId);
+        payload.put("chatId",      chatId);
+        payload.put("callerId",    callerId);
+        payload.put("callerName",  callerName);
+        payload.put("isVideoCall", request.isVideoCall());
+
+        messagingTemplate.convertAndSendToUser(
+                request.targetUserId(),
+                "/queue/incoming_call",
+                payload
+        );
+
+        System.out.println("Push done");
+
+        return ApiResponse.ok(new InitiateCallResponse(callId, messageId, chatId));
+    }
+
+    /** POST /api/messages/calls/{callId}/answer */
+    @PostMapping("/calls/{callId}/answer")
+    public ApiResponse<Void> answerCall(@PathVariable String callId) {
+        return ApiResponse.ok(null);
+    }
+
+    /** POST /api/messages/calls/{callId}/end — push call_ended đến bên kia */
+    @PostMapping("/calls/{callId}/end")
+    public ApiResponse<Void> endCall(
+            @PathVariable String callId,
+            @RequestBody(required = false) EndCallRequest request) {
+
+        if (request != null && request.targetUserId() != null) {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("callId", callId);
+
+            messagingTemplate.convertAndSendToUser(
+                    request.targetUserId(),
+                    "/queue/call_ended",
+                    payload
+            );
+        }
+
+        return ApiResponse.ok(null);
+    }
+
+    // ── JWT builder ────────────────────────────────────────────
+
+    private String buildStringeeToken(String userId) {
         if (stringeeApiKeySid == null || stringeeApiKeySid.isBlank()
                 || stringeeApiKeySecret == null || stringeeApiKeySecret.isBlank()) {
             throw new RuntimeException("Missing Stringee API credentials");
         }
-
         try {
             long now = System.currentTimeMillis() / 1000;
             long exp = now + 3600;
-
-            // Header
-            String headerJson = "{\"typ\":\"JWT\",\"alg\":\"HS256\"}";
-            String header = base64Url(headerJson);
-
-            // Payload
+            String headerJson  = "{\"typ\":\"JWT\",\"alg\":\"HS256\"}";
+            String header      = base64Url(headerJson);
             String payloadJson = String.format(
                     "{\"jti\":\"%s-%d\",\"iss\":\"%s\",\"exp\":%d,\"userId\":\"%s\"}",
-                    UUID.randomUUID(),
-                    now,
-                    stringeeApiKeySid,
-                    exp,
-                    userId
-            );
-            String payload = base64Url(payloadJson);
-
-            // Data
-            String data = header + "." + payload;
-
-            // Signature
-            String signature = signHmacSHA256(data, stringeeApiKeySecret);
-
-            return data + "." + signature;
-
+                    UUID.randomUUID(), now, stringeeApiKeySid, exp, userId);
+            String payload     = base64Url(payloadJson);
+            String data        = header + "." + payload;
+            return data + "." + signHmacSHA256(data, stringeeApiKeySecret);
         } catch (Exception e) {
             throw new RuntimeException("Cannot generate Stringee token", e);
         }
     }
 
-
-
-    // ================== UTILS ==================
+    // ── Utils ──────────────────────────────────────────────────
 
     private String base64Url(String input) {
         return Base64.getUrlEncoder()
@@ -158,15 +201,14 @@ public class MessageController {
 
     private String signHmacSHA256(String data, String secret) throws Exception {
         Mac mac = Mac.getInstance("HmacSHA256");
-        mac.init(new SecretKeySpec(
-                secret.getBytes(StandardCharsets.UTF_8),
-                "HmacSHA256"
-        ));
-
+        mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
         byte[] raw = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
-
-        return Base64.getUrlEncoder()
-                .withoutPadding()
-                .encodeToString(raw);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(raw);
     }
+
+    // ── DTOs ───────────────────────────────────────────────────
+
+    public record InitiateCallRequest(String targetUserId, boolean isVideoCall) {}
+    public record InitiateCallResponse(String callId, String messageId, String chatId) {}
+    public record EndCallRequest(String targetUserId) {}
 }

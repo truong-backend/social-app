@@ -96,6 +96,10 @@ public class SecurityConfig {
                                 "/api/users/me/profile-picture"
                         ).authenticated()
 
+                        .requestMatchers(HttpMethod.POST, "/api/messages/calls").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/messages/calls/*/answer").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/messages/calls/*/end").authenticated()
+
 
                         // ── Posts ──────────────────────────────────────────────────────────
                         .requestMatchers(HttpMethod.POST,   "/api/posts").authenticated()
@@ -120,7 +124,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/comments/{commentId}/like").authenticated()
 
                         // ── Messages ──────────────────────────────────────────────────────
-                        .requestMatchers(HttpMethod.GET, "/api/messages/calls/stringee-token").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/messages/calls/stringee-token").authenticated()
 
                         // ── Notifications ─────────────────────────────────────────────────
                         .requestMatchers("/api/notifications/**").authenticated()
