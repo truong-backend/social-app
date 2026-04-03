@@ -41,5 +41,6 @@ public interface AccountNeo4jRepository extends Neo4jRepository<AccountNode, Str
            """)
     void linkAccountToUser(String accountId, String userId);
 
-
+    @Query("MATCH (a:Account {userId: $userId}) RETURN a")
+    Optional<AccountNode> findByUserId(String userId);
 }

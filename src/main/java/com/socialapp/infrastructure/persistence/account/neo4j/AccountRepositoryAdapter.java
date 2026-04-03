@@ -86,6 +86,15 @@ public class AccountRepositoryAdapter implements AccountRepository {
         neo4jRepository.deleteById(id);
     }
 
+    @Override
+    public Optional<Account> findByUserId(String userId) {
+        return neo4jRepository.findByUserId(userId).map(node -> {
+            Account account = mapper.toDomain(node);
+            resolveAndInjectVerifyCode(account, node.getId());
+            return account;
+        });
+    }
+
     // ── Helper: resolve VerifyCode từ graph và inject vào Account ──
 
     private void resolveAndInjectVerifyCode(Account account, String accountId) {
@@ -98,4 +107,5 @@ public class AccountRepositoryAdapter implements AccountRepository {
                         )
                 ));
     }
+
 }

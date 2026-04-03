@@ -115,18 +115,18 @@ public class MessageController {
     public ApiResponse<InitiateCallResponse> initiateCall(
             @Valid @RequestBody InitiateCallRequest request) {
 
-        String callerId   = resolveUserId();
-            String callerName = callerId; // TODO: đổi thành display name nếu có
+        String callerId  = resolveUserId();
+        String callerName = callerId;
 
-        System.out.println("=== CALL DEBUG ===");
-        System.out.println("callerId (userId): " + callerId);
-        System.out.println("targetUserId from request: " + request.targetUserId());
+        // ← Lookup accountId của receiver
+        String targetAccountId = accountRepository.findByUserId(request.targetUserId())
+                .orElseThrow(() -> new RuntimeException("Target user not found"))
+                .getId();
 
         String callId    = "call-" + UUID.randomUUID();
         String messageId = "msg-"  + UUID.randomUUID();
         String chatId    = "chat-" + UUID.randomUUID();
 
-        // Push WebSocket đến receiver — FE subscribe /user/{userId}/queue/incoming_call
         Map<String, Object> payload = new HashMap<>();
         payload.put("callId",      callId);
         payload.put("messageId",   messageId);
@@ -135,14 +135,12 @@ public class MessageController {
         payload.put("callerName",  callerName);
         payload.put("isVideoCall", request.isVideoCall());
 
+        // ← Push theo accountId thay vì userId
         messagingTemplate.convertAndSendToUser(
-                request.targetUserId(),
+                targetAccountId,
                 "/queue/incoming_call",
                 payload
         );
-
-        System.out.println("Push done to: " + request.targetUserId());
-        System.out.println("Push done");
 
         return ApiResponse.ok(new InitiateCallResponse(callId, messageId, chatId));
     }
@@ -160,11 +158,17 @@ public class MessageController {
             @RequestBody(required = false) EndCallRequest request) {
 
         if (request != null && request.targetUserId() != null) {
+            // ← Lookup accountId của receiver
+            String targetAccountId = accountRepository.findByUserId(request.targetUserId())
+                    .orElseThrow(() -> new RuntimeException("Target user not found"))
+                    .getId();
+
             Map<String, Object> payload = new HashMap<>();
             payload.put("callId", callId);
 
+            // ← Push theo accountId
             messagingTemplate.convertAndSendToUser(
-                    request.targetUserId(),
+                    targetAccountId,
                     "/queue/call_ended",
                     payload
             );
@@ -172,7 +176,6 @@ public class MessageController {
 
         return ApiResponse.ok(null);
     }
-
     // ── JWT builder ────────────────────────────────────────────
 
     private String buildStringeeToken(String userId) {

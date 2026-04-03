@@ -22,4 +22,6 @@ public interface AccountRepository {
     Account save(Account account);
 
     void deleteById(String id);
+
+    Optional<Account> findByUserId(String userId);
 }
