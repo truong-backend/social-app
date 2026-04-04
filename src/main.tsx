@@ -5,12 +5,12 @@ import './index.css'
 import { App } from './App'
 
 const rootElement = document.getElementById('root')
-
+ 
 if (!rootElement) {
   throw new Error('[main] Root element #root not found in DOM')
 }
 
-createRoot(rootElement).render(
+createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
   </StrictMode>,
