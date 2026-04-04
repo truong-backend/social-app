@@ -1,20 +1,12 @@
 // src/features/call/hooks/useZegoClient.ts
 import { useCallback, useRef } from 'react'
+import { ZegoExpressEngine } from 'zego-express-engine-webrtc'
 import { getZegoTokenApi } from '../api/call.api'
 import { useCallStore } from '../store/call.store'
 import { ZegoSingleton, attachLocalStream, attachRemoteStream } from '../services/zego.singleton'
-import { useSessionStore } from '@stores/session.store'
 
 // Prevent double-init
 let _initCalled = false
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getSDK = (): any => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const SDK = (window as any).ZegoExpressEngine
-  if (!SDK) throw new Error('[ZegoCloud] SDK chưa được load — kiểm tra index.html')
-  return SDK
-}
 
 /**
  * roomID convention: "call-{smallerUserId}-{largerUserId}" để cả 2 user join cùng room.
@@ -27,70 +19,71 @@ const buildRoomId = (userA: string, userB: string): string => {
 
 export const useZegoClient = () => {
   const {
-    setZegoToken, setCallStarted, setCallEnded, clearSession, setIncomingCall
+    setZegoToken, setCallStarted, setCallEnded, clearSession
   } = useCallStore()
 
   const localStreamIdRef = useRef<string>('')
 
+  // ── Tạo / lấy engine instance ────────────────────────────────
+  const getOrCreateEngine = useCallback(async (): Promise<ZegoExpressEngine> => {
+    const existing = ZegoSingleton.getEngine() as ZegoExpressEngine | null
+    if (existing) return existing
+
+    const { appId } = await getZegoTokenApi()
+    if (!appId) throw new Error('[ZegoCloud] APP_ID chưa được cấu hình (VITE_ZEGOCLOUD_APP_ID)')
+
+    const engine = new ZegoExpressEngine(appId, 'wss://webliveroom-api.zego.im/ws')
+    ZegoSingleton.setEngine(engine as unknown as import('../types/zego.types').ZegoEngineInstance)
+
+    // Remote stream added
+    engine.on('roomStreamUpdate', async (roomID: string, updateType: string, streamList: Array<{ streamID: string }>) => {
+      if (updateType === 'ADD' && streamList?.length) {
+        for (const s of streamList) {
+          try {
+            const remoteStream = await engine.startPlayingStream(s.streamID)
+            attachRemoteStream(remoteStream)
+          } catch (err) {
+            console.error('[ZegoCloud] startPlayingStream failed:', err)
+          }
+        }
+      }
+      if (updateType === 'DELETE' && streamList?.length) {
+        for (const s of streamList) {
+          engine.stopPlayingStream(s.streamID)
+        }
+      }
+    })
+
+    // Remote user left → call ended
+    engine.on('roomUserUpdate', (_roomID: string, updateType: string) => {
+      if (updateType === 'LEAVE') {
+        setCallEnded()
+        ZegoSingleton.setLocalStream(null)
+        ZegoSingleton.setRemoteStream(null)
+        setTimeout(clearSession, 2000)
+      }
+    })
+
+    console.log('[ZegoCloud] engine created, appId:', appId)
+    return engine
+  }, [setCallEnded, clearSession])
+
   // ── Init engine singleton (1 lần cho toàn app) ──────────────
   const initEngine = useCallback(async () => {
     if (_initCalled) return
-    if (ZegoSingleton.getEngine()) return
     _initCalled = true
 
     try {
-      const { token, appId } = await getZegoTokenApi()
+      const engine = await getOrCreateEngine()
+      const { token } = await getZegoTokenApi()
       setZegoToken(token)
-
-      const ZegoExpressEngine = getSDK()
-      const engine = new ZegoExpressEngine(appId, 'wss://webliveroom-api.zego.im/ws')
-      ZegoSingleton.setEngine(engine)
-
-      // Room state callback
-      engine.on('roomStateChanged', (...args: unknown[]) => {
-        const [, , errorCode] = args as [string, string, number]
-        if (errorCode !== 0) {
-          console.error('[ZegoCloud] roomStateChanged error:', errorCode)
-        }
-      })
-
-      // Remote stream added
-      engine.on('roomStreamUpdate', async (...args: unknown[]) => {
-        const [, updateType, streamList] = args as [string, string, Array<{ streamID: string }>]
-        if (updateType === 'ADD' && streamList?.length) {
-          for (const s of streamList) {
-            try {
-              const remoteStream = await engine.startPlayingStream(s.streamID)
-              attachRemoteStream(remoteStream)
-            } catch (err) {
-              console.error('[ZegoCloud] startPlayingStream failed:', err)
-            }
-          }
-        }
-        if (updateType === 'DELETE' && streamList?.length) {
-          for (const s of streamList) {
-            engine.stopPlayingStream(s.streamID)
-          }
-        }
-      })
-
-      // Remote user left → call ended
-      engine.on('roomUserUpdate', (...args: unknown[]) => {
-        const [, updateType] = args as [string, string]
-        if (updateType === 'LEAVE') {
-          setCallEnded()
-          ZegoSingleton.setLocalStream(null)
-          ZegoSingleton.setRemoteStream(null)
-          setTimeout(clearSession, 2000)
-        }
-      })
-
-      console.log('[ZegoCloud] engine initialized')
+      console.log('[ZegoCloud] engine ready')
+      void engine // keep reference
     } catch (err) {
       console.error('[ZegoCloud] initEngine failed:', err)
       _initCalled = false
     }
-  }, [setZegoToken, setCallEnded, clearSession, setIncomingCall])
+  }, [getOrCreateEngine, setZegoToken])
 
   // ── Join room & publish stream (caller) ─────────────────────
   const makeCall = useCallback(async (
@@ -98,8 +91,7 @@ export const useZegoClient = () => {
     toUserId: string,
     isVideoCall: boolean,
   ) => {
-    const engine = ZegoSingleton.getEngine()
-    if (!engine) throw new Error('[ZegoCloud] Engine chưa init')
+    const engine = await getOrCreateEngine()
 
     const { token } = await getZegoTokenApi()
     const roomID = buildRoomId(fromUserId, toUserId)
@@ -116,7 +108,7 @@ export const useZegoClient = () => {
     setCallStarted()
 
     console.log('[ZegoCloud] makeCall — room:', roomID, 'stream:', streamID)
-  }, [setCallStarted])
+  }, [getOrCreateEngine, setCallStarted])
 
   // ── Join room & publish stream (receiver) ───────────────────
   const answerCall = useCallback(async (
@@ -124,8 +116,7 @@ export const useZegoClient = () => {
     callerUserId: string,
     isVideoCall: boolean,
   ) => {
-    const engine = ZegoSingleton.getEngine()
-    if (!engine) { console.warn('[ZegoCloud] answerCall — no engine'); return }
+    const engine = await getOrCreateEngine()
 
     const { token } = await getZegoTokenApi()
     const roomID = buildRoomId(myUserId, callerUserId)
@@ -142,11 +133,11 @@ export const useZegoClient = () => {
     setCallStarted()
 
     console.log('[ZegoCloud] answerCall — room:', roomID, 'stream:', streamID)
-  }, [setCallStarted])
+  }, [getOrCreateEngine, setCallStarted])
 
   // ── Hang up / leave room ─────────────────────────────────────
   const hangUp = useCallback(async () => {
-    const engine = ZegoSingleton.getEngine()
+    const engine = ZegoSingleton.getEngine() as ZegoExpressEngine | null
     if (!engine) return
 
     if (localStreamIdRef.current) {
@@ -157,21 +148,25 @@ export const useZegoClient = () => {
     ZegoSingleton.setLocalStream(null)
     ZegoSingleton.setRemoteStream(null)
 
-    await engine.logoutRoom().catch(() => {})
+    try { engine.logoutRoom() } catch { /* ignore */ }
     console.log('[ZegoCloud] hangUp — room left')
   }, [])
 
   // ── Mute / Video toggle ──────────────────────────────────────
   const setMuted = useCallback((muted: boolean) => {
-    const engine = ZegoSingleton.getEngine()
-    if (!engine || !localStreamIdRef.current) return
-    engine.mutePublishStreamAudio(localStreamIdRef.current, muted)
+    const engine = ZegoSingleton.getEngine() as ZegoExpressEngine | null
+    if (!engine) return
+    const localStream = ZegoSingleton.getLocalStream()
+    if (!localStream) return
+    engine.mutePublishStreamAudio(localStream, muted)
   }, [])
 
   const setVideoEnabled = useCallback((enabled: boolean) => {
-    const engine = ZegoSingleton.getEngine()
-    if (!engine || !localStreamIdRef.current) return
-    engine.mutePublishStreamVideo(localStreamIdRef.current, !enabled)
+    const engine = ZegoSingleton.getEngine() as ZegoExpressEngine | null
+    if (!engine) return
+    const localStream = ZegoSingleton.getLocalStream()
+    if (!localStream) return
+    engine.mutePublishStreamVideo(localStream, !enabled)
   }, [])
 
   const disconnectClient = useCallback(async () => {

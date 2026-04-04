@@ -1,16 +1,20 @@
 // src/features/call/services/zego.singleton.ts
+// Singleton lưu ZegoExpressEngine instance xuyên suốt app
 
-import type { ZegoEngineInstance } from '../types/zego.types'
-
-let _engine: ZegoEngineInstance | null = null
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let _engine: any = null
 let _localStream:  MediaStream | null = null
 let _remoteStream: MediaStream | null = null
 let _localVideoEl:  HTMLVideoElement | null = null
 let _remoteVideoEl: HTMLVideoElement | null = null
+let _pendingLocalStream:  MediaStream | null = null
+let _pendingRemoteStream: MediaStream | null = null
 
 export const ZegoSingleton = {
-  getEngine: () => _engine,
-  setEngine: (e: ZegoEngineInstance | null) => { _engine = e },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getEngine: (): any => _engine,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  setEngine: (e: any) => { _engine = e },
 
   getLocalStream: () => _localStream,
   setLocalStream: (s: MediaStream | null) => { _localStream = s },
@@ -18,8 +22,8 @@ export const ZegoSingleton = {
   getRemoteStream: () => _remoteStream,
   setRemoteStream: (s: MediaStream | null) => { _remoteStream = s },
 
-  getLocalVideoEl:  () => _localVideoEl,
-  setLocalVideoEl:  (el: HTMLVideoElement | null) => {
+  getLocalVideoEl: () => _localVideoEl,
+  setLocalVideoEl: (el: HTMLVideoElement | null) => {
     _localVideoEl = el
     if (el && _pendingLocalStream) {
       el.srcObject = _pendingLocalStream
@@ -38,9 +42,6 @@ export const ZegoSingleton = {
     }
   },
 }
-
-let _pendingLocalStream:  MediaStream | null = null
-let _pendingRemoteStream: MediaStream | null = null
 
 export const attachLocalStream = (stream: MediaStream) => {
   _localStream = stream
