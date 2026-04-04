@@ -14,4 +14,8 @@ export interface StringeeCallInstance {
   enableVideo: (enabled: boolean) => void
   on:          (event: string, handler: (...args: unknown[]) => void) => void
   isVideoCall: boolean
+  // Fields available on incomingcall event object from Stringee SDK
+  fromNumber:  string   // userId của caller
+  toNumber:    string   // userId của callee
+  callId:      string   // Stringee callId thực
 }

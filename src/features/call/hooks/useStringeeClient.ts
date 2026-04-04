@@ -3,6 +3,7 @@ import { getStringeeTokenApi } from '../api/call.api'
 import { useCallStore } from '../store/call.store'
 import { StringeeSingleton, attachLocalStream, attachRemoteStream } from '../services/stringee.singleton'
 import type { StringeeCallInstance } from '../types/stringee.types'
+import { useSessionStore } from '@stores/session.store'
 
 // Module-level flag — tồn tại suốt lifetime app, không bị reset khi re-render
 let _initCalled = false
@@ -18,7 +19,7 @@ const getSDK = () => {
 const getCallSDK = () => (window as any).StringeeCall
 
 export const useStringeeClient = () => {
-  const { setStringeeToken, setCallStarted, setCallEnded, clearSession } = useCallStore()
+  const { setStringeeToken, setCallStarted, setCallEnded, clearSession, setIncomingCall } = useCallStore()
 
   // ── Bind events lên call object ──────────────────────────────
   const _bindCallEvents = useCallback((call: StringeeCallInstance) => {
@@ -58,7 +59,6 @@ export const useStringeeClient = () => {
 
   // ── Init client — chỉ chạy 1 lần duy nhất ───────────────────
   const initClient = useCallback(async () => {
-    // Double-check: cả module flag lẫn singleton
     if (_initCalled) return
     if (StringeeSingleton.getClient()) return
     _initCalled = true
@@ -81,18 +81,43 @@ export const useStringeeClient = () => {
 
       client.on('disconnect', () => {
         console.log('[Stringee] disconnected')
-        // Reset flag để có thể reconnect nếu cần
         _initCalled = false
         StringeeSingleton.setClient(null)
       })
 
-      // Lưu call object khi có cuộc gọi đến qua Stringee SDK
-      // UI được điều khiển bởi WebSocket (useCallWebSocket)
+      /**
+       * incomingcall — Stringee SDK push peer-to-peer, độc lập với WS.
+       *
+       * Luồng đúng: WS incoming_call → setIncomingCall() → UI hiện modal
+       *             Stringee incomingcall → lưu call object vào Singleton (để answer)
+       *
+       * Fallback: nếu WS chưa đến (chậm / lỗi) mà Stringee đã fire,
+       * tự gọi setIncomingCall() dùng data từ call object của Stringee.
+       * Tránh trường hợp người nghe thấy camera/mic hoạt động nhưng không có modal.
+       */
       client.on('incomingcall', (...args: unknown[]) => {
         const incomingCall = args[0] as StringeeCallInstance
         console.log('[Stringee] incomingcall — lưu call object vào Singleton')
         StringeeSingleton.setCall(incomingCall)
         _bindCallEvents(incomingCall)
+
+        // Fallback: nếu store chưa có session (WS incoming_call chưa đến)
+        // → tự trigger UI bằng data từ Stringee call object
+        const currentSession = useCallStore.getState().session
+        if (!currentSession || currentSession.status === 'idle') {
+          const currentUserId = useSessionStore.getState().userId ?? ''
+          console.log('[Stringee] incomingcall fallback → setIncomingCall from Stringee data')
+          setIncomingCall(
+            {
+              callId:      incomingCall.callId   ?? 'stringee-' + Date.now(),
+              callerId:    incomingCall.fromNumber ?? '',
+              callerName:  incomingCall.fromNumber ?? 'Unknown',
+              isVideoCall: incomingCall.isVideoCall,
+            },
+            currentUserId,
+            '',
+          )
+        }
       })
 
       client.connect(token)
@@ -100,7 +125,7 @@ export const useStringeeClient = () => {
       console.error('[Stringee] initClient failed:', err)
       _initCalled = false
     }
-  }, [setStringeeToken, _bindCallEvents])
+  }, [setStringeeToken, _bindCallEvents, setIncomingCall])
 
   // ── Disconnect ───────────────────────────────────────────────
   const disconnectClient = useCallback(() => {
