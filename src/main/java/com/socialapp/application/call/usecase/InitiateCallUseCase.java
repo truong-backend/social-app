@@ -19,7 +19,7 @@ import java.util.UUID;
 /**
  * Bước 1: Caller nhấn nút gọi → server:
  *   1. Kiểm tra cả 2 không đang trong call khác
- *   2. Chuẩn bị trạng thái "prepared" (Stringee sắp khởi tạo call)
+ *   2. Chuẩn bị trạng thái "prepared" (ZegoCloud sắp khởi tạo call)
  *   3. Push WebSocket incoming_call đến callee để hiện modal
  *   4. Trả về callId tạm thời cho FE
  */
@@ -52,10 +52,10 @@ public class InitiateCallUseCase {
         userRepository.findById(request.targetUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("Target user not found"));
 
-        // Tạo callId tạm (Stringee sẽ tạo callId thực khi bắt đầu)
+        // Tạo callId tạm (callId tạm, ZegoCloud dùng làm roomID)
         String tempCallId = "call-" + UUID.randomUUID();
 
-        // Đánh dấu "prepared" — Stringee sắp gọi
+        // Đánh dấu "prepared" — ZegoCloud sắp kết nối
         inCallStore.prepare(callerUserId, request.targetUserId());
 
         // Lấy accountId của callee để push WebSocket (convertAndSendToUser dùng accountId)

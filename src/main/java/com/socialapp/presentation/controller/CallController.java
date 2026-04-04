@@ -10,14 +10,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 /**
  * Controller cho tất cả call endpoints.
- * Thay toàn bộ call logic cũ trong MessageController.
  *
  * Endpoints:
- *   GET  /api/calls/stringee-token        → lấy Stringee JWT cho FE
+ *   GET  /api/calls/zego-token            → lấy ZegoCloud token cho FE
  *   POST /api/calls                       → khởi tạo cuộc gọi
  *   POST /api/calls/{callId}/reject       → callee từ chối
  *   POST /api/calls/{callId}/end          → kết thúc cuộc gọi
@@ -27,11 +24,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CallController {
 
-    private final AccountRepository       accountRepository;
-    private final GetStringeeTokenUseCase getStringeeTokenUseCase;
-    private final InitiateCallUseCase     initiateCallUseCase;
-    private final RejectCallUseCase       rejectCallUseCase;
-    private final EndCallUseCase          endCallUseCase;
+    private final AccountRepository   accountRepository;
+    private final GetZegoTokenUseCase getZegoTokenUseCase;
+    private final InitiateCallUseCase initiateCallUseCase;
+    private final RejectCallUseCase   rejectCallUseCase;
+    private final EndCallUseCase      endCallUseCase;
 
     /** Lấy userId từ JWT → AccountRepository */
     private String resolveUserId() {
@@ -41,13 +38,13 @@ public class CallController {
     }
 
     /**
-     * GET /api/calls/stringee-token
-     * FE gọi khi init Stringee client.
+     * GET /api/calls/zego-token
+     * FE gọi khi init ZegoExpressEngine.
      */
-    @GetMapping("/stringee-token")
-    public ApiResponse<StringeeTokenResponse> getStringeeToken() {
+    @GetMapping("/zego-token")
+    public ApiResponse<ZegoTokenResponse> getZegoToken() {
         String userId = resolveUserId();
-        return ApiResponse.ok(getStringeeTokenUseCase.execute(userId));
+        return ApiResponse.ok(getZegoTokenUseCase.execute(userId));
     }
 
     /**

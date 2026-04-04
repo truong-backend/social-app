@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Thay thế Redis InCallRepository từ social-network.
  *
  * Tất cả key đều dùng userId (không dùng username)
- * để nhất quán giữa InitiateCallUseCase và HandleStringeeEventUseCase.
+ * để nhất quán giữa InitiateCallUseCase và call event handler.
  */
 @Slf4j
 @Component
@@ -28,10 +28,10 @@ public class InCallStore {
     // callId → Set<userId>
     private final Map<String, Set<String>> callUserIdsMap = new ConcurrentHashMap<>();
 
-    // ── Prepare (trước khi Stringee bắt đầu) ─────────────────
+    // ── Prepare (trước khi ZegoCloud kết nối) ─────────────────
 
     /**
-     * Đánh dấu cặp userId đã "prepared" — Stringee sắp kết nối.
+     * Đánh dấu cặp userId đã "prepared" — ZegoCloud sắp kết nối.
      */
     public void prepare(String callerUserId, String calleeUserId) {
         preparedMap.put(callerUserId + ":" + calleeUserId, true);

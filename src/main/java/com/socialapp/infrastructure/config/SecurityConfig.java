@@ -126,12 +126,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST,   "/api/comments/{commentId}/like").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/comments/{commentId}/like").authenticated()
 
-                        // ── Stringee Webhooks (Stringee server goi -- khong can JWT) ────
-                        .requestMatchers(HttpMethod.GET,  "/api/stringee/answer").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/stringee/event").permitAll()
+                        
+                        
+                        
 
                         // ── Calls ──────────────────────────────────────────────────
-                        .requestMatchers(HttpMethod.GET,  "/api/calls/stringee-token").authenticated()
+                        .requestMatchers(HttpMethod.GET,  "/api/calls/zego-token").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/calls").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/calls/**").authenticated()
 

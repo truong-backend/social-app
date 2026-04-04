@@ -9,11 +9,11 @@ import java.util.UUID;
 /**
  * Entity: Call (subclass of Message)
  * Đại diện cho cuộc gọi trong chat — kế thừa Message,
- * thêm thông tin từ Stringee API.
+ * thêm thông tin từ ZegoCloud.
  */
 public class Call extends Message {
 
-    private final String callId;          // Mã từ Stringee API
+    private final String callId;          // callId / roomID dùng cho ZegoCloud
     private LocalDateTime callAt;
     private LocalDateTime endAt;
     private boolean isAnswered;

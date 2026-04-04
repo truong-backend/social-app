@@ -19,7 +19,7 @@ public class CallNode {
     @Id
     private String id;
 
-    /** Stringee callId */
+    /** callId dùng cho ZegoCloud roomID */
     @Property("callId")
     private String callId;
 
