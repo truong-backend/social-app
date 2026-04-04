@@ -6,7 +6,6 @@ import { useChatWebSocket } from '../hooks/useChatWebSocket'
 import { useChatStore } from '../store/chat.store'
 import { MessageBubble } from './MessageBubble'
 import { useSessionStore } from '@stores/session.store'
-import { CallButton } from '@features/call/components/CallButton'
 
 interface ChatWindowProps {
   chatId:         string
@@ -64,10 +63,6 @@ export const ChatWindow = ({ chatId, targetUserId, targetUsername }: ChatWindowP
             </p>
           </div>
         </div>
-
-        {targetUserId && (
-          <CallButton targetUserId={targetUserId} targetName={targetUsername} />
-        )}
       </header>
 
       {/* Messages */}

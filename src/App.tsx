@@ -9,15 +9,11 @@ import { QueryProvider } from '@providers/QueryProvider'
 import { WebSocketProvider } from '@providers/WebSocketProvider'
 import { AppRouter } from '@routes/AppRouter'
 import { ErrorBoundary } from '@components/feedback/ErrorBoundary'
-import { CallOverlay } from '@features/call/components/CallOverlay'
-
 export const App = () => (
   <ErrorBoundary>
     <QueryProvider>
       <WebSocketProvider>
         <AppRouter />
-        {/* CallOverlay nằm ngoài Router để luôn hiển thị khi call đang diễn ra */}
-        <CallOverlay />
         <Toaster
           position="top-right"
           toastOptions={{
