@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { initiateCallApi, endCallApi } from '../api/call.api'
 import { useCallStore } from '../store/call.store'
-import { useStringeeClient } from './useStringeeClient'
+import { useZegoClient } from './useZegoClient'
 import { useSessionStore } from '@stores/session.store'
 import { extractErrorMessage } from '@utils/api-response'
 import toast from 'react-hot-toast'
@@ -9,7 +9,7 @@ import toast from 'react-hot-toast'
 export const useInitiateCall = () => {
   const userId = useSessionStore((state) => state.userId) ?? ''
   const { setOutgoingCall, setCallEnded, clearSession } = useCallStore()
-  const { makeCall, hangUp } = useStringeeClient()
+  const { makeCall, hangUp } = useZegoClient()
 
   const startCall = useCallback(async (
     targetUserId: string,
@@ -18,7 +18,7 @@ export const useInitiateCall = () => {
     myName: string,
   ) => {
     try {
-      // 1. Gọi BE — nhận callId tạm
+      // 1. Gọi BE — nhận callId tạm, push incoming_call WS đến callee
       const { callId } = await initiateCallApi(targetUserId, isVideoCall)
 
       // 2. Update store TRƯỚC khi makeCall → CallScreen hiện ngay
@@ -30,10 +30,8 @@ export const useInitiateCall = () => {
         receiverName: targetName,
         isVideoCall,
       })
-      console.log('[startCall] store updated, status should be outgoing')
-      console.log('[startCall] store state:', useCallStore.getState().session?.status)
 
-      // 3. Kết nối Stringee
+      // 3. Join ZegoCloud room & publish stream
       await makeCall(userId, targetUserId, isVideoCall)
     } catch (error) {
       console.error('[startCall] error:', error)
@@ -45,7 +43,7 @@ export const useInitiateCall = () => {
 
   const endCall = useCallback(async () => {
     const session = useCallStore.getState().session
-    hangUp()
+    await hangUp()
     if (session?.callId) {
       const targetUserId = session.callerId === userId
         ? session.receiverId

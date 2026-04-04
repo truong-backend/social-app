@@ -1,24 +1,24 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useCallStore } from '../store/call.store'
 import { useInitiateCall } from '../hooks/useInitiateCall'
-import { useStringeeClient } from '../hooks/useStringeeClient'
-import { StringeeSingleton } from '../services/stringee.singleton'
+import { useZegoClient } from '../hooks/useZegoClient'
+import { ZegoSingleton } from '../services/zego.singleton'
 
 export const CallScreen = () => {
-  const session    = useCallStore((state) => state.session)
+  const session     = useCallStore((state) => state.session)
   const isMicMuted  = useCallStore((state) => state.isMicMuted)
   const isCameraOff = useCallStore((state) => state.isCameraOff)
   const { toggleMic, toggleCamera } = useCallStore()
 
   const { endCall } = useInitiateCall()
-  const { setMuted, setVideoEnabled } = useStringeeClient()
+  const { setMuted, setVideoEnabled } = useZegoClient()
 
   const localVideoCallbackRef = useCallback((el: HTMLVideoElement | null) => {
-    StringeeSingleton.setLocalVideoEl(el)
+    ZegoSingleton.setLocalVideoEl(el)
   }, [])
 
   const remoteVideoCallbackRef = useCallback((el: HTMLVideoElement | null) => {
-    StringeeSingleton.setRemoteVideoEl(el)
+    ZegoSingleton.setRemoteVideoEl(el)
   }, [])
 
   const [callDurationSeconds, setCallDurationSeconds] = useState(0)
@@ -50,7 +50,7 @@ export const CallScreen = () => {
     return `${m}:${s}`
   }
 
-  const peerName  = session.status === 'outgoing' ? session.receiverName : session.callerName
+  const peerName   = session.status === 'outgoing' ? session.receiverName : session.callerName
   const isIncoming = session.status === 'incoming'
 
   return (

@@ -3,7 +3,7 @@ import { websocketService } from '@services/websocket.service'
 import { useSessionStore } from '@stores/session.store'
 import { useNotificationWebSocket } from '@features/notification/hooks/useNotificationWebSocket'
 import { useCallWebSocket } from '@features/call/hooks/useCallWebSocket'
-import { useStringeeClient } from '@features/call/hooks/useStringeeClient'
+import { useZegoClient } from '@features/call/hooks/useZegoClient'
 
 interface WebSocketProviderProps {
   children: React.ReactNode
@@ -13,12 +13,12 @@ const AuthenticatedSubscriptions = () => {
   useNotificationWebSocket()
   useCallWebSocket()
 
-  const { initClient, disconnectClient } = useStringeeClient()
+  const { initEngine, disconnectClient } = useZegoClient()
 
   useEffect(() => {
-    initClient()
-    return () => disconnectClient()
-  }, [initClient, disconnectClient])
+    initEngine()
+    return () => { disconnectClient() }
+  }, [initEngine, disconnectClient])
 
   return null
 }

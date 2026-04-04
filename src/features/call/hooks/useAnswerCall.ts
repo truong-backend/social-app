@@ -1,34 +1,35 @@
 import { useCallback } from 'react'
 import { endCallApi } from '../api/call.api'
 import { useCallStore } from '../store/call.store'
-import { useStringeeClient } from './useStringeeClient'
+import { useZegoClient } from './useZegoClient'
+import { useSessionStore } from '@stores/session.store'
 import { extractErrorMessage } from '@utils/api-response'
 import toast from 'react-hot-toast'
 
 export const useAnswerCall = () => {
   const { setCallEnded, clearSession } = useCallStore()
-  const { answerCall, hangUp } = useStringeeClient()
+  const { answerCall: zegoAnswer, hangUp } = useZegoClient()
+  const userId = useSessionStore((state) => state.userId) ?? ''
 
   const acceptCall = useCallback(async () => {
     const session = useCallStore.getState().session
     if (!session) return
 
     try {
-      // Không gọi BE để "answer" — không có endpoint đó.
-      // Stringee SDK tự xử lý: signalingstate code=3 → setCallStarted()
-      answerCall()
+      // Join ZegoCloud room với roomID tương ứng caller
+      await zegoAnswer(userId, session.callerId, session.isVideoCall)
     } catch (error) {
       toast.error(extractErrorMessage(error))
       setCallEnded()
       setTimeout(clearSession, 2000)
     }
-  }, [setCallEnded, clearSession, answerCall])
+  }, [userId, setCallEnded, clearSession, zegoAnswer])
 
   const rejectCall = useCallback(async () => {
     const session = useCallStore.getState().session
     if (!session) return
 
-    hangUp()
+    await hangUp()
     // Push call_ended đến caller qua BE
     // Backend RejectCallUseCase: POST /api/calls/{callId}/reject?callerUserId=xxx
     await endCallApi(session.callId, session.callerId).catch(() => {})

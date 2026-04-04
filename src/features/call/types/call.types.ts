@@ -6,7 +6,7 @@ export type CallStatus =
   | 'ended'        // cuộc gọi kết thúc
 
 export interface CallSession {
-  callId:        string       // ID tạm từ BE (call-UUID), Stringee sẽ có callId thực
+  callId:        string       // ID tạm từ BE (call-UUID), ZegoCloud dùng làm roomID
   callerId:      string       // userId người gọi
   callerName:    string
   receiverId:    string       // userId người nhận

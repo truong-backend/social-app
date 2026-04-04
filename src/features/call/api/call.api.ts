@@ -9,6 +9,14 @@ export interface InitiateCallResponse {
 }
 
 /**
+ * ZegoCloud token + appId trả về từ BE.
+ */
+export interface ZegoTokenData {
+  token: string
+  appId: number
+}
+
+/**
  * Gọi BE để khởi tạo cuộc gọi.
  * Endpoint: POST /api/calls
  */
@@ -32,16 +40,16 @@ export const endCallApi = async (callId: string, targetUserId?: string): Promise
 }
 
 /**
- * Lấy Stringee access token từ BE.
- * Endpoint: GET /api/calls/stringee-token
+ * Lấy ZegoCloud token từ BE.
+ * Endpoint: GET /api/calls/zego-token
  *
  * BE trả về ApiResponse<{ token: string }>.
- * unwrapData() → { token: "eyJ..." }  (object, không phải string)
- * Phải lấy .token ra → truyền string thuần cho Stringee SDK.
- * Nếu truyền object, SDK encode thành access_token[token]=... → Stringee 500.
+ * Token dùng để loginRoom trong ZegoExpressEngine.
+ * appId được đọc từ VITE_ZEGOCLOUD_APP_ID env.
  */
-export const getStringeeTokenApi = async (): Promise<string> => {
-  const response = await axiosInstance.get('/api/calls/stringee-token')
+export const getZegoTokenApi = async (): Promise<ZegoTokenData> => {
+  const response = await axiosInstance.get('/api/calls/zego-token')
   const data = unwrapData<{ token: string }>(response)
-  return data?.token ?? ''
+  const appId = Number(import.meta.env.VITE_ZEGOCLOUD_APP_ID ?? 0)
+  return { token: data?.token ?? '', appId }
 }

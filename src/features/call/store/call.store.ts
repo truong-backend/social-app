@@ -3,13 +3,13 @@ import { immer } from 'zustand/middleware/immer'
 import type { CallSession, CallStatus, IncomingCallPayload } from '../types/call.types'
 
 interface CallState {
-  session:       CallSession | null
-  stringeeToken: string | null
-  isMicMuted:    boolean
-  isCameraOff:   boolean
+  session:     CallSession | null
+  zegoToken:   string | null
+  isMicMuted:  boolean
+  isCameraOff: boolean
 
   // Setters
-  setStringeeToken:  (token: string) => void
+  setZegoToken:      (token: string) => void
   setIncomingCall:   (payload: IncomingCallPayload, currentUserId: string, currentUserName: string) => void
   setOutgoingCall:   (params: {
     callId:       string
@@ -29,13 +29,13 @@ interface CallState {
 
 export const useCallStore = create<CallState>()(
   immer((set) => ({
-    session:       null,
-    stringeeToken: null,
-    isMicMuted:    false,
-    isCameraOff:   false,
+    session:     null,
+    zegoToken:   null,
+    isMicMuted:  false,
+    isCameraOff: false,
 
-    setStringeeToken: (token) =>
-      set((state) => { state.stringeeToken = token }),
+    setZegoToken: (token) =>
+      set((state) => { state.zegoToken = token }),
 
     setIncomingCall: (payload, currentUserId, currentUserName) =>
       set((state) => {
@@ -81,7 +81,7 @@ export const useCallStore = create<CallState>()(
     clearSession: () =>
       set((state) => {
         state.session    = null
-        state.isMicMuted = false
+        state.isMicMuted  = false
         state.isCameraOff = false
       }),
 
