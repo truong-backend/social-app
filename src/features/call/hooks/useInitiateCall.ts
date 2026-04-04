@@ -36,10 +36,19 @@ export const useInitiateCall = () => {
     } catch (error) {
       console.error('[startCall] error:', error)
       toast.error(extractErrorMessage(error))
+
+      // FIX Bug 4: Khi makeCall fail, notify BE để hủy call
+      // Tránh callee vẫn thấy incoming modal treo mãi
+      const session = useCallStore.getState().session
+      if (session?.callId) {
+        endCallApi(session.callId, session.receiverId).catch(() => {})
+      }
+
+      await hangUp()
       setCallEnded()
       setTimeout(clearSession, 2000)
     }
-  }, [userId, setOutgoingCall, setCallEnded, clearSession, makeCall])
+  }, [userId, setOutgoingCall, setCallEnded, clearSession, makeCall, hangUp])
 
   const endCall = useCallback(async () => {
     const session = useCallStore.getState().session

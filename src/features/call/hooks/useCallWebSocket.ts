@@ -66,7 +66,13 @@ export const useCallWebSocket = () => {
       const payload: CallEndedPayload = JSON.parse(frame.body);
       const session = sessionRef.current;
 
-      if (session?.callId === payload.callId) {
+      console.log("[WS] call_ended received:", payload, "session:", session?.callId, session?.status);
+
+      // Guard: chỉ xử lý nếu đúng callId và session chưa kết thúc
+      if (
+        session?.callId === payload.callId &&
+        session.status !== "ended"
+      ) {
         if (session.status === "outgoing") {
           toast("Không có ai bắt máy", { icon: "📵" });
         }

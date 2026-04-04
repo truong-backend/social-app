@@ -40,6 +40,19 @@ export const endCallApi = async (callId: string, targetUserId?: string): Promise
 }
 
 /**
+ * FIX Bug 3: Callee từ chối cuộc gọi.
+ * Endpoint: POST /api/calls/{callId}/reject?callerUserId=xxx
+ * BE dùng RejectCallUseCase — push call_ended WS về caller.
+ *
+ * KHÔNG dùng endCallApi (/end) vì endpoint và use case khác nhau.
+ */
+export const rejectCallApi = async (callId: string, callerUserId: string): Promise<void> => {
+  await axiosInstance.post(`/api/calls/${callId}/reject`, null, {
+    params: { callerUserId },
+  })
+}
+
+/**
  * Lấy ZegoCloud token từ BE.
  * Endpoint: GET /api/calls/zego-token
  *

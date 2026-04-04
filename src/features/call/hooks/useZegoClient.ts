@@ -54,9 +54,16 @@ export const useZegoClient = () => {
       }
     })
 
-    // Remote user left → call ended
+    // FIX Bug 2: Chỉ kết thúc call khi session đang 'connected'
+    // Tránh LEAVE event fire sớm khi chỉ có 1 người trong phòng (phantom leave)
     engine.on('roomUserUpdate', (_roomID: string, updateType: string) => {
       if (updateType === 'LEAVE') {
+        const session = useCallStore.getState().session
+        if (session?.status !== 'connected') {
+          console.log('[ZegoCloud] roomUserUpdate LEAVE ignored — session not connected:', session?.status)
+          return
+        }
+        console.log('[ZegoCloud] roomUserUpdate LEAVE — ending call')
         setCallEnded()
         ZegoSingleton.setLocalStream(null)
         ZegoSingleton.setRemoteStream(null)
@@ -98,7 +105,12 @@ export const useZegoClient = () => {
     const streamID = `${fromUserId}-stream`
     localStreamIdRef.current = streamID
 
-    await engine.loginRoom(roomID, token, { userID: fromUserId, userName: fromUserId })
+    // FIX Bug 1: loginRoom trả về Promise<boolean> — false = thất bại, KHÔNG throw
+    // Nếu không check, createStream() chạy khi chưa vào phòng → crash
+    const loginOk = await engine.loginRoom(roomID, token, { userID: fromUserId, userName: fromUserId })
+    if (!loginOk) {
+      throw new Error('[ZegoCloud] loginRoom thất bại — kiểm tra token hoặc appId')
+    }
 
     const localStream = await engine.createStream({
       camera: { audio: true, video: isVideoCall }
@@ -123,7 +135,11 @@ export const useZegoClient = () => {
     const streamID = `${myUserId}-stream`
     localStreamIdRef.current = streamID
 
-    await engine.loginRoom(roomID, token, { userID: myUserId, userName: myUserId })
+    // FIX Bug 1: tương tự makeCall
+    const loginOk = await engine.loginRoom(roomID, token, { userID: myUserId, userName: myUserId })
+    if (!loginOk) {
+      throw new Error('[ZegoCloud] loginRoom thất bại — kiểm tra token hoặc appId')
+    }
 
     const localStream = await engine.createStream({
       camera: { audio: true, video: isVideoCall }

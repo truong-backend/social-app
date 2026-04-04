@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { endCallApi } from '../api/call.api'
+import { endCallApi, rejectCallApi } from '../api/call.api'
 import { useCallStore } from '../store/call.store'
 import { useZegoClient } from './useZegoClient'
 import { useSessionStore } from '@stores/session.store'
@@ -20,19 +20,26 @@ export const useAnswerCall = () => {
       await zegoAnswer(userId, session.callerId, session.isVideoCall)
     } catch (error) {
       toast.error(extractErrorMessage(error))
+
+      // Notify BE để hủy call khi join thất bại
+      endCallApi(session.callId, session.callerId).catch(() => {})
+
+      await hangUp()
       setCallEnded()
       setTimeout(clearSession, 2000)
     }
-  }, [userId, setCallEnded, clearSession, zegoAnswer])
+  }, [userId, setCallEnded, clearSession, zegoAnswer, hangUp])
 
   const rejectCall = useCallback(async () => {
     const session = useCallStore.getState().session
     if (!session) return
 
     await hangUp()
-    // Push call_ended đến caller qua BE
-    // Backend RejectCallUseCase: POST /api/calls/{callId}/reject?callerUserId=xxx
-    await endCallApi(session.callId, session.callerId).catch(() => {})
+
+    // FIX Bug 3: Phải gọi đúng endpoint /reject?callerUserId=xxx
+    // KHÔNG dùng endCallApi (POST /end) vì endpoint khác nhau
+    // BE RejectCallUseCase: POST /api/calls/{callId}/reject?callerUserId=xxx
+    await rejectCallApi(session.callId, session.callerId).catch(() => {})
   }, [hangUp])
 
   return { acceptCall, rejectCall }
