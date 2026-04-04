@@ -16,8 +16,6 @@ import java.util.List;
 
 /**
  * Controller cho messaging (chat & messages).
- * Call endpoints đã được chuyển sang CallController.
- * Call logic được xử lý qua CallController.
  */
 @RestController
 @RequestMapping("/api/messages")
