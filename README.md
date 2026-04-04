@@ -1,6 +1,4 @@
 # social-app-ui — Frontend
-
-> Báo cáo đồ án — Trường ĐH Công Nghệ Sài Gòn, Khoa CNTT  
 > Đề tài: **Xây dựng website mạng xã hội**  
 > Người hướng dẫn: ThS. Khuất Bá Duy Lâm  
 > Sinh viên thực hiện: **Nguyễn Thanh Trường**
