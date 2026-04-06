@@ -19,20 +19,24 @@ public interface ChatNeo4jRepository extends Neo4jRepository<ChatNode, String> {
            """)
     Optional<ChatNode> findDirectChatBetween(String userIdA, String userIdB);
 
-    // Tất cả chat của một user, sắp xếp mới nhất
+    // FIX: Sắp xếp theo tin nhắn mới nhất (lastMessageAt) thay vì ngày tạo chat
+    // → Danh sách chat luôn hiển thị đúng thứ tự; chat mới nhắn nổi lên đầu
+    // OPTIONAL MATCH để những chat chưa có tin nhắn vẫn xuất hiện (sắp cuối)
     @Query("""
            MATCH (u:User {id: $userId})-[:IS_MEMBER_OF]->(c:Chat)
-           RETURN c ORDER BY c.createdAt DESC
+           OPTIONAL MATCH (c)-[:HAS_MESSAGE]->(m:Message)
+           WITH c, max(m.sentAt) AS lastMessageAt
+           RETURN c ORDER BY lastMessageAt DESC, c.createdAt DESC
            """)
     List<ChatNode> findByUserId(String userId);
 
-    // Tìm chat theo tên member khác (không phải mình)
+    // Tìm chat theo tên member khác (không phải mình), case-insensitive
     @Query("""
            MATCH (u:User {id: $userId})-[:IS_MEMBER_OF]->(c:Chat)<-[:IS_MEMBER_OF]-(other:User)
            WHERE other.id <> $userId
-             AND (other.username CONTAINS $query
-                  OR other.familyName CONTAINS $query
-                  OR other.givenName  CONTAINS $query)
+             AND (toLower(other.username) CONTAINS toLower($query)
+                  OR toLower(other.familyName) CONTAINS toLower($query)
+                  OR toLower(other.givenName)  CONTAINS toLower($query))
            RETURN DISTINCT c
            """)
     List<ChatNode> searchByUserId(String query, String userId);

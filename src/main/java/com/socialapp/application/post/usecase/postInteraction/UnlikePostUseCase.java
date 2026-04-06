@@ -5,13 +5,7 @@ import com.socialapp.application.shared.exception.ResourceNotFoundException;
 import com.socialapp.domain.post.entity.Post;
 import com.socialapp.domain.post.repository.PostRepository;
 import com.socialapp.domain.post.service.PostDomainService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-// ── LikePostUseCase ─────────────────────────────────────────────────────────
-
-// ── UnlikePostUseCase ───────────────────────────────────────────────────────
 
 public class UnlikePostUseCase {
 
@@ -19,7 +13,7 @@ public class UnlikePostUseCase {
     private final PostDomainService postDomainService;
 
     public UnlikePostUseCase(PostRepository postRepository, PostDomainService postDomainService) {
-        this.postRepository = postRepository;
+        this.postRepository    = postRepository;
         this.postDomainService = postDomainService;
     }
 
@@ -29,15 +23,17 @@ public class UnlikePostUseCase {
         Post post = postRepository.findByIdNotDeleted(postId)
                 .orElseThrow(() -> new ResourceNotFoundException("Post not found"));
 
+        // ✅ Kiểm tra đã like chưa — nếu chưa sẽ throw từ domain
         boolean alreadyLiked = postRepository.isLikedByUser(requesterId, postId);
         postDomainService.validateUnlike(alreadyLiked);
 
+        // Giảm likeCount trên node
         post.onUnliked();
         postRepository.save(post);
+
+        // ✅ FIX: Xóa relationship (User)-[:LIKED]->(Post) khỏi graph
+        postRepository.removeLike(requesterId, postId);
 
         return new MessageResponse("Post unliked");
     }
 }
-
-// ── SharePostUseCase ────────────────────────────────────────────────────────
-

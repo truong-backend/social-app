@@ -7,6 +7,7 @@ import com.socialapp.infrastructure.persistence.comment.neo4j.node.CommentNode;
 import com.socialapp.infrastructure.persistence.comment.neo4j.repository.CommentNeo4jRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,7 +22,6 @@ public class CommentRepositoryAdapter implements CommentRepository {
     @Override
     public Optional<Comment> findById(String id) {
         return neo4j.findById(id).map(node -> {
-            // Resolve context từ graph
             String authorId           = neo4j.findAuthorIdByCommentId(node.getId());
             String postId             = neo4j.findPostIdByCommentId(node.getId());
             String repliedToCommentId = neo4j.findRepliedToCommentId(node.getId());
@@ -35,10 +35,10 @@ public class CommentRepositoryAdapter implements CommentRepository {
         return neo4j.findRootByPostId(postId, skip, limit)
                 .stream()
                 .map(node -> {
-                    String authorId        = neo4j.findAuthorIdByCommentId(node.getId());
-                    List<String> filePaths = neo4j.findAttachedFilePathsByCommentId(node.getId());
-                    // root comment: repliedToCommentId = null
-                    return mapper.toDomain(node, authorId, postId, null, filePaths);
+                    String authorId           = neo4j.findAuthorIdByCommentId(node.getId());
+                    String repliedToCommentId = neo4j.findRepliedToCommentId(node.getId());
+                    List<String> filePaths    = neo4j.findAttachedFilePathsByCommentId(node.getId());
+                    return mapper.toDomain(node, authorId, postId, repliedToCommentId, filePaths);
                 })
                 .toList();
     }
@@ -62,6 +62,7 @@ public class CommentRepositoryAdapter implements CommentRepository {
     }
 
     @Override
+    @Transactional
     public Comment save(Comment comment) {
         CommentNode saved = neo4j.save(mapper.toNode(comment));
         String commentId = saved.getId();
@@ -93,5 +94,17 @@ public class CommentRepositoryAdapter implements CommentRepository {
     @Override
     public void deleteById(String id) {
         neo4j.deleteById(id);
+    }
+
+    // ✅ FIX: Tạo LIKED relationship cho comment
+    @Override
+    public void addLike(String userId, String commentId) {
+        neo4j.linkUserLikedComment(userId, commentId);
+    }
+
+    // ✅ FIX: Xóa LIKED relationship khi unlike comment
+    @Override
+    public void removeLike(String userId, String commentId) {
+        neo4j.unlinkUserLikedComment(userId, commentId);
     }
 }

@@ -8,14 +8,11 @@ import com.socialapp.domain.file.repository.FileRepository;
 import com.socialapp.domain.post.entity.Post;
 import com.socialapp.domain.post.repository.PostRepository;
 import com.socialapp.domain.post.valueobject.Privacy;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
-
 
 public class CreatePostUseCase {
 
@@ -23,9 +20,11 @@ public class CreatePostUseCase {
     private final FileStorage    fileStorage;
     private final FileRepository fileRepository;
 
-    public CreatePostUseCase(PostRepository postRepository, FileStorage fileStorage, FileRepository fileRepository) {
+    public CreatePostUseCase(PostRepository postRepository,
+                             FileStorage fileStorage,
+                             FileRepository fileRepository) {
         this.postRepository = postRepository;
-        this.fileStorage = fileStorage;
+        this.fileStorage    = fileStorage;
         this.fileRepository = fileRepository;
     }
 
@@ -33,7 +32,7 @@ public class CreatePostUseCase {
     public PostResponse execute(String authorId,
                                 CreatePostRequest request,
                                 List<MultipartFile> files) {
-        // 1. Upload files
+        // 1. Upload files — lưu paths (object keys)
         List<String> filePaths = uploadFiles(files);
 
         // 2. Tạo Post (domain)
@@ -45,7 +44,7 @@ public class CreatePostUseCase {
         );
         postRepository.save(post);
 
-        return toResponse(post, authorId, false);
+        return toResponse(post, false);
     }
 
     private List<String> uploadFiles(List<MultipartFile> files) {
@@ -61,7 +60,13 @@ public class CreatePostUseCase {
         return paths;
     }
 
-    private PostResponse toResponse(Post post, String requesterId, boolean isLiked) {
+    private PostResponse toResponse(Post post, boolean isLiked) {
+        // ✅ FIX: Chuyển object paths → public URLs cho response
+        List<String> fileUrls = post.getAttachedFilePaths() == null ? List.of()
+                : post.getAttachedFilePaths().stream()
+                        .map(fileStorage::getPublicUrl)
+                        .toList();
+
         return new PostResponse(
                 post.getId(), post.getAuthorId(), null, null,
                 post.getContent(), post.getPrivacy().name(),
@@ -69,7 +74,7 @@ public class CreatePostUseCase {
                 post.getCounts().getShareCount(),
                 post.getCounts().getCommentCount(),
                 isLiked, post.isShared(), post.getSharedFromPostId(),
-                post.getAttachedFilePaths(),
+                fileUrls,
                 post.getCreatedAt(), post.getUpdatedAt()
         );
     }

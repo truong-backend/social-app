@@ -10,8 +10,6 @@ import com.socialapp.domain.message.entity.Chat;
 import com.socialapp.domain.message.entity.Message;
 import com.socialapp.domain.message.repository.ChatRepository;
 import com.socialapp.domain.message.repository.MessageRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -70,8 +68,12 @@ public class SendMessageUseCase {
     }
 
     private MessageResponseDtos.MessageResponse toResponse(Message m) {
+        List<String> fileUrls = m.getAttachedFilePaths() == null ? List.of()
+                : m.getAttachedFilePaths().stream()
+                        .map(fileStorage::getPublicUrl)
+                        .toList();
         return new MessageResponseDtos.MessageResponse(m.getId(), m.getSenderId(), m.getChatId(),
-                m.getContent(), m.getAttachedFilePaths(),
+                m.getContent(), fileUrls,
                 m.isRead(), m.getSentAt(), m.getUpdatedAt());
     }
 }

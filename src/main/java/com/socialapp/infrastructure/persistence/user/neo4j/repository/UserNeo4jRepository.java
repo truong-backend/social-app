@@ -18,12 +18,13 @@ public interface UserNeo4jRepository extends Neo4jRepository<UserNode, String> {
     boolean existsByUsername(String username);
 
     // FIX: tách alias requester ra khỏi alias u để tránh nhầm lẫn trong EXISTS()
+    // FIX: dùng toLower() để tìm kiếm không phân biệt hoa thường
     @Query("""
             MATCH (requester:User {id: $requesterId})
             MATCH (u:User)
-            WHERE (u.username CONTAINS $keyword
-                   OR u.familyName CONTAINS $keyword
-                   OR u.givenName  CONTAINS $keyword)
+            WHERE (toLower(u.username) CONTAINS toLower($keyword)
+                   OR toLower(u.familyName) CONTAINS toLower($keyword)
+                   OR toLower(u.givenName)  CONTAINS toLower($keyword))
               AND u.id <> $requesterId
               AND NOT EXISTS((requester)-[:BLOCK]->(u))
               AND NOT EXISTS((u)-[:BLOCK]->(requester))

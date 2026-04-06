@@ -10,10 +10,9 @@ import java.util.List;
 @Repository
 public interface CommentNeo4jRepository extends Neo4jRepository<CommentNode, String> {
 
-    // Root comments của Post (chưa có REPLIED → comment nào)
+    // Tất cả comment của Post (cả root lẫn reply), sắp theo thời gian
     @Query("""
            MATCH (p:Post {id: $postId})-[:HAS_COMMENT]->(c:Comment)
-           WHERE NOT EXISTS((c)-[:REPLIED]->(:Comment))
            RETURN c ORDER BY c.createdAt ASC
            SKIP $skip LIMIT $limit
            """)

@@ -30,21 +30,20 @@ public class PostRepositoryAdapter implements PostRepository {
 
     @Override
     public List<Post> findFeedByUserId(String userId, int skip, int limit) {
-        // Feed không cần resolve files/keywords — dùng toDomain() nhanh
         return neo4jRepository.findFeedByUserId(userId, skip, limit)
-                .stream().map(mapper::toDomain).toList();
+                .stream().map(node -> resolveFullPost(node)).toList();
     }
 
     @Override
     public List<Post> findByAuthorId(String authorId, String viewerId, int skip, int limit) {
         return neo4jRepository.findByAuthorId(authorId, viewerId, skip, limit)
-                .stream().map(mapper::toDomain).toList();
+                .stream().map(node -> resolveFullPost(node)).toList();
     }
 
     @Override
     public List<Post> searchByKeyword(String keyword, String requesterId) {
         return neo4jRepository.searchByKeyword(keyword, requesterId)
-                .stream().map(mapper::toDomain).toList();
+                .stream().map(node -> resolveFullPost(node)).toList();
     }
 
     @Override
@@ -77,7 +76,6 @@ public class PostRepositoryAdapter implements PostRepository {
                     .forEach(kw -> neo4jRepository.linkPostKeyword(postId, kw));
         }
 
-        // Trả về domain đầy đủ context (đã biết từ input)
         return mapper.toDomain(saved,
                 post.getSharedFromPostId(),
                 post.getAttachedFilePaths(),
@@ -87,6 +85,18 @@ public class PostRepositoryAdapter implements PostRepository {
     @Override
     public void deleteById(String id) {
         neo4jRepository.deleteById(id);
+    }
+
+    // ✅ FIX: Tạo relationship LIKED — đây là điều kiện để isLikedByUser trả về đúng
+    @Override
+    public void addLike(String userId, String postId) {
+        neo4jRepository.linkUserLikedPost(userId, postId);
+    }
+
+    // ✅ FIX: Xóa relationship LIKED khi unlike
+    @Override
+    public void removeLike(String userId, String postId) {
+        neo4jRepository.unlinkUserLikedPost(userId, postId);
     }
 
     // ── Helper: resolve đầy đủ context từ graph ──────────────

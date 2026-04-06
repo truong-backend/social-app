@@ -1,19 +1,22 @@
 package com.socialapp.application.post.usecase.postMutation;
 
 import com.socialapp.application.post.dto.response.PostResponseDtos.PostResponse;
+import com.socialapp.application.shared.port.FileStorage;
 import com.socialapp.domain.post.entity.Post;
 import com.socialapp.domain.post.repository.PostRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
 public class SearchPostsUseCase {
 
     private final PostRepository postRepository;
+    private final FileStorage    fileStorage;
+
+    public SearchPostsUseCase(PostRepository postRepository, FileStorage fileStorage) {
+        this.postRepository = postRepository;
+        this.fileStorage    = fileStorage;
+    }
 
     @Transactional(readOnly = true)
     public List<PostResponse> execute(String keyword, String requesterId) {
@@ -24,6 +27,12 @@ public class SearchPostsUseCase {
     }
 
     private PostResponse toResponse(Post post, boolean isLiked) {
+        // ✅ FIX: Chuyển paths → public URLs
+        List<String> fileUrls = post.getAttachedFilePaths() == null ? List.of()
+                : post.getAttachedFilePaths().stream()
+                        .map(fileStorage::getPublicUrl)
+                        .toList();
+
         return new PostResponse(
                 post.getId(), post.getAuthorId(), null, null,
                 post.getContent(), post.getPrivacy().name(),
@@ -31,7 +40,7 @@ public class SearchPostsUseCase {
                 post.getCounts().getShareCount(),
                 post.getCounts().getCommentCount(),
                 isLiked, post.isShared(), post.getSharedFromPostId(),
-                post.getAttachedFilePaths(),
+                fileUrls,
                 post.getCreatedAt(), post.getUpdatedAt()
         );
     }

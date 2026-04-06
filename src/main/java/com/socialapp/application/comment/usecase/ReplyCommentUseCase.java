@@ -14,8 +14,8 @@ import com.socialapp.domain.notification.entity.Notification;
 import com.socialapp.domain.notification.repository.NotificationRepository;
 import com.socialapp.domain.notification.service.NotificationDomainService;
 import com.socialapp.domain.post.repository.PostRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import com.socialapp.domain.user.entity.User;
+import com.socialapp.domain.user.repository.UserRepository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -32,8 +32,15 @@ public class ReplyCommentUseCase {
     private final NotificationRepository notificationRepository;
     private final NotificationDomainService notificationDomainService;
     private final RealtimePublisher realtimePublisher;
+    private final UserRepository userRepository;
 
-    public ReplyCommentUseCase(CommentRepository commentRepository, PostRepository postRepository, CommentDomainService commentDomainService, FileStorage fileStorage, FileRepository fileRepository, NotificationRepository notificationRepository, NotificationDomainService notificationDomainService, RealtimePublisher realtimePublisher) {
+    public ReplyCommentUseCase(CommentRepository commentRepository, PostRepository postRepository,
+                               CommentDomainService commentDomainService, FileStorage fileStorage,
+                               FileRepository fileRepository,
+                               NotificationRepository notificationRepository,
+                               NotificationDomainService notificationDomainService,
+                               RealtimePublisher realtimePublisher,
+                               UserRepository userRepository) {
         this.commentRepository = commentRepository;
         this.postRepository = postRepository;
         this.commentDomainService = commentDomainService;
@@ -42,6 +49,7 @@ public class ReplyCommentUseCase {
         this.notificationRepository = notificationRepository;
         this.notificationDomainService = notificationDomainService;
         this.realtimePublisher = realtimePublisher;
+        this.userRepository = userRepository;
     }
 
     @Transactional
@@ -60,11 +68,9 @@ public class ReplyCommentUseCase {
                 request.content(), paths);
         commentRepository.save(reply);
 
-        // Tăng replyCount
         parent.onReplyAdded();
         commentRepository.save(parent);
 
-        // Notify tác giả comment cha
         if (!parent.getAuthorId().equals(authorId)) {
             Notification noti = notificationDomainService
                     .createRepliedCommentNotification(parent.getAuthorId(), authorId, parentCommentId);
@@ -87,9 +93,24 @@ public class ReplyCommentUseCase {
     }
 
     private CommentResponseDtos.CommentResponse toResponse(Comment c, boolean isLiked) {
-        return new CommentResponseDtos.CommentResponse(c.getId(), c.getAuthorId(), null, null,
+        // FIX: convert paths → public URLs
+        List<String> fileUrls = c.getAttachedFilePaths() == null ? List.of()
+                : c.getAttachedFilePaths().stream()
+                .map(fileStorage::getPublicUrl)
+                .toList();
+
+        // FIX: lấy username + avatar thật
+        User author = userRepository.findById(c.getAuthorId()).orElse(null);
+        String authorUsername   = author != null ? author.getUsername().getValue() : null;
+        String rawPicPath       = author != null ? author.getProfilePicturePath() : null;
+        String authorProfilePic = (rawPicPath != null && !rawPicPath.isBlank())
+                ? fileStorage.getPublicUrl(rawPicPath)
+                : null;
+
+        return new CommentResponseDtos.CommentResponse(
+                c.getId(), c.getAuthorId(), authorUsername, authorProfilePic,
                 c.getPostId(), c.getRepliedToCommentId(), c.getContent(),
-                c.getAttachedFilePaths(), c.getLikeCount(), c.getReplyCount(),
+                fileUrls, c.getLikeCount(), c.getReplyCount(),
                 isLiked, c.getCreatedAt(), c.getUpdatedAt());
     }
 }

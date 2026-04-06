@@ -14,11 +14,19 @@ public interface PostNeo4jRepository extends Neo4jRepository<PostNode, String> {
     @Query("MATCH (p:Post {id: $id}) WHERE p.deletedAt IS NULL RETURN p")
     Optional<PostNode> findByIdNotDeleted(String id);
 
-    // Feed: bài của bạn bè
+    // Feed: bài của bản thân VÀ bài của bạn bè
+    // FIX: dùng CALL {} subquery (Neo4j 4.1+) thay vì UNION sai cú pháp
     @Query("""
-           MATCH (u:User {id: $userId})-[:FRIEND]-(friend:User)-[:POSTED]->(p:Post)
-           WHERE p.deletedAt IS NULL AND p.privacy IN ['PUBLIC', 'FRIENDS']
-           RETURN p ORDER BY p.createdAt DESC
+           CALL {
+             MATCH (u:User {id: $userId})-[:POSTED]->(p:Post)
+             WHERE p.deletedAt IS NULL
+             RETURN p
+             UNION
+             MATCH (:User {id: $userId})-[:FRIEND]-(friend:User)-[:POSTED]->(p:Post)
+             WHERE p.deletedAt IS NULL AND p.privacy IN ['PUBLIC', 'FRIENDS']
+             RETURN p
+           }
+           RETURN DISTINCT p ORDER BY p.createdAt DESC
            SKIP $skip LIMIT $limit
            """)
     List<PostNode> findFeedByUserId(String userId, int skip, int limit);
@@ -36,15 +44,15 @@ public interface PostNeo4jRepository extends Neo4jRepository<PostNode, String> {
            """)
     List<PostNode> findByAuthorId(String authorId, String viewerId, int skip, int limit);
 
-    // Tìm kiếm theo keyword, loại trừ block
+    // Tìm kiếm theo keyword trong content, case-insensitive, loại trừ block
     @Query("""
-           MATCH (p:Post)-[:HAS_KEYWORD]->(k:Keyword)
-           WHERE k.text CONTAINS $keyword
+           MATCH (p:Post)
+           WHERE toLower(p.content) CONTAINS toLower($keyword)
              AND p.deletedAt IS NULL
              AND p.privacy = 'PUBLIC'
              AND NOT EXISTS((:User)-[:POSTED]->(p)<-[:BLOCK]-(:User {id: $requesterId}))
              AND NOT EXISTS((:User {id: $requesterId})-[:BLOCK]->(:User)-[:POSTED]->(p))
-           RETURN DISTINCT p
+           RETURN DISTINCT p ORDER BY p.createdAt DESC
            """)
     List<PostNode> searchByKeyword(String keyword, String requesterId);
 
@@ -56,21 +64,18 @@ public interface PostNeo4jRepository extends Neo4jRepository<PostNode, String> {
 
     // ── Context resolvers ────────────────────────────────────
 
-    // Lấy originalPostId qua (Post)-[:SHARE]→(Post)
     @Query("""
            MATCH (shared:Post {id: $postId})-[:SHARE]->(original:Post)
            RETURN original.id
            """)
     Optional<String> findSharedFromPostId(String postId);
 
-    // Lấy danh sách file đính kèm qua (Post)-[:ATTACH_FILE]→(File)
     @Query("""
            MATCH (p:Post {id: $postId})-[:ATTACH_FILE]->(f:File)
            RETURN f.path
            """)
     List<String> findAttachedFilePathsByPostId(String postId);
 
-    // Lấy danh sách keywords qua (Post)-[:HAS_KEYWORD]→(Keyword)
     @Query("""
            MATCH (p:Post {id: $postId})-[:HAS_KEYWORD]->(k:Keyword)
            RETURN k.text
@@ -79,42 +84,36 @@ public interface PostNeo4jRepository extends Neo4jRepository<PostNode, String> {
 
     // ── Relationships ────────────────────────────────────────
 
-    // (User)-[:POSTED]→(Post)
     @Query("""
            MATCH (u:User {id: $authorId}), (p:Post {id: $postId})
            MERGE (u)-[:POSTED]->(p)
            """)
     void linkAuthorToPost(String authorId, String postId);
 
-    // (User)-[:LIKED]→(Post)
     @Query("""
            MATCH (u:User {id: $userId}), (p:Post {id: $postId})
            MERGE (u)-[:LIKED]->(p)
            """)
     void linkUserLikedPost(String userId, String postId);
 
-    // xóa LIKED khi unlike
     @Query("""
            MATCH (u:User {id: $userId})-[r:LIKED]->(p:Post {id: $postId})
            DELETE r
            """)
     void unlinkUserLikedPost(String userId, String postId);
 
-    // (Post)-[:SHARE]→(Post) — sharedPost → originalPost
     @Query("""
            MATCH (shared:Post {id: $sharedPostId}), (original:Post {id: $originalPostId})
            MERGE (shared)-[:SHARE]->(original)
            """)
     void linkSharePost(String sharedPostId, String originalPostId);
 
-    // (Post)-[:ATTACH_FILE]→(File)
     @Query("""
            MATCH (p:Post {id: $postId}), (f:File {path: $filePath})
            MERGE (p)-[:ATTACH_FILE]->(f)
            """)
     void linkPostAttachFile(String postId, String filePath);
 
-    // (Post)-[:HAS_KEYWORD]→(Keyword) — MERGE tạo Keyword node nếu chưa có
     @Query("""
            MATCH (p:Post {id: $postId})
            MERGE (k:Keyword {text: $keyword})
@@ -122,7 +121,6 @@ public interface PostNeo4jRepository extends Neo4jRepository<PostNode, String> {
            """)
     void linkPostKeyword(String postId, String keyword);
 
-    // (User)-[:INTERACT_WITH]→(Keyword)
     @Query("""
            MERGE (k:Keyword {text: $keyword})
            WITH k

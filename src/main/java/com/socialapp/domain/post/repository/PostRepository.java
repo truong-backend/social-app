@@ -22,4 +22,16 @@ public interface PostRepository {
     Post save(Post post);
 
     void deleteById(String id);
+
+    /**
+     * Tạo relationship (User)-[:LIKED]->(Post) trong graph.
+     * Gọi sau khi save post (likeCount đã tăng).
+     */
+    void addLike(String userId, String postId);
+
+    /**
+     * Xóa relationship (User)-[:LIKED]->(Post) khỏi graph.
+     * Gọi sau khi save post (likeCount đã giảm).
+     */
+    void removeLike(String userId, String postId);
 }

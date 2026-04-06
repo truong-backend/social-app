@@ -18,4 +18,16 @@ public interface CommentRepository {
     Comment save(Comment comment);
 
     void deleteById(String id);
+
+    /**
+     * Tạo relationship (User)-[:LIKED]->(Comment) trong graph.
+     * Gọi sau khi save comment (likeCount đã tăng).
+     */
+    void addLike(String userId, String commentId);
+
+    /**
+     * Xóa relationship (User)-[:LIKED]->(Comment) khỏi graph.
+     * Gọi sau khi save comment (likeCount đã giảm).
+     */
+    void removeLike(String userId, String commentId);
 }

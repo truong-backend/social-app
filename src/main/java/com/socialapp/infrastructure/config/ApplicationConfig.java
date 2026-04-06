@@ -8,8 +8,7 @@ import com.socialapp.application.account.usecase.logout.LogoutUseCase;
 import com.socialapp.application.comment.usecase.*;
 import com.socialapp.application.message.usecase.*;
 import com.socialapp.application.notification.usecase.GetNotificationsUseCase;
-import com.socialapp.application.post.usecase.CreatePostUseCase;
-import com.socialapp.application.post.usecase.GetPostUseCase;
+import com.socialapp.application.post.usecase.*;
 import com.socialapp.application.post.usecase.postInteraction.*;
 import com.socialapp.application.post.usecase.postMutation.*;
 import com.socialapp.application.relationship.usecase.*;
@@ -44,7 +43,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
 public class ApplicationConfig {
-    // ==================== DOMAIN REPO ====================
 
     // ==================== DOMAIN SERVICES ====================
 
@@ -52,7 +50,6 @@ public class ApplicationConfig {
     public UserDomainService userDomainService() {
         return new UserDomainService();
     }
-
 
     @Bean
     public NotificationDomainService notificationDomainService() {
@@ -81,12 +78,6 @@ public class ApplicationConfig {
     }
 
     // ==================== ACCOUNT USE CASES ====================
-
-    @Bean
-    public GetCommentsUseCase getCommentsUseCase(CommentRepository commentRepository, PostRepository postRepository) {
-        return new GetCommentsUseCase(commentRepository, postRepository);
-    }
-
 
     @Bean
     public RegisterUseCase registerUseCase(
@@ -171,19 +162,24 @@ public class ApplicationConfig {
     }
 
     @Bean
+    // ✅ FIX: inject thêm FileStorage để convert path → URL
     public GetProfileUseCase getProfileUseCase(
             UserRepository userRepository,
             BlockRepository blockRepository,
             FriendRepository friendRepository,
             FriendRequestRepository friendRequestRepository,
-            UserDomainService userDomainService) {
+            UserDomainService userDomainService,
+            FileStorage fileStorage) {
         return new GetProfileUseCase(userRepository, blockRepository,
-                friendRepository, friendRequestRepository, userDomainService);
+                friendRepository, friendRequestRepository, userDomainService, fileStorage);
     }
 
     @Bean
-    public SearchUserUseCase searchUserUseCase(UserRepository userRepository) {
-        return new SearchUserUseCase(userRepository);
+    // ✅ FIX: inject thêm FileStorage
+    public SearchUserUseCase searchUserUseCase(
+            UserRepository userRepository,
+            FileStorage fileStorage) {
+        return new SearchUserUseCase(userRepository, fileStorage);
     }
 
     @Bean
@@ -264,6 +260,7 @@ public class ApplicationConfig {
     // ==================== POST USE CASES ====================
 
     @Bean
+    // ✅ FIX: inject FileStorage để convert paths → URLs trong response
     public CreatePostUseCase createPostUseCase(
             PostRepository postRepository,
             FileStorage fileStorage,
@@ -272,11 +269,37 @@ public class ApplicationConfig {
     }
 
     @Bean
+    // ✅ FIX: inject FileStorage
     public GetPostUseCase getPostUseCase(
             PostRepository postRepository,
             PostDomainService postDomainService,
-            FriendRepository friendRepository) {
-        return new GetPostUseCase(postRepository, postDomainService, friendRepository);
+            FriendRepository friendRepository,
+            FileStorage fileStorage) {
+        return new GetPostUseCase(postRepository, postDomainService, friendRepository, fileStorage);
+    }
+
+    @Bean
+    // ✅ FIX: inject FileStorage — GetFeedUseCase không còn @Service nên phải khai báo bean
+    public GetFeedUseCase getFeedUseCase(
+            PostRepository postRepository,
+            FileStorage fileStorage) {
+        return new GetFeedUseCase(postRepository, fileStorage);
+    }
+
+    @Bean
+    // ✅ FIX: inject FileStorage
+    public GetPostsByAuthorUseCase getPostsByAuthorUseCase(
+            PostRepository postRepository,
+            FileStorage fileStorage) {
+        return new GetPostsByAuthorUseCase(postRepository, fileStorage);
+    }
+
+    @Bean
+    // ✅ FIX: inject FileStorage
+    public SearchPostsUseCase searchPostsUseCase(
+            PostRepository postRepository,
+            FileStorage fileStorage) {
+        return new SearchPostsUseCase(postRepository, fileStorage);
     }
 
     @Bean
@@ -328,6 +351,17 @@ public class ApplicationConfig {
     // ==================== COMMENT USE CASES ====================
 
     @Bean
+    // FIX: inject UserRepository để trả authorUsername + authorProfilePic thật
+    public GetCommentsUseCase getCommentsUseCase(
+            CommentRepository commentRepository,
+            PostRepository postRepository,
+            FileStorage fileStorage,
+            UserRepository userRepository) {
+        return new GetCommentsUseCase(commentRepository, postRepository, fileStorage, userRepository);
+    }
+
+    @Bean
+    // ✅ FIX Bug 3: inject UserRepository để trả authorUsername thật về frontend
     public CreateCommentUseCase createCommentUseCase(
             CommentRepository commentRepository,
             PostRepository postRepository,
@@ -335,10 +369,11 @@ public class ApplicationConfig {
             FileRepository fileRepository,
             NotificationRepository notificationRepository,
             NotificationDomainService notificationDomainService,
-            RealtimePublisher realtimePublisher) {
+            RealtimePublisher realtimePublisher,
+            UserRepository userRepository) {
         return new CreateCommentUseCase(commentRepository, postRepository,
                 fileStorage, fileRepository, notificationRepository,
-                notificationDomainService, realtimePublisher);
+                notificationDomainService, realtimePublisher, userRepository);
     }
 
     @Bean
@@ -378,6 +413,7 @@ public class ApplicationConfig {
     }
 
     @Bean
+    // ✅ FIX Bug 3: inject UserRepository để trả authorUsername thật về frontend
     public ReplyCommentUseCase replyCommentUseCase(
             CommentRepository commentRepository,
             PostRepository postRepository,
@@ -386,10 +422,12 @@ public class ApplicationConfig {
             FileRepository fileRepository,
             NotificationRepository notificationRepository,
             NotificationDomainService notificationDomainService,
-            RealtimePublisher realtimePublisher) {
+            RealtimePublisher realtimePublisher,
+            UserRepository userRepository) {
         return new ReplyCommentUseCase(commentRepository, postRepository,
                 commentDomainService, fileStorage, fileRepository,
-                notificationRepository, notificationDomainService, realtimePublisher);
+                notificationRepository, notificationDomainService, realtimePublisher,
+                userRepository);
     }
 
     // ==================== MESSAGE USE CASES ====================
@@ -426,8 +464,9 @@ public class ApplicationConfig {
     @Bean
     public GetChatUseCase getChatUseCase(
             ChatRepository chatRepository,
-            MessageRepository messageRepository) {
-        return new GetChatUseCase(chatRepository, messageRepository);
+            MessageRepository messageRepository,
+            FileStorage fileStorage) {
+        return new GetChatUseCase(chatRepository, messageRepository, fileStorage);
     }
 
     @Bean

@@ -7,6 +7,7 @@ import com.socialapp.infrastructure.persistence.message.neo4j.node.ChatNode;
 import com.socialapp.infrastructure.persistence.message.neo4j.repository.ChatNeo4jRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -55,10 +56,11 @@ class ChatRepositoryAdapter implements ChatRepository {
     }
 
     @Override
+    @Transactional
     public Chat save(Chat chat) {
         ChatNode saved = neo4j.save(mapper.toNode(chat));
 
-        // (User)-[:IS_MEMBER_OF]→(Chat) — tạo cho tất cả members
+        // (User)-[:IS_MEMBER_OF]→(Chat) — tạo cho tất cả members trong cùng transaction
         chat.getMemberIds()
                 .forEach(memberId -> neo4j.linkUserToChat(memberId, saved.getId()));
 

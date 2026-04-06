@@ -4,7 +4,7 @@ import lombok.*;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
 
-@Node("FileNode")
+@Node("File")   // FIX: phải là "File" để khớp với tất cả Cypher queries ATTACH_FILE
 @Getter
 @Setter
 @Builder
