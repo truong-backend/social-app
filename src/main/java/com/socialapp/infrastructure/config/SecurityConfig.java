@@ -62,6 +62,7 @@ public class SecurityConfig {
                                 "/api-docs/swagger-config"
                         ).permitAll()
 
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         // ── Auth (public) ──────────────────────────────────────────────────
                         .requestMatchers(HttpMethod.POST,
                                 "/api/auth/register",

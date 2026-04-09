@@ -84,6 +84,7 @@ public class Notification {
     public String getByUserId()             { return byUserId; }
     public NotificationAction getAction()   { return action; }
     public NotificationTarget getTarget()   { return target; }
+
     public boolean isRead()                 { return isRead; }
     public LocalDateTime getSentAt()        { return sentAt; }
 }
