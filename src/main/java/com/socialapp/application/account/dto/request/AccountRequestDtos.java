@@ -53,4 +53,7 @@ public class AccountRequestDtos {
             @NotBlank @Size(min = 8, max = 64)
             String confirmPassword
     ) {}
+    public record DeleteAccountRequest(
+            @jakarta.validation.constraints.NotBlank String password
+    ) {}
 }

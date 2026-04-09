@@ -10,11 +10,11 @@ import java.util.UUID;
 
 /**
  * Entity / Aggregate Root: Account
- *
+ * <p>
  * Chịu trách nhiệm:
- *  - Quản lý thông tin xác thực (email, password, role)
- *  - Quản lý vòng đời VerifyCode
- *  - Enforce business rules: xác thực email trước khi đăng nhập
+ * - Quản lý thông tin xác thực (email, password, role)
+ * - Quản lý vòng đời VerifyCode
+ * - Enforce business rules: xác thực email trước khi đăng nhập
  */
 public class Account {
 
@@ -33,15 +33,19 @@ public class Account {
     // ── Linked User id (reference, not full object) ───────────
     private String userId;
 
+    private boolean isBanned;
+    private String banReason;
+    private boolean isActive = true;
+
     // ── Private constructor (dùng factory method) ─────────────
     private Account(String id, Email email, HashedPassword password,
                     Role role, boolean isVerified, String userId) {
-        this.id         = id;
-        this.email      = email;
-        this.password   = password;
-        this.role       = role;
+        this.id = id;
+        this.email = email;
+        this.password = password;
+        this.role = role;
         this.isVerified = isVerified;
-        this.userId     = userId;
+        this.userId = userId;
     }
 
     // ── Factory Methods ───────────────────────────────────────
@@ -68,6 +72,19 @@ public class Account {
                                        String userId, VerifyCode verifyCode) {
         Account account = new Account(id, email, password, role, isVerified, userId);
         account.verifyCode = verifyCode;
+        return account;
+    }
+
+    // Thêm method reconstituteFull vào Account.java:
+    public static Account reconstituteFull(String id, Email email, HashedPassword password,
+                                           Role role, boolean isVerified,
+                                           String userId, VerifyCode verifyCode,
+                                           boolean isBanned, String banReason, boolean isActive) {
+        Account account = new Account(id, email, password, role, isVerified, userId);
+        account.verifyCode  = verifyCode;
+        account.isBanned    = isBanned;
+        account.banReason   = banReason;
+        account.isActive    = isActive;
         return account;
     }
 
@@ -114,11 +131,57 @@ public class Account {
 
     // ── Getters (không có setters — bất biến từ ngoài) ────────
 
-    public String getId()               { return id; }
-    public Email getEmail()             { return email; }
-    public HashedPassword getPassword() { return password; }
-    public Role getRole()               { return role; }
-    public boolean isVerified()         { return isVerified; }
-    public VerifyCode getVerifyCode()   { return verifyCode; }
-    public String getUserId()           { return userId; }
+    public void ban(String reason) {
+        this.isBanned = true;
+        this.banReason = reason;
+    }
+
+    public void unban() {
+        this.isBanned = false;
+        this.banReason = null;
+    }
+
+    public void deactivate() {
+        this.isActive = false;
+    }
+
+    public boolean isBanned() {
+        return isBanned;
+    }
+
+    public String getBanReason() {
+        return banReason;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public Email getEmail() {
+        return email;
+    }
+
+    public HashedPassword getPassword() {
+        return password;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public boolean isVerified() {
+        return isVerified;
+    }
+
+    public VerifyCode getVerifyCode() {
+        return verifyCode;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public boolean isActive() {
+        return isActive;
+    }
 }

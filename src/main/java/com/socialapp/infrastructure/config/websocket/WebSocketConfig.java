@@ -1,4 +1,4 @@
-package com.socialapp.infrastructure.config;
+package com.socialapp.infrastructure.config.websocket;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;

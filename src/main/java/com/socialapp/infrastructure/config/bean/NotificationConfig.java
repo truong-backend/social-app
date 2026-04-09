@@ -1,8 +1,7 @@
-package com.socialapp.infrastructure.config;
+package com.socialapp.infrastructure.config.bean;
 
 import com.socialapp.application.notification.usecase.*;
 import com.socialapp.domain.notification.repository.NotificationRepository;
-import com.socialapp.domain.notification.service.NotificationDomainService;
 import com.socialapp.infrastructure.persistence.notification.neo4j.NotificationRepositoryAdapter;
 import com.socialapp.infrastructure.persistence.notification.neo4j.repository.NotificationNeo4jRepository;
 import org.springframework.context.annotation.Bean;

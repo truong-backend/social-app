@@ -7,11 +7,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Raw Cypher queries cho relationship (FRIEND, REQUEST, BLOCK).
- * Dùng Neo4jClient thay vì Neo4jRepository vì relationship
- * giữa 2 node User không dễ dùng Spring Data.
- */
 @Repository
 public class RelationshipNeo4jRepository {
 
@@ -137,5 +132,14 @@ public class RelationshipNeo4jRepository {
                 RETURN t.id AS blockedId, r.createdAt AS createdAt
                 """)
                 .bind(blockerId).to("userId").fetch().all().stream().toList();
+    }
+
+    /** Lấy danh sách người đã block mình (ngược chiều) */
+    public List<Map<String, Object>> findBlockersByUserId(String userId) {
+        return client.query("""
+                MATCH (blocker:User)-[r:BLOCK]->(me:User {id: $userId})
+                RETURN blocker.id AS blockerId, r.createdAt AS createdAt
+                """)
+                .bind(userId).to("userId").fetch().all().stream().toList();
     }
 }

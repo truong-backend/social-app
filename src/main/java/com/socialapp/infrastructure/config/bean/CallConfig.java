@@ -1,4 +1,4 @@
-package com.socialapp.infrastructure.config;
+package com.socialapp.infrastructure.config.bean;
 
 import com.socialapp.application.call.usecase.EndCallUseCase;
 import com.socialapp.application.call.usecase.InitiateCallUseCase;

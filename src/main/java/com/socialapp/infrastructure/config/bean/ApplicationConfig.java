@@ -1,4 +1,4 @@
-package com.socialapp.infrastructure.config;
+package com.socialapp.infrastructure.config.bean;
 
 import com.socialapp.application.account.usecase.Register.ConfirmEmailUseCase;
 import com.socialapp.application.account.usecase.Register.RegisterUseCase;
@@ -7,7 +7,6 @@ import com.socialapp.application.account.usecase.logout.LogoutUseCase;
 
 import com.socialapp.application.comment.usecase.*;
 import com.socialapp.application.message.usecase.*;
-import com.socialapp.application.notification.usecase.GetNotificationsUseCase;
 import com.socialapp.application.post.usecase.*;
 import com.socialapp.application.post.usecase.postInteraction.*;
 import com.socialapp.application.post.usecase.postMutation.*;
@@ -278,12 +277,13 @@ public class ApplicationConfig {
         return new GetPostUseCase(postRepository, postDomainService, friendRepository, fileStorage);
     }
 
+    // Tìm method này trong ApplicationConfig.java và thay bằng:
     @Bean
-    // ✅ FIX: inject FileStorage — GetFeedUseCase không còn @Service nên phải khai báo bean
     public GetFeedUseCase getFeedUseCase(
             PostRepository postRepository,
-            FileStorage fileStorage) {
-        return new GetFeedUseCase(postRepository, fileStorage);
+            FileStorage fileStorage,
+            BlockRepository blockRepository) {
+        return new GetFeedUseCase(postRepository, fileStorage, blockRepository);
     }
 
     @Bean

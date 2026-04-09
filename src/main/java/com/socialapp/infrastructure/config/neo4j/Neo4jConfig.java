@@ -1,4 +1,4 @@
-package com.socialapp.infrastructure.config;
+package com.socialapp.infrastructure.config.neo4j;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

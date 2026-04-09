@@ -5,23 +5,15 @@ import com.socialapp.domain.shared.valueobject.Email;
 
 import java.util.Optional;
 
-/**
- * Repository Port (Domain layer)
- * Được implement ở infrastructure layer (Neo4j adapter)
- */
 public interface AccountRepository {
 
     Optional<Account> findByVerifyCode(String verifyCode);
-
     Optional<Account> findById(String id);
-
     Optional<Account> findByEmail(Email email);
+    Optional<Account> findByUserId(String userId);
 
     boolean existsByEmail(Email email);
 
     Account save(Account account);
-
     void deleteById(String id);
-
-    Optional<Account> findByUserId(String userId);
 }

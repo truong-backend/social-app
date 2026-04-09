@@ -6,61 +6,37 @@ import com.socialapp.domain.user.valueobject.*;
 import java.time.LocalDate;
 import java.util.UUID;
 
-/**
- * Entity / Aggregate Root: User
- *
- * Chịu trách nhiệm:
- *  - Quản lý thông tin cá nhân
- *  - Enforce giới hạn đổi tên / username / ngày sinh
- *  - Quản lý counter (friend, block, request)
- */
 public class User {
 
-    // ── Identity ──────────────────────────────────────────────
     private final String id;
-
-    // ── Value Objects ─────────────────────────────────────────
     private Username username;
     private FullName fullName;
     private LocalDate birthdate;
     private String bio;
-
-    // ── Counters ──────────────────────────────────────────────
     private UserCounts counts;
-
-    // ── Change restrictions ───────────────────────────────────
     private ChangeRestriction changeRestriction;
-
-    // ── Profile picture (file path reference) ─────────────────
     private String profilePicturePath;
+    private boolean isDeleted;
 
-    // ── Private constructor ───────────────────────────────────
     private User(String id, Username username, FullName fullName,
                  LocalDate birthdate, String bio,
                  UserCounts counts, ChangeRestriction changeRestriction,
                  String profilePicturePath) {
-        this.id                = id;
-        this.username          = username;
-        this.fullName          = fullName;
-        this.birthdate         = birthdate;
-        this.bio               = bio;
-        this.counts            = counts;
-        this.changeRestriction = changeRestriction;
+        this.id                 = id;
+        this.username           = username;
+        this.fullName           = fullName;
+        this.birthdate          = birthdate;
+        this.bio                = bio;
+        this.counts             = counts;
+        this.changeRestriction  = changeRestriction;
         this.profilePicturePath = profilePicturePath;
     }
-
-    // ── Factory Methods ───────────────────────────────────────
 
     public static User create(Username username, FullName fullName, LocalDate birthdate) {
         return new User(
                 UUID.randomUUID().toString(),
-                username,
-                fullName,
-                birthdate,
-                null,
-                UserCounts.zero(),
-                ChangeRestriction.noRestriction(),
-                null
+                username, fullName, birthdate, null,
+                UserCounts.zero(), ChangeRestriction.noRestriction(), null
         );
     }
 
@@ -73,6 +49,19 @@ public class User {
     }
 
     // ── Domain Behaviors ──────────────────────────────────────
+
+    /**
+     * Xóa thông tin cá nhân khi user yêu cầu xóa tài khoản.
+     * Giữ lại id để các bài post / comment vẫn tham chiếu được.
+     */
+    public void anonymize() {
+        this.username           = new Username("deleted_" + id.substring(0, 8));
+        this.fullName           = FullName.of("Deleted", "User");
+        this.bio                = null;
+        this.birthdate          = null;
+        this.profilePicturePath = null;
+        this.isDeleted          = true;
+    }
 
     public void changeName(FullName newName) {
         if (!changeRestriction.canChangeName())
@@ -106,8 +95,6 @@ public class User {
         this.profilePicturePath = filePath;
     }
 
-    // ── Counter mutations (gọi từ relationship domain service) ─
-
     public void onFriendAdded()            { this.counts = counts.incrementFriend(); }
     public void onFriendRemoved()          { this.counts = counts.decrementFriend(); }
     public void onUserBlocked()            { this.counts = counts.incrementBlock(); }
@@ -118,13 +105,13 @@ public class User {
     public void onRequestReceivedHandled() { this.counts = counts.decrementRequestReceived(); }
 
     // ── Getters ───────────────────────────────────────────────
-
-    public String getId()                          { return id; }
-    public Username getUsername()                  { return username; }
-    public FullName getFullName()                  { return fullName; }
-    public LocalDate getBirthdate()                { return birthdate; }
-    public String getBio()                         { return bio; }
-    public UserCounts getCounts()                  { return counts; }
-    public ChangeRestriction getChangeRestriction(){ return changeRestriction; }
-    public String getProfilePicturePath()          { return profilePicturePath; }
+    public String getId()                           { return id; }
+    public Username getUsername()                   { return username; }
+    public FullName getFullName()                   { return fullName; }
+    public LocalDate getBirthdate()                 { return birthdate; }
+    public String getBio()                          { return bio; }
+    public UserCounts getCounts()                   { return counts; }
+    public ChangeRestriction getChangeRestriction() { return changeRestriction; }
+    public String getProfilePicturePath()           { return profilePicturePath; }
+    public boolean isDeleted()                      { return isDeleted; }
 }

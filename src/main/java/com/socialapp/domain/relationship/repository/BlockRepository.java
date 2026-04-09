@@ -13,4 +13,8 @@ public interface BlockRepository {
     BlockRelationship save(BlockRelationship block);
 
     void delete(String blockerId, String blockedId);
+
+    // Thêm method lấy danh sách người đã block mình:
+    java.util.List<com.socialapp.domain.relationship.entity.BlockRelationship>
+    findBlockersByUserId(String userId);
 }

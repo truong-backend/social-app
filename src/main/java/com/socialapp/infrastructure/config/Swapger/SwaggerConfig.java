@@ -1,4 +1,4 @@
-package com.socialapp.infrastructure.config;
+package com.socialapp.infrastructure.config.Swapger;
 
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.OpenAPI;

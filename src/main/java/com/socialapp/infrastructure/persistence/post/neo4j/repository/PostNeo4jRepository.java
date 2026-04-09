@@ -3,6 +3,7 @@ package com.socialapp.infrastructure.persistence.post.neo4j.repository;
 import com.socialapp.infrastructure.persistence.post.neo4j.node.PostNode;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.data.neo4j.repository.query.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -128,4 +129,31 @@ public interface PostNeo4jRepository extends Neo4jRepository<PostNode, String> {
            MERGE (u)-[:INTERACT_WITH]->(k)
            """)
     void linkUserInteractKeyword(String userId, String keyword);
+
+    /**
+     * Feed ranking: score = likeCount*3 + commentCount*5 + shareCount*2 - age_hours*0.5
+     * Lấy bài của bạn bè + public trong 7 ngày gần nhất, sắp xếp theo score giảm dần.
+     */
+    @Query("""
+    CALL {
+      MATCH (me:User {id: $userId})-[:FRIEND]-(friend:User)-[:POSTED]->(p:Post)
+      WHERE p.deletedAt IS NULL
+        AND p.privacy IN ['PUBLIC', 'FRIENDS']
+        AND p.createdAt >= datetime() - duration('P7D')
+      RETURN p
+      UNION
+      MATCH (me2:User {id: $userId})-[:POSTED]->(p:Post)
+      WHERE p.deletedAt IS NULL
+        AND p.createdAt >= datetime() - duration('P7D')
+      RETURN p
+    }
+    WITH DISTINCT p,
+         (p.likeCount * 3 + p.commentCount * 5 + p.shareCount * 2
+          - duration.inSeconds(p.createdAt, datetime()).seconds / 3600.0 * 0.5) AS score
+    RETURN p ORDER BY score DESC SKIP $skip LIMIT $limit
+    """)
+    List<PostNode> findRankedFeedByUserId(
+            @Param("userId") String userId,
+            @Param("skip")   int skip,
+            @Param("limit")  int limit);
 }

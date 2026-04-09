@@ -20,4 +20,10 @@ public class AccountResponseDtos {
     public record MessageResponse(
             String message
     ) {}
+
+    public record AuthWithRefreshResponse(
+            String accessToken,
+            String refreshToken,
+            String userId
+    ) {}
 }

@@ -1,4 +1,4 @@
-package com.socialapp.infrastructure.config;
+package com.socialapp.infrastructure.config.bean;
 
 import com.socialapp.application.admin.usecase.GetPostStatisticsUseCase;
 import com.socialapp.application.admin.usecase.GetUserStatisticsUseCase;

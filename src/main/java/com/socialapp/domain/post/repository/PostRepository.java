@@ -23,15 +23,10 @@ public interface PostRepository {
 
     void deleteById(String id);
 
-    /**
-     * Tạo relationship (User)-[:LIKED]->(Post) trong graph.
-     * Gọi sau khi save post (likeCount đã tăng).
-     */
     void addLike(String userId, String postId);
 
-    /**
-     * Xóa relationship (User)-[:LIKED]->(Post) khỏi graph.
-     * Gọi sau khi save post (likeCount đã giảm).
-     */
     void removeLike(String userId, String postId);
+
+    /** Feed ranking — trả về domain Post để UseCase xử lý filter + map */
+    List<Post> findRankedFeedByUserId(String userId, int skip, int limit);
 }

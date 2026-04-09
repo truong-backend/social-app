@@ -2,12 +2,10 @@ package com.socialapp.presentation.controller;
 
 import com.socialapp.application.account.dto.request.AccountRequestDtos.*;
 import com.socialapp.application.account.dto.response.AccountResponseDtos.*;
+import com.socialapp.application.account.usecase.DeleteAccountUseCase;
 import com.socialapp.application.account.usecase.Register.ConfirmEmailUseCase;
 import com.socialapp.application.account.usecase.Register.RegisterUseCase;
-import com.socialapp.application.account.usecase.login.ConfirmResetCodeUseCase;
-import com.socialapp.application.account.usecase.login.LoginUseCase;
-import com.socialapp.application.account.usecase.login.PrepareResetPasswordUseCase;
-import com.socialapp.application.account.usecase.login.UpdatePasswordUseCase;
+import com.socialapp.application.account.usecase.login.*;
 import com.socialapp.application.account.usecase.logout.LogoutUseCase;
 import com.socialapp.presentation.util.ApiResponse;
 import com.socialapp.presentation.util.SecurityUtil;
@@ -28,6 +26,8 @@ public class AuthController {
     private final PrepareResetPasswordUseCase prepareResetUseCase;
     private final ConfirmResetCodeUseCase confirmResetCodeUseCase;
     private final UpdatePasswordUseCase updatePasswordUseCase;
+    private final RefreshTokenUseCase refreshTokenUseCase;
+    private final DeleteAccountUseCase deleteAccountUseCase;
 
     /** POST /api/auth/register */
     @PostMapping("/register")
@@ -87,5 +87,22 @@ public class AuthController {
         String accountId = SecurityUtil.currentAccountId();
         var res = updatePasswordUseCase.execute(accountId, request);
         return ApiResponse.ok(res.message());
+    }
+
+    /** POST /api/auth/refresh */
+    @PostMapping("/refresh")
+    public ApiResponse<AuthResponse> refresh(
+            @RequestHeader("X-Refresh-Token") String refreshToken) {
+        return ApiResponse.ok(refreshTokenUseCase.execute(refreshToken));
+    }
+
+    // Thêm endpoint:
+    /** DELETE /api/auth/account */
+    @DeleteMapping("/account")
+    public ApiResponse<Void> deleteAccount(
+            @Valid @RequestBody DeleteAccountRequest request) {
+        String accountId = SecurityUtil.currentAccountId();
+        deleteAccountUseCase.execute(accountId, request.password());
+        return ApiResponse.ok("Account deleted");
     }
 }

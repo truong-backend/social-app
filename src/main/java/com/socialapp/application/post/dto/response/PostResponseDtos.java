@@ -21,7 +21,11 @@ public class PostResponseDtos {
             List<String> attachedFileUrls,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
-    ) {}
+
+
+    ) {
+
+    }
 
     public record PostSummaryResponse(
             String id,
@@ -32,6 +36,7 @@ public class PostResponseDtos {
             int commentCount,
             LocalDateTime createdAt
     ) {}
+
 
     public record MessageResponse(String message) {}
 }

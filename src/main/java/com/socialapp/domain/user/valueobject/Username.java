@@ -13,7 +13,7 @@ public final class Username {
 
     private final String value;
 
-    private Username(String value) {
+    public Username(String value) {
         if (value == null || value.isBlank())
             throw new IllegalArgumentException("Username must not be blank");
         if (!PATTERN.matcher(value).matches())

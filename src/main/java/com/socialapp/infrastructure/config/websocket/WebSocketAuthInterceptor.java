@@ -1,4 +1,4 @@
-package com.socialapp.infrastructure.config;
+package com.socialapp.infrastructure.config.websocket;
 
 import com.socialapp.infrastructure.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;

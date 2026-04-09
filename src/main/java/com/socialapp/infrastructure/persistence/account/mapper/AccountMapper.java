@@ -7,26 +7,21 @@ import com.socialapp.domain.shared.valueobject.Email;
 import com.socialapp.infrastructure.persistence.account.neo4j.node.AccountNode;
 import org.springframework.stereotype.Component;
 
-/**
- * VerifyCode không còn được lưu trong AccountNode.
- * Việc load VerifyCode từ VerifyCodeNode được xử lý
- * hoàn toàn trong AccountRepositoryAdapter qua relationship HAS_VERIFY_CODE.
- */
 @Component
 public class AccountMapper {
 
     public Account toDomain(AccountNode node) {
-
-
-        // verifyCode = null — AccountRepositoryAdapter sẽ tự resolve qua VerifyCodeNode nếu cần
-        return Account.reconstitute(
+        return Account.reconstituteFull(
                 node.getId(),
                 Email.of(node.getEmail()),
                 HashedPassword.ofHashed(node.getPassword()),
                 Role.valueOf(node.getRole()),
                 Boolean.TRUE.equals(node.getIsVerified()),
                 node.getUserId(),
-                null
+                null,                                         // verifyCode — resolve ở Adapter
+                Boolean.TRUE.equals(node.getIsBanned()),
+                node.getBanReason(),
+                !Boolean.FALSE.equals(node.getIsActive())     // null → true (active by default)
         );
     }
 
@@ -38,6 +33,9 @@ public class AccountMapper {
                 .role(account.getRole().name())
                 .isVerified(account.isVerified())
                 .userId(account.getUserId())
+                .isBanned(account.isBanned())
+                .banReason(account.getBanReason())
+                .isActive(account.isActive())
                 .build();
     }
 }
