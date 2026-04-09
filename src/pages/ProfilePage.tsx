@@ -60,9 +60,9 @@ export const ProfilePage = () => {
   const posts = postsData?.pages.flat() ?? []
 
   return (
-    <div className="max-w-2xl mx-auto pb-24 md:pb-8">
-      {/* Profile card */}
-      <div className="bg-surface-container-low rounded-b-[2rem] overflow-hidden shadow-sm">
+    <div className="min-h-screen bg-surface pb-24 md:pb-8">
+      {/* Profile header card */}
+      <div className="bg-surface-container-lowest shadow-sm">
         <UserProfileCard
           profile={profile}
           isOwnProfile={isOwnProfile}
@@ -73,46 +73,91 @@ export const ProfilePage = () => {
         />
       </div>
 
-      {isOwnProfile && (
-        <div className="px-4 mt-4">
-          <Link
-            to="/profile/edit"
-            className="flex items-center justify-center gap-2 w-full py-3 rounded-full bg-surface-container-high text-primary font-bold text-sm hover:bg-surface-container-highest transition-colors active:scale-95"
-          >
-            <span className="material-symbols-outlined text-sm">edit</span>
-            Chỉnh sửa trang cá nhân
-          </Link>
+      {/* Content grid */}
+      <div className="max-w-6xl mx-auto px-4 md:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left sidebar */}
+          <aside className="lg:col-span-4 space-y-6">
+            {/* Quick Stats */}
+            <div className="bg-surface-container-lowest p-6 rounded-xl shadow-sm">
+              <h2
+                className="text-lg font-bold mb-4"
+                style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+              >
+                Quick Stats
+              </h2>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-surface-container-low p-4 rounded-lg">
+                  <span className="text-xs text-on-surface-variant font-bold uppercase tracking-wider">Followers</span>
+                  <p className="text-2xl font-extrabold text-primary">{profile.friendCount ?? 0}</p>
+                </div>
+                <div className="bg-surface-container-low p-4 rounded-lg">
+                  <span className="text-xs text-on-surface-variant font-bold uppercase tracking-wider">Following</span>
+                  <p className="text-2xl font-extrabold text-primary">0</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Intro Info */}
+            <div className="bg-surface-container-lowest p-6 rounded-xl shadow-sm">
+              <h2
+                className="text-lg font-bold mb-4"
+                style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+              >
+                Intro
+              </h2>
+              <ul className="space-y-4">
+                {profile.bio && (
+                  <li className="flex items-center gap-3 text-on-surface-variant">
+                    <span className="material-symbols-outlined text-primary text-xl">info</span>
+                    <span className="text-sm">{profile.bio}</span>
+                  </li>
+                )}
+                <li className="flex items-center gap-3 text-on-surface-variant">
+                  <span className="material-symbols-outlined text-primary text-xl">person</span>
+                  <span className="text-sm">@{profile.username}</span>
+                </li>
+              </ul>
+
+              {isOwnProfile && (
+                <Link
+                  to="/profile/edit"
+                  className="flex items-center justify-center gap-2 w-full mt-6 py-2.5 rounded-xl bg-surface-container-low text-on-surface font-bold text-sm hover:bg-surface-container transition-colors"
+                >
+                  <span className="material-symbols-outlined text-sm">edit</span>
+                  Edit Profile
+                </Link>
+              )}
+            </div>
+          </aside>
+
+          {/* Right feed column */}
+          <main className="lg:col-span-8 space-y-6">
+            {postsLoading ? (
+              <div className="flex justify-center py-12">
+                <Spinner size="md" />
+              </div>
+            ) : posts.length === 0 ? (
+              <div className="flex flex-col items-center py-16 gap-3 bg-surface-container-lowest rounded-xl shadow-sm">
+                <span className="material-symbols-outlined text-on-surface-variant text-4xl">article</span>
+                <p className="text-on-surface-variant text-sm">Chưa có bài viết nào</p>
+              </div>
+            ) : (
+              posts.map((post) => (
+                <PostCard key={post.id} post={post} currentUserId={currentUserId} />
+              ))
+            )}
+
+            <div ref={bottomRef}>
+              {isFetchingNextPage && (
+                <div className="flex justify-center py-4">
+                  <Spinner size="sm" />
+                </div>
+              )}
+            </div>
+          </main>
         </div>
-      )}
-
-      {/* Posts section */}
-      <section className="mt-8 px-4 flex flex-col gap-4">
-        <h2
-          className="text-xl font-extrabold text-on-surface"
-          style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-        >
-          Bài viết
-        </h2>
-
-        {postsLoading ? (
-          <div className="flex justify-center py-12"><Spinner size="md" /></div>
-        ) : posts.length === 0 ? (
-          <div className="flex flex-col items-center py-16 gap-3">
-            <span className="material-symbols-outlined text-on-surface-variant text-4xl">article</span>
-            <p className="text-on-surface-variant text-sm">Chưa có bài viết nào</p>
-          </div>
-        ) : (
-          posts.map((post) => (
-            <PostCard key={post.id} post={post} currentUserId={currentUserId} />
-          ))
-        )}
-
-        <div ref={bottomRef}>
-          {isFetchingNextPage && (
-            <div className="flex justify-center py-4"><Spinner size="sm" /></div>
-          )}
-        </div>
-      </section>
+      </div>
     </div>
   )
 }

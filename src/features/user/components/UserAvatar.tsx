@@ -5,19 +5,28 @@ interface UserAvatarProps {
   className?: string
 }
 
-const SIZE_MAP = { sm: 32, md: 44, lg: 80 }
+const SIZE_MAP = {
+  sm: 'w-8 h-8 text-xs',
+  md: 'w-11 h-11 text-sm',
+  lg: 'w-20 h-20 text-2xl',
+}
 
 export const UserAvatar = ({ src, username, size = 'md', className }: UserAvatarProps) => {
-  const px = SIZE_MAP[size]
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={username}
+        className={`rounded-full object-cover ${SIZE_MAP[size]} ${className ?? ''}`}
+      />
+    )
+  }
 
   return (
-    <img
-      src={src ?? '/default-avatar.png'}
-      alt={username}
-      width={px}
-      height={px}
-      className={`user-avatar user-avatar--${size} ${className ?? ''}`}
-      style={{ borderRadius: '50%', objectFit: 'cover' }}
-    />
+    <div
+      className={`rounded-full bg-gradient-to-br from-primary to-primary-container text-on-primary flex items-center justify-center font-bold ${SIZE_MAP[size]} ${className ?? ''}`}
+    >
+      {username.charAt(0).toUpperCase()}
+    </div>
   )
 }

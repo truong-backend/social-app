@@ -13,16 +13,16 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
-  primary:   'bg-gradient-to-br from-primary to-primary-container text-on-primary shadow-lg shadow-primary/20 hover:opacity-90',
-  secondary: 'bg-surface-container-high text-primary hover:bg-surface-container-highest',
-  danger:    'bg-error-container text-on-error hover:opacity-90',
-  ghost:     'bg-transparent text-on-surface-variant hover:bg-surface-container-low',
+  primary:   'bg-gradient-to-r from-primary to-primary-container text-on-primary shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98]',
+  secondary: 'bg-surface-container-lowest text-on-surface border border-outline-variant/20 shadow-sm hover:bg-surface-container-low',
+  danger:    'bg-red-50 text-error border border-red-100 hover:bg-red-100',
+  ghost:     'bg-transparent text-primary hover:bg-primary/5',
 }
 
 const SIZE_CLASSES: Record<ButtonSize, string> = {
   sm: 'px-4 py-1.5 text-xs rounded-full',
-  md: 'px-6 py-3 text-sm rounded-full',
-  lg: 'px-8 py-4 text-base rounded-full',
+  md: 'px-6 py-3 text-sm rounded-xl',
+  lg: 'px-8 py-4 text-base rounded-xl',
 }
 
 export const Button = ({
@@ -38,7 +38,7 @@ export const Button = ({
   return (
     <button
       className={clsx(
-        'inline-flex items-center justify-center font-bold transition-all duration-200 active:scale-95',
+        'inline-flex items-center justify-center font-bold transition-all duration-200',
         'disabled:opacity-50 disabled:pointer-events-none',
         VARIANT_CLASSES[variant],
         SIZE_CLASSES[size],

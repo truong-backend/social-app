@@ -65,14 +65,6 @@ export const deleteCommentApi = async (commentId: string): Promise<void> => {
   await axiosInstance.delete(`/api/comments/${commentId}`)
 }
 
-export const getRepliesApi = async (
-  commentId: string,
-  skip = 0,
-  limit = 10,
-): Promise<Comment[]> => {
-  const response = await axiosInstance.get(
-    `/api/posts/comments/${commentId}/replies`,
-    { params: { skip, limit } },
-  )
-  return unwrapData(response) ?? []
-}
+// NOTE: Backend không có endpoint GET replies riêng.
+// Replies được load cùng với comments của post qua /api/posts/{postId}/comments
+// Chúng được phân biệt bằng trường repliedToCommentId != null

@@ -19,8 +19,9 @@ export const sharePostApi = async (
   return unwrapData(response)
 }
 
+// FIX: đổi từ /api/users/search sang /api/posts/search
 export const searchPostsApi = async (keyword: string): Promise<Post[]> => {
-  const response = await axiosInstance.get('/api/users/search', {
+  const response = await axiosInstance.get('/api/posts/search', {
     params: { q: keyword },
   })
   return unwrapData(response) ?? []

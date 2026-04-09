@@ -1,9 +1,10 @@
 import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import {
   useFriends, useReceivedRequests, useSentRequests, useBlockedUsers,
   useAcceptFriendRequest, useDeleteRequest, useUnfriend, useUnblockUser,
 } from '@features/relationship'
-import { Avatar } from '@components/ui/Avatar'
+import { getProfileApi } from '@features/user/api/user.api'
 import { Button } from '@components/ui/Button'
 import { Spinner } from '@components/feedback/Spinner'
 import { Link } from 'react-router-dom'
@@ -11,11 +12,58 @@ import { Link } from 'react-router-dom'
 type FriendsTab = 'friends' | 'received' | 'sent' | 'blocked'
 
 const TAB_META: { key: FriendsTab; label: string; icon: string }[] = [
-  { key: 'friends',  label: 'Bạn bè',          icon: 'group' },
-  { key: 'received', label: 'Lời mời nhận',     icon: 'person_add' },
-  { key: 'sent',     label: 'Đã gửi',           icon: 'schedule_send' },
-  { key: 'blocked',  label: 'Đã chặn',          icon: 'block' },
+  { key: 'friends',  label: 'Bạn bè',       icon: 'group' },
+  { key: 'received', label: 'Lời mời',       icon: 'person_add' },
+  { key: 'sent',     label: 'Đã gửi',        icon: 'schedule_send' },
+  { key: 'blocked',  label: 'Đã chặn',       icon: 'block' },
 ]
+
+// Component hiển thị 1 user item với tên thật
+const UserItem = ({
+  userId,
+  actions,
+}: {
+  userId: string
+  actions: React.ReactNode
+}) => {
+  const { data: profile } = useQuery({
+    queryKey: ['user', 'profile', userId],
+    queryFn: () => getProfileApi(userId),
+    staleTime: 1000 * 60 * 5,
+    enabled: !!userId,
+  })
+
+  const displayName = profile
+    ? `${profile.familyName ?? ''} ${profile.givenName ?? ''}`.trim() || profile.username
+    : userId.slice(0, 12) + '...'
+
+  const avatarUrl = profile?.profilePictureUrl
+
+  return (
+    <div className="flex items-center justify-between p-4 bg-surface-container-lowest rounded-xl hover:shadow-sm border border-outline-variant/10 transition-all hover:border-outline-variant/30">
+      <Link to={`/profile/${userId}`} className="flex items-center gap-3 min-w-0">
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt={displayName}
+            className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+          />
+        ) : (
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary-container text-on-primary flex items-center justify-center font-bold text-sm flex-shrink-0">
+            {displayName.charAt(0).toUpperCase()}
+          </div>
+        )}
+        <div className="min-w-0">
+          <p className="font-semibold text-on-surface text-sm truncate">{displayName}</p>
+          {profile?.username && (
+            <p className="text-xs text-on-surface-variant truncate">@{profile.username}</p>
+          )}
+        </div>
+      </Link>
+      <div className="flex gap-2 flex-shrink-0">{actions}</div>
+    </div>
+  )
+}
 
 export const FriendsPage = () => {
   const [activeTab, setActiveTab] = useState<FriendsTab>('friends')
@@ -30,7 +78,7 @@ export const FriendsPage = () => {
   const unfriend      = useUnfriend()
   const unblock       = useUnblockUser()
 
-  const counts: Record<FriendsTab, number | undefined> = {
+  const counts = {
     friends:  friends.data?.length,
     received: receivedRequests.data?.length,
     sent:     sentRequests.data?.length,
@@ -49,8 +97,8 @@ export const FriendsPage = () => {
     }
     if (ids.length === 0) {
       return (
-        <div className="flex flex-col items-center py-16 gap-3">
-          <span className="material-symbols-outlined text-on-surface-variant text-4xl">{emptyIcon}</span>
+        <div className="flex flex-col items-center py-16 gap-3 bg-surface-container-lowest rounded-xl shadow-sm">
+          <span className="material-symbols-outlined text-on-surface-variant text-4xl opacity-40">{emptyIcon}</span>
           <p className="text-sm text-on-surface-variant">{emptyText}</p>
         </div>
       )
@@ -58,16 +106,7 @@ export const FriendsPage = () => {
     return (
       <div className="flex flex-col gap-2">
         {ids.map((id) => (
-          <div
-            key={id}
-            className="flex items-center justify-between p-4 bg-surface-container-low rounded-2xl hover:bg-surface-container-high transition-colors"
-          >
-            <Link to={`/profile/${id}`} className="flex items-center gap-4 min-w-0">
-              <Avatar src={null} alt={id} size="md" />
-              <span className="font-semibold text-on-surface text-sm truncate">{id}</span>
-            </Link>
-            <div className="flex gap-2 flex-shrink-0">{actions(id)}</div>
-          </div>
+          <UserItem key={id} userId={id} actions={actions(id)} />
         ))}
       </div>
     )
@@ -85,7 +124,7 @@ export const FriendsPage = () => {
       {/* Tabs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2" role="tablist">
         {TAB_META.map(({ key, label, icon }) => {
-          const count = counts[key]
+          const count    = counts[key]
           const isActive = activeTab === key
           return (
             <button
@@ -93,10 +132,10 @@ export const FriendsPage = () => {
               role="tab"
               aria-selected={isActive}
               onClick={() => setActiveTab(key)}
-              className={`relative flex flex-col items-center gap-1 px-3 py-4 rounded-2xl transition-all duration-200 ${
+              className={`relative flex flex-col items-center gap-1 px-3 py-4 rounded-xl transition-all duration-200 ${
                 isActive
-                  ? 'bg-surface-container-highest text-primary'
-                  : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high'
+                  ? 'bg-blue-50 text-primary font-bold shadow-sm'
+                  : 'bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-low border border-outline-variant/10'
               }`}
             >
               <span
@@ -107,7 +146,7 @@ export const FriendsPage = () => {
               </span>
               <span className="text-xs font-bold">{label}</span>
               {!!count && count > 0 && (
-                <span className="absolute top-2 right-2 min-w-[18px] h-[18px] flex items-center justify-center bg-secondary text-on-secondary rounded-full text-[10px] font-bold px-1">
+                <span className="absolute top-2 right-2 min-w-[18px] h-[18px] flex items-center justify-center bg-primary text-on-primary rounded-full text-[10px] font-bold px-1">
                   {count}
                 </span>
               )}

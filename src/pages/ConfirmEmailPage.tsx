@@ -41,39 +41,45 @@ export const ConfirmEmailPage = () => {
   })
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h2
-          className="text-3xl font-extrabold tracking-tight text-on-surface"
-          style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-        >
-          Xác thực email
-        </h2>
-        <p className="mt-2 text-sm text-on-surface-variant leading-relaxed">
-          Chúng tôi đã gửi mã xác thực đến email của bạn. Vui lòng nhập mã bên dưới.
-        </p>
+    <div className="flex flex-col gap-8">
+      {/* Header */}
+      <div className="flex flex-col gap-3">
+        <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+          <span className="material-symbols-outlined text-primary text-2xl">mark_email_read</span>
+        </div>
+        <div>
+          <h2
+            className="text-3xl font-extrabold tracking-tight text-on-surface"
+            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+          >
+            Verify Email
+          </h2>
+          <p className="mt-2 text-sm text-on-surface-variant leading-relaxed">
+            We sent a verification code to your email. Please enter the 6-digit code below.
+          </p>
+        </div>
       </div>
 
-      {/* OTP hint visual */}
-      <div className="flex items-center gap-2 px-4 py-3 bg-surface-container rounded-xl border border-outline-variant/30">
-        <span className="material-symbols-outlined text-primary text-lg">mark_email_read</span>
-        <span className="text-sm text-on-surface-variant">Kiểm tra hộp thư đến của bạn</span>
+      {/* OTP hint */}
+      <div className="flex items-center gap-3 px-4 py-3 bg-surface-container-low rounded-xl border border-outline-variant/20">
+        <span className="material-symbols-outlined text-primary text-lg">inbox</span>
+        <span className="text-sm text-on-surface-variant">Check your inbox for the code</span>
       </div>
 
       <form
-        className="flex flex-col gap-4"
+        className="flex flex-col gap-5"
         onSubmit={handleSubmit((data) => confirm.mutate(data))}
       >
         <Input
-          label="Mã xác thực"
+          label="Verification Code"
           maxLength={6}
-          placeholder="Nhập mã 6 chữ số"
+          placeholder="Enter 6-digit code"
           errorMessage={errors.code?.message}
           {...register('code')}
         />
 
         <Button type="submit" fullWidth isLoading={confirm.isPending}>
-          Xác nhận
+          Verify Email
         </Button>
       </form>
     </div>

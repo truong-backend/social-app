@@ -39,19 +39,21 @@ export const PostDetailPage = () => {
       {/* Back button */}
       <Link
         to="/feed"
-        className="flex items-center gap-2 text-on-surface-variant hover:text-on-surface transition-colors w-fit"
+        className="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors w-fit group"
       >
-        <span className="material-symbols-outlined text-lg">arrow_back</span>
-        <span className="text-sm font-medium">Quay lại</span>
+        <span className="material-symbols-outlined text-lg group-hover:-translate-x-0.5 transition-transform">arrow_back</span>
+        <span className="text-sm font-semibold">Back to Feed</span>
       </Link>
 
       <PostCard post={post} currentUserId={currentUserId} />
 
       {/* Divider */}
       <div className="flex items-center gap-4">
-        <div className="flex-1 h-px bg-outline-variant/30" />
-        <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Bình luận</span>
-        <div className="flex-1 h-px bg-outline-variant/30" />
+        <div className="flex-1 h-px bg-outline-variant/20" />
+        <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">
+          Comments
+        </span>
+        <div className="flex-1 h-px bg-outline-variant/20" />
       </div>
 
       <CommentList postId={post.id} />

@@ -12,7 +12,11 @@ import { extractErrorMessage } from '@utils/api-response'
 
 const useInvalidateMyProfile = () => {
   const queryClient = useQueryClient()
-  return () => queryClient.invalidateQueries({ queryKey: USER_QUERY_KEYS.myProfile() })
+  return () => {
+    // Invalidate tất cả queries liên quan đến user
+    queryClient.invalidateQueries({ queryKey: USER_QUERY_KEYS.myProfile() })
+    queryClient.invalidateQueries({ queryKey: USER_QUERY_KEYS.all })
+  }
 }
 
 export const useChangeName = () => {
@@ -52,10 +56,15 @@ export const useChangeBio = () => {
 }
 
 export const useUpdateProfilePicture = () => {
-  const invalidate = useInvalidateMyProfile()
+  const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (file: File) => updateProfilePictureApi(file),
-    onSuccess: () => { toast.success('Đã cập nhật ảnh đại diện'); invalidate() },
+    onSuccess: () => {
+      toast.success('Đã cập nhật ảnh đại diện')
+      // Invalidate tất cả - bao gồm myProfile, profile cá nhân, và feed (vì avatar hiện trong bài viết)
+      queryClient.invalidateQueries({ queryKey: USER_QUERY_KEYS.myProfile() })
+      queryClient.invalidateQueries({ queryKey: USER_QUERY_KEYS.all })
+    },
     onError: (error) => toast.error(extractErrorMessage(error)),
   })
 }

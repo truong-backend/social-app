@@ -27,36 +27,39 @@ export const SharePostModal = ({ originalPostId, onClose }: SharePostModalProps)
   })
 
   return (
-    // faux overlay — dùng div thường để không vỡ layout
-    <div
-      style={{
-        marginTop: 12,
-        padding: 16,
-        border: '1px solid var(--color-border-secondary)',
-        borderRadius: 8,
-        background: 'var(--color-background-secondary)',
-      }}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-        <span style={{ fontWeight: 500 }}>Chia sẻ bài viết</span>
-        <button onClick={onClose} aria-label="Đóng" style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-          ✕
+    <div className="mt-3 p-4 bg-surface-container-lowest rounded-xl border border-outline-variant/15 shadow-sm">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3">
+        <span
+          className="font-bold text-on-surface text-sm"
+          style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+        >
+          Share Post
+        </span>
+        <button
+          onClick={onClose}
+          aria-label="Đóng"
+          className="p-1.5 hover:bg-surface-container-high rounded-lg text-on-surface-variant transition-colors"
+        >
+          <span className="material-symbols-outlined text-sm">close</span>
         </button>
       </div>
 
+      {/* Textarea */}
       <textarea
         placeholder="Nói gì đó về bài viết này..."
         value={content}
         onChange={(e) => setContent(e.target.value)}
         rows={3}
-        style={{ width: '100%', boxSizing: 'border-box', marginBottom: 8, padding: 8, borderRadius: 6, border: '1px solid var(--color-border-tertiary)', background: 'var(--color-background-primary)', color: 'var(--color-text-primary)', resize: 'vertical' }}
+        className="w-full px-4 py-3 bg-surface-container-low border-none rounded-xl text-sm text-on-surface placeholder:text-on-surface-variant/60 focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none mb-3"
       />
 
-      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+      {/* Actions */}
+      <div className="flex items-center gap-3 justify-end">
         <select
           value={privacy}
           onChange={(e) => setPrivacy(e.target.value as Privacy)}
-          style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid var(--color-border-tertiary)', background: 'var(--color-background-primary)', color: 'var(--color-text-primary)' }}
+          className="px-3 py-2 rounded-xl bg-surface-container-low border-none text-sm text-on-surface focus:ring-2 focus:ring-primary/20 outline-none"
         >
           <option value="PUBLIC">Công khai</option>
           <option value="FRIENDS">Bạn bè</option>
@@ -66,9 +69,9 @@ export const SharePostModal = ({ originalPostId, onClose }: SharePostModalProps)
         <button
           onClick={() => share.mutate()}
           disabled={share.isPending}
-          style={{ padding: '6px 16px', borderRadius: 6, background: 'var(--color-background-info)', color: 'var(--color-text-info)', border: 'none', cursor: share.isPending ? 'not-allowed' : 'pointer', fontWeight: 500 }}
+          className="px-5 py-2 bg-gradient-to-r from-primary to-primary-container text-on-primary text-sm font-bold rounded-xl shadow-md active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none"
         >
-          {share.isPending ? 'Đang chia sẻ...' : 'Chia sẻ'}
+          {share.isPending ? 'Đang chia sẻ...' : 'Share'}
         </button>
       </div>
     </div>

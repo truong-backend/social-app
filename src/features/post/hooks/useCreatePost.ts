@@ -13,6 +13,8 @@ export const useCreatePost = () => {
       createPostApi(payload, files),
 
     onSuccess: () => {
+      // invalidateQueries sẽ trigger refetch ngay lập tức cho infinite feed
+      // (resetQueries cũ làm mất dữ liệu cũ trước khi fetch xong, gây flash trắng)
       queryClient.invalidateQueries({ queryKey: POST_QUERY_KEYS.feed() })
       toast.success('Đăng bài thành công')
     },

@@ -34,9 +34,9 @@ const newPasswordSchema = z
   })
 
 const STEP_META: Record<Step, { icon: string; title: string; subtitle: string }> = {
-  'request-code': { icon: 'lock_reset',      title: 'Đặt lại mật khẩu',    subtitle: 'Nhập email để nhận mã xác thực' },
-  'confirm-code': { icon: 'mark_email_read', title: 'Nhập mã xác thực',    subtitle: 'Kiểm tra hộp thư đến của bạn' },
-  'new-password': { icon: 'key',             title: 'Mật khẩu mới',        subtitle: 'Tạo mật khẩu mạnh cho tài khoản' },
+  'request-code': { icon: 'lock_reset',      title: 'Reset Password',         subtitle: 'Enter your email to receive a verification code' },
+  'confirm-code': { icon: 'mark_email_read', title: 'Enter Code',             subtitle: 'Check your inbox for the code' },
+  'new-password': { icon: 'key',             title: 'New Password',           subtitle: 'Create a strong password for your account' },
 }
 
 export const ResetPasswordPage = () => {
@@ -46,7 +46,7 @@ export const ResetPasswordPage = () => {
 
   const requestCode = useMutation({
     mutationFn: prepareResetPasswordApi,
-    onSuccess:  () => { toast.success('Đã gửi mã xác thực'); setStep('confirm-code') },
+    onSuccess:  () => { toast.success('Verification code sent'); setStep('confirm-code') },
     onError:    (err) => toast.error(extractErrorMessage(err)),
   })
   const confirmCode = useMutation({
@@ -56,7 +56,7 @@ export const ResetPasswordPage = () => {
   })
   const updatePassword = useMutation({
     mutationFn: updatePasswordApi,
-    onSuccess:  () => { toast.success('Đổi mật khẩu thành công'); navigate('/login') },
+    onSuccess:  () => { toast.success('Password updated successfully'); navigate('/login') },
     onError:    (err) => toast.error(extractErrorMessage(err)),
   })
 
@@ -64,83 +64,97 @@ export const ResetPasswordPage = () => {
   const codeForm     = useForm<z.infer<typeof codeSchema>>({ resolver: zodResolver(codeSchema) })
   const passwordForm = useForm<z.infer<typeof newPasswordSchema>>({ resolver: zodResolver(newPasswordSchema) })
 
-  /* Step indicator */
   const steps: Step[] = ['request-code', 'confirm-code', 'new-password']
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       {/* Header */}
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-3">
         <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
           <span className="material-symbols-outlined text-primary text-2xl">{meta.icon}</span>
         </div>
-        <h2
-          className="text-3xl font-extrabold tracking-tight text-on-surface"
-          style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-        >
-          {meta.title}
-        </h2>
-        <p className="text-sm text-on-surface-variant">{meta.subtitle}</p>
+        <div>
+          <h2
+            className="text-3xl font-extrabold tracking-tight text-on-surface"
+            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+          >
+            {meta.title}
+          </h2>
+          <p className="mt-1 text-sm text-on-surface-variant">{meta.subtitle}</p>
+        </div>
       </div>
 
-      {/* Step dots */}
+      {/* Step progress bar */}
       <div className="flex gap-2">
         {steps.map((s) => (
           <div
             key={s}
             className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
-              s === step ? 'bg-primary' : steps.indexOf(s) < steps.indexOf(step) ? 'bg-primary/40' : 'bg-surface-container-high'
+              s === step
+                ? 'bg-primary'
+                : steps.indexOf(s) < steps.indexOf(step)
+                ? 'bg-primary/40'
+                : 'bg-surface-container-high'
             }`}
           />
         ))}
       </div>
 
-      {/* Forms */}
+      {/* Step: Request Code */}
       {step === 'request-code' && (
-        <form className="flex flex-col gap-4" onSubmit={emailForm.handleSubmit((d) => requestCode.mutate(d))}>
+        <form className="flex flex-col gap-5" onSubmit={emailForm.handleSubmit((d) => requestCode.mutate(d))}>
           <Input
-            label="Email tài khoản"
+            label="Email Address"
             type="email"
+            placeholder="Enter your email"
             errorMessage={emailForm.formState.errors.email?.message}
             {...emailForm.register('email')}
           />
           <Button type="submit" fullWidth isLoading={requestCode.isPending}>
-            Gửi mã xác thực
+            Send Verification Code
           </Button>
         </form>
       )}
 
+      {/* Step: Confirm Code */}
       {step === 'confirm-code' && (
-        <form className="flex flex-col gap-4" onSubmit={codeForm.handleSubmit((d) => confirmCode.mutate(d))}>
+        <form className="flex flex-col gap-5" onSubmit={codeForm.handleSubmit((d) => confirmCode.mutate(d))}>
+          <div className="flex items-center gap-3 px-4 py-3 bg-surface-container-low rounded-xl border border-outline-variant/20">
+            <span className="material-symbols-outlined text-primary text-lg">inbox</span>
+            <span className="text-sm text-on-surface-variant">Check your inbox for the 6-digit code</span>
+          </div>
           <Input
-            label="Mã xác thực"
+            label="Verification Code"
             maxLength={6}
-            placeholder="6 chữ số"
+            placeholder="6-digit code"
             errorMessage={codeForm.formState.errors.code?.message}
             {...codeForm.register('code')}
           />
           <Button type="submit" fullWidth isLoading={confirmCode.isPending}>
-            Xác nhận
+            Verify Code
           </Button>
         </form>
       )}
 
+      {/* Step: New Password */}
       {step === 'new-password' && (
-        <form className="flex flex-col gap-4" onSubmit={passwordForm.handleSubmit((d) => updatePassword.mutate(d))}>
+        <form className="flex flex-col gap-5" onSubmit={passwordForm.handleSubmit((d) => updatePassword.mutate(d))}>
           <Input
-            label="Mật khẩu mới"
+            label="New Password"
             type="password"
+            placeholder="••••••••"
             errorMessage={passwordForm.formState.errors.newPassword?.message}
             {...passwordForm.register('newPassword')}
           />
           <Input
-            label="Xác nhận mật khẩu"
+            label="Confirm Password"
             type="password"
+            placeholder="••••••••"
             errorMessage={passwordForm.formState.errors.confirmPassword?.message}
             {...passwordForm.register('confirmPassword')}
           />
           <Button type="submit" fullWidth isLoading={updatePassword.isPending}>
-            Cập nhật mật khẩu
+            Update Password
           </Button>
         </form>
       )}

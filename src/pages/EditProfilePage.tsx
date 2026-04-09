@@ -12,7 +12,7 @@ import { Input } from '@components/ui/Input'
 import { Textarea } from '@components/ui/Textarea'
 import { Button } from '@components/ui/Button'
 import { Spinner } from '@components/feedback/Spinner'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 
 const editProfileSchema = z.object({
   familyName: z.string().min(1, 'Vui lòng nhập họ'),
@@ -25,7 +25,8 @@ type EditProfileFormValues = z.infer<typeof editProfileSchema>
 
 export const EditProfilePage = () => {
   const { data: profile, isLoading } = useMyProfile()
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef  = useRef<HTMLInputElement>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
   const changeName     = useChangeName()
   const changeUsername = useChangeUsername()
@@ -54,6 +55,17 @@ export const EditProfilePage = () => {
     }
   }
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    // Preview ngay lập tức
+    const url = URL.createObjectURL(file)
+    setPreviewUrl(url)
+    updatePicture.mutate(file, {
+      onError: () => setPreviewUrl(null),
+    })
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -63,6 +75,7 @@ export const EditProfilePage = () => {
   }
 
   const isSaving = changeName.isPending || changeUsername.isPending || changeBio.isPending
+  const currentAvatarUrl = previewUrl ?? profile?.profilePictureUrl ?? null
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 pb-24 md:pb-8 flex flex-col gap-8">
@@ -72,28 +85,45 @@ export const EditProfilePage = () => {
           className="text-3xl font-extrabold tracking-tight text-on-surface"
           style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
         >
-          Chỉnh sửa trang cá nhân
+          Chỉnh sửa hồ sơ
         </h1>
-        <p className="mt-1 text-sm text-on-surface-variant">Cập nhật thông tin của bạn</p>
+        <p className="mt-1 text-sm text-on-surface-variant">Cập nhật thông tin cá nhân của bạn</p>
       </div>
 
       {/* Avatar section */}
-      <div className="flex items-center gap-6 p-6 bg-surface-container-low rounded-2xl">
+      <div className="flex items-center gap-6 p-6 bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/10">
         <div className="relative flex-shrink-0">
-          <img
-            src={profile?.profilePictureUrl ?? '/default-avatar.png'}
-            alt={profile?.username}
-            className="w-24 h-24 rounded-full object-cover border-4 border-surface shadow-lg"
-          />
+          {currentAvatarUrl ? (
+            <img
+              src={currentAvatarUrl}
+              alt={profile?.username}
+              className="w-24 h-24 rounded-full object-cover border-4 border-surface shadow-lg"
+            />
+          ) : (
+            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-primary-container text-on-primary flex items-center justify-center text-3xl font-bold border-4 border-surface shadow-lg">
+              {profile?.username?.charAt(0).toUpperCase()}
+            </div>
+          )}
           {updatePicture.isPending && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full">
               <Spinner size="sm" />
             </div>
           )}
+          {/* Overlay click to change */}
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/30 rounded-full transition-colors group"
+          >
+            <span className="material-symbols-outlined text-white opacity-0 group-hover:opacity-100 transition-opacity">
+              photo_camera
+            </span>
+          </button>
         </div>
+
         <div className="flex flex-col gap-2">
           <p className="font-bold text-on-surface">Ảnh đại diện</p>
-          <p className="text-xs text-on-surface-variant">JPG, PNG tối đa 5MB</p>
+          <p className="text-xs text-on-surface-variant">JPG, PNG — tối đa 5MB</p>
           <Button
             variant="secondary"
             size="sm"
@@ -101,18 +131,22 @@ export const EditProfilePage = () => {
             onClick={() => fileInputRef.current?.click()}
           >
             <span className="material-symbols-outlined text-sm mr-1">photo_camera</span>
-            Đổi ảnh
+            Thay ảnh đại diện
           </Button>
+          {updatePicture.isSuccess && !updatePicture.isPending && (
+            <p className="text-xs text-green-600 font-medium flex items-center gap-1">
+              <span className="material-symbols-outlined text-sm">check_circle</span>
+              Đã cập nhật ảnh đại diện
+            </p>
+          )}
         </div>
+
         <input
           ref={fileInputRef}
           type="file"
           accept="image/*"
           className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0]
-            if (file) updatePicture.mutate(file)
-          }}
+          onChange={handleFileChange}
         />
       </div>
 
@@ -139,9 +173,9 @@ export const EditProfilePage = () => {
         />
 
         <Textarea
-          label="Tiểu sử"
+          label="Bio"
           rows={3}
-          placeholder="Giới thiệu bản thân..."
+          placeholder="Giới thiệu về bản thân..."
           errorMessage={errors.bio?.message}
           {...register('bio')}
         />

@@ -16,17 +16,17 @@ export const MessageBubble = ({
 }: MessageBubbleProps) => {
   return (
     <div
-      className={`group flex items-end gap-2 ${
-        isOwnMessage ? 'flex-row-reverse' : 'flex-row'
+      className={`group flex items-end gap-3 max-w-[80%] ${
+        isOwnMessage ? 'flex-row-reverse ml-auto' : 'flex-row'
       }`}
     >
       {/* Bubble */}
-      <div className={`flex flex-col gap-1 max-w-[80%] ${isOwnMessage ? 'items-end' : 'items-start'}`}>
+      <div className={`flex flex-col gap-1 ${isOwnMessage ? 'items-end' : 'items-start'}`}>
         <div
           className={`px-4 py-3 rounded-2xl shadow-sm ${
             isOwnMessage
-              ? 'bg-gradient-to-br from-primary to-primary-container text-on-primary rounded-br-none shadow-primary/10'
-              : 'bg-surface-container-lowest text-on-surface rounded-bl-none shadow-[0_4px_12px_rgba(48,41,80,0.06)]'
+              ? 'bg-gradient-to-br from-primary to-primary-container text-white rounded-br-none shadow-md'
+              : 'bg-surface-container-high/50 text-on-surface rounded-bl-none'
           }`}
         >
           {message.content && (
@@ -49,11 +49,14 @@ export const MessageBubble = ({
 
         {/* Time + read */}
         <div className={`flex items-center gap-1 px-1 ${isOwnMessage ? 'flex-row-reverse' : ''}`}>
-          <span className="text-[11px] text-on-surface-variant">
+          <span className="text-[10px] text-slate-400">
             {formatRelativeTime(message.sentAt)}
           </span>
           {message.isRead && isOwnMessage && (
-            <span className="material-symbols-outlined text-[12px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
+            <span
+              className="material-symbols-outlined text-primary"
+              style={{ fontSize: '12px', fontVariationSettings: "'FILL' 1" }}
+            >
               done_all
             </span>
           )}

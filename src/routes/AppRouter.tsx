@@ -6,23 +6,23 @@ import { ProtectedRoute } from './ProtectedRoute'
 import { AdminRoute } from './AdminRoute'
 import { Spinner } from '@components/feedback/Spinner'
 
-// ── Lazy pages ─────────────────────────────────────────────────────────────
-const FeedPage          = lazy(() => import('@pages/FeedPage').then((m) => ({ default: m.FeedPage })))
-const LoginPage         = lazy(() => import('@pages/LoginPage').then((m) => ({ default: m.LoginPage })))
-const RegisterPage      = lazy(() => import('@pages/RegisterPage').then((m) => ({ default: m.RegisterPage })))
-const ConfirmEmailPage  = lazy(() => import('@pages/ConfirmEmailPage').then((m) => ({ default: m.ConfirmEmailPage })))
-const ResetPasswordPage = lazy(() => import('@pages/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage })))
-const ProfilePage       = lazy(() => import('@pages/ProfilePage').then((m) => ({ default: m.ProfilePage })))
-const EditProfilePage   = lazy(() => import('@pages/EditProfilePage').then((m) => ({ default: m.EditProfilePage })))
-const PostDetailPage    = lazy(() => import('@pages/PostDetailPage').then((m) => ({ default: m.PostDetailPage })))
-const MessagesPage      = lazy(() => import('@pages/MessagesPage').then((m) => ({ default: m.MessagesPage })))
-const FriendsPage       = lazy(() => import('@pages/FriendsPage').then((m) => ({ default: m.FriendsPage })))
-const SearchPage        = lazy(() => import('@pages/SearchPage').then((m) => ({ default: m.SearchPage })))
-const NotFoundPage      = lazy(() => import('@pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })))
-const AdminPage         = lazy(() => import('@pages/AdminPage').then((m) => ({ default: m.AdminPage })))
+const FeedPage           = lazy(() => import('@pages/FeedPage').then((m) => ({ default: m.FeedPage })))
+const LoginPage          = lazy(() => import('@pages/LoginPage').then((m) => ({ default: m.LoginPage })))
+const RegisterPage       = lazy(() => import('@pages/RegisterPage').then((m) => ({ default: m.RegisterPage })))
+const ConfirmEmailPage   = lazy(() => import('@pages/ConfirmEmailPage').then((m) => ({ default: m.ConfirmEmailPage })))
+const ResetPasswordPage  = lazy(() => import('@pages/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage })))
+const ProfilePage        = lazy(() => import('@pages/ProfilePage').then((m) => ({ default: m.ProfilePage })))
+const EditProfilePage    = lazy(() => import('@pages/EditProfilePage').then((m) => ({ default: m.EditProfilePage })))
+const PostDetailPage     = lazy(() => import('@pages/PostDetailPage').then((m) => ({ default: m.PostDetailPage })))
+const MessagesPage       = lazy(() => import('@pages/MessagesPage').then((m) => ({ default: m.MessagesPage })))
+const FriendsPage        = lazy(() => import('@pages/FriendsPage').then((m) => ({ default: m.FriendsPage })))
+const SearchPage         = lazy(() => import('@pages/SearchPage').then((m) => ({ default: m.SearchPage })))
+const NotificationsPage  = lazy(() => import('@pages/NotificationsPage').then((m) => ({ default: m.NotificationsPage })))
+const NotFoundPage       = lazy(() => import('@pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })))
+const AdminPage          = lazy(() => import('@pages/AdminPage').then((m) => ({ default: m.AdminPage })))
 
 const SuspenseFallback = () => (
-  <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
+  <div className="flex items-center justify-center py-16 min-h-[40vh]">
     <Spinner size="lg" />
   </div>
 )
@@ -32,7 +32,7 @@ const wrap = (element: React.ReactNode) => (
 )
 
 const router = createBrowserRouter([
-  // ── Auth routes ────────────────────────────────────────────────────────
+  // ── Auth routes
   {
     element: <AuthLayout />,
     children: [
@@ -43,26 +43,27 @@ const router = createBrowserRouter([
     ],
   },
 
-  // ── Protected routes ───────────────────────────────────────────────────
+  // ── Protected routes
   {
     element: <ProtectedRoute />,
     children: [
       {
         element: <MainLayout />,
         children: [
-          { index: true,               element: <Navigate to="/feed" replace /> },
-          { path: '/feed',             element: wrap(<FeedPage />) },
-          { path: '/profile/edit',     element: wrap(<EditProfilePage />) },
-          { path: '/profile/:userId',  element: wrap(<ProfilePage />) },
-          { path: '/posts/:postId',    element: wrap(<PostDetailPage />) },
-          { path: '/messages',         element: wrap(<MessagesPage />) },
-          { path: '/messages/:chatId', element: wrap(<MessagesPage />) },
-          { path: '/friends',          element: wrap(<FriendsPage />) },
-          { path: '/search',           element: wrap(<SearchPage />) },
+          { index: true,                element: <Navigate to="/feed" replace /> },
+          { path: '/feed',              element: wrap(<FeedPage />) },
+          { path: '/profile/edit',      element: wrap(<EditProfilePage />) },
+          { path: '/profile/:userId',   element: wrap(<ProfilePage />) },
+          { path: '/posts/:postId',     element: wrap(<PostDetailPage />) },
+          { path: '/messages',          element: wrap(<MessagesPage />) },
+          { path: '/messages/:chatId',  element: wrap(<MessagesPage />) },
+          { path: '/friends',           element: wrap(<FriendsPage />) },
+          { path: '/search',            element: wrap(<SearchPage />) },
+          { path: '/notifications',     element: wrap(<NotificationsPage />) },
         ],
       },
 
-      // ── Admin only ───────────────────────────────────────────────────
+      // ── Admin only
       {
         element: <AdminRoute />,
         children: [
@@ -77,7 +78,7 @@ const router = createBrowserRouter([
     ],
   },
 
-  // ── 404 ───────────────────────────────────────────────────────────────
+  // ── 404
   { path: '*', element: wrap(<NotFoundPage />) },
 ])
 

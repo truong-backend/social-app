@@ -13,10 +13,22 @@
 
 body {
   font-family: 'Inter', sans-serif;
-  background-color: #faf4ff;
-  color: #302950;
+  background-color: #f7f5ff;
+  color: #232c51;
+  -webkit-font-smoothing: antialiased;
 }
 
 h1, h2, h3 {
   font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar { width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #d5dbff; border-radius: 10px; }
+
+/* Glass nav */
+.glass-nav {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
 }

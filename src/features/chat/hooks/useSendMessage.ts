@@ -9,6 +9,7 @@ import type { Message, SendMessageRequest } from '../types/chat.types'
 export const useSendMessage = (targetUserId: string, chatId: string | null) => {
   const queryClient = useQueryClient()
   const appendMessage = useChatStore((state) => state.appendMessage)
+  const setActiveChatId = useChatStore((state) => state.setActiveChatId)
 
   return useMutation<Message, Error, { payload: SendMessageRequest; files?: File[] }>({
     mutationFn: ({ payload, files }) => sendMessageApi(targetUserId, payload, files),
@@ -16,8 +17,15 @@ export const useSendMessage = (targetUserId: string, chatId: string | null) => {
     onSuccess: (newMessage) => {
       const resolvedChatId = chatId ?? newMessage.chatId
       appendMessage(resolvedChatId, newMessage)
-      queryClient.invalidateQueries({ queryKey: CHAT_QUERY_KEYS.messages(resolvedChatId) })
+
+      // Nếu là cuộc trò chuyện mới (chưa có chatId), set active chat
+      if (!chatId && newMessage.chatId) {
+        setActiveChatId(newMessage.chatId)
+      }
+
+      // Invalidate để sidebar cập nhật danh sách chat ngay
       queryClient.invalidateQueries({ queryKey: CHAT_QUERY_KEYS.list() })
+      queryClient.invalidateQueries({ queryKey: CHAT_QUERY_KEYS.messages(resolvedChatId) })
     },
 
     onError: (error) => {

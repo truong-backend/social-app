@@ -31,7 +31,7 @@ const PERIOD_COLORS: Record<string, string> = {
 }
 
 const StatCard = ({ label, count, period }: StatEntry) => (
-  <div className="flex flex-col gap-2 p-5 bg-surface-container-low rounded-2xl hover:bg-surface-container-high transition-colors">
+  <div className="flex flex-col gap-2 p-5 bg-surface-container-lowest rounded-xl hover:shadow-md border border-outline-variant/10 transition-all hover:border-outline-variant/30">
     <p className={`text-[0.6875rem] font-bold uppercase tracking-widest ${PERIOD_COLORS[period] ?? 'text-on-surface-variant'}`}>
       {period}
     </p>
@@ -49,7 +49,7 @@ const StatSection = ({ title, entries }: { title: string; entries: StatEntry[] }
   if (!entries.length) return null
   return (
     <div className="flex flex-col gap-3">
-      <h3 className="text-sm font-bold text-on-surface-variant uppercase tracking-widest">{title}</h3>
+      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">{title}</h3>
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
         {entries.map((entry, i) => <StatCard key={i} {...entry} />)}
       </div>
@@ -68,7 +68,7 @@ const SectionBlock = ({
 }) => (
   <div className="flex flex-col gap-5">
     <div className="flex items-center gap-3">
-      <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
+      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
         <span className="material-symbols-outlined text-primary">{icon}</span>
       </div>
       <h2
@@ -81,16 +81,16 @@ const SectionBlock = ({
 
     {data ? (
       <div className="flex flex-col gap-6">
-        <StatSection title="Tổng quan"      entries={data.commonStats ?? []} />
-        <StatSection title="Tuần này"       entries={data.weekStats ?? []} />
-        <StatSection title="Tháng này"      entries={data.monthStats ?? []} />
-        <StatSection title="Năm nay"        entries={data.yearStats ?? []} />
-        <StatSection title="Toàn thời gian" entries={data.allTimeStats ?? []} />
+        <StatSection title="Overview"    entries={data.commonStats ?? []} />
+        <StatSection title="This Week"   entries={data.weekStats ?? []} />
+        <StatSection title="This Month"  entries={data.monthStats ?? []} />
+        <StatSection title="This Year"   entries={data.yearStats ?? []} />
+        <StatSection title="All Time"    entries={data.allTimeStats ?? []} />
       </div>
     ) : (
       <div className="flex items-center gap-3 px-4 py-3 bg-error/10 rounded-xl text-error text-sm font-medium">
         <span className="material-symbols-outlined text-sm">warning</span>
-        Không tải được dữ liệu
+        Failed to load data
       </div>
     )}
   </div>
@@ -122,24 +122,29 @@ export const AdminPage = () => {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 pb-24 md:pb-8 flex flex-col gap-10">
+    <div className="max-w-5xl mx-auto px-4 md:px-8 py-8 pb-24 md:pb-8 flex flex-col gap-10">
       {/* Header */}
-      <div>
-        <h1
-          className="text-4xl font-extrabold tracking-tight text-on-surface"
-          style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-        >
-          Thống kê hệ thống
-        </h1>
-        <p className="mt-1 text-on-surface-variant text-sm">Tổng quan hoạt động của nền tảng</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1
+            className="text-4xl font-extrabold tracking-tight text-on-surface"
+            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+          >
+            System Stats
+          </h1>
+          <p className="mt-1 text-on-surface-variant text-sm">Platform activity overview</p>
+        </div>
+        <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-xl text-sm font-bold">
+          <span className="material-symbols-outlined text-sm">admin_panel_settings</span>
+          Admin Panel
+        </div>
       </div>
 
-      {/* Divider */}
-      <div className="h-px bg-outline-variant/30" />
-
-      <SectionBlock title="Người dùng" icon="group"   data={userStats.data} />
       <div className="h-px bg-outline-variant/20" />
-      <SectionBlock title="Bài viết"   icon="article" data={postStats.data} />
+
+      <SectionBlock title="Users"  icon="group"   data={userStats.data} />
+      <div className="h-px bg-outline-variant/15" />
+      <SectionBlock title="Posts"  icon="article" data={postStats.data} />
     </div>
   )
 }

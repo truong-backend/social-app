@@ -16,31 +16,31 @@ const SIZE_CLASSES = {
 }
 
 export const Avatar = ({ src, alt, size = 'md', className }: AvatarProps) => {
-  if (!src) {
+  if (src) {
     return (
-      <div
+      <img
+        src={src}
+        alt={alt}
         className={clsx(
-          'rounded-full flex items-center justify-center font-bold',
-          'bg-gradient-to-br from-primary to-primary-container text-on-primary',
+          'rounded-full object-cover',
           SIZE_CLASSES[size],
           className,
         )}
-        aria-label={alt}
-      >
-        {alt.charAt(0).toUpperCase()}
-      </div>
+      />
     )
   }
 
   return (
-    <img
-      src={src}
-      alt={alt}
+    <div
       className={clsx(
-        'rounded-full object-cover',
+        'rounded-full flex items-center justify-center font-bold',
+        'bg-gradient-to-br from-primary to-primary-container text-on-primary',
         SIZE_CLASSES[size],
         className,
       )}
-    />
+      aria-label={alt}
+    >
+      {alt.charAt(0).toUpperCase()}
+    </div>
   )
 }
