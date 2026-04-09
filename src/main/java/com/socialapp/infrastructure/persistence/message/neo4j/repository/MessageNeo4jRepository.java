@@ -3,6 +3,7 @@ package com.socialapp.infrastructure.persistence.message.neo4j.repository;
 import com.socialapp.infrastructure.persistence.message.neo4j.node.MessageNode;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.data.neo4j.repository.query.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -63,4 +64,29 @@ public interface MessageNeo4jRepository extends Neo4jRepository<MessageNode, Str
            MERGE (m)-[:ATTACH_FILE]->(f)
            """)
     void linkMessageAttachFile(String messageId, String filePath);
+
+    @Query("MATCH (m:MessageNode {chatId: $chatId}) " +
+            "WHERE m.deletedForEveryoneAt IS NULL " +
+            "RETURN m ORDER BY m.sentAt DESC SKIP $skip LIMIT $limit")
+    List<MessageNode> findByChatIdOrderBySentAtDesc(
+            @Param("chatId") String chatId,
+            @Param("skip")   int skip,
+            @Param("limit")  int limit);
+
+    @Query("MATCH (m:MessageNode {chatId: $chatId}) " +
+            "WHERE m.senderId <> $readerId AND m.isRead = false " +
+            "  AND m.deletedForEveryoneAt IS NULL " +
+            "SET m.isRead = true")
+    void markChatMessagesAsRead(
+            @Param("chatId")   String chatId,
+            @Param("readerId") String readerId);
+
+    @Query("MATCH (m:MessageNode {chatId: $chatId}) " +
+            "WHERE m.senderId <> $userId AND m.isRead = false " +
+            "  AND m.deletedForEveryoneAt IS NULL " +
+            "RETURN count(m)")
+    long countUnreadByChatId(
+            @Param("chatId") String chatId,
+            @Param("userId") String userId);
+
 }

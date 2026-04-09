@@ -14,4 +14,8 @@ public interface MessageRepository {
     Message save(Message message);
 
     void deleteById(String id);
+
+
+    void markChatMessagesAsRead(String chatId, String readerId);
+    long countUnreadByChatId(String chatId, String userId);
 }

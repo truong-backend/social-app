@@ -29,6 +29,7 @@ public class MessageController {
     private final GetChatUseCase       getChatUseCase;
     private final SearchChatUseCase    searchChatUseCase;
     private final AccountRepository    accountRepository;
+    private final MarkMessagesReadUseCase markMessagesReadUseCase;
 
     private String resolveUserId() {
         return accountRepository.findById(SecurityUtil.currentAccountId())
@@ -86,5 +87,12 @@ public class MessageController {
             @Valid @RequestBody DeleteMessageRequest request) {
         var res = deleteMessageUseCase.execute(resolveUserId(), messageId, request);
         return ApiResponse.ok(res.message());
+    }
+
+    /** PATCH /api/messages/chats/{chatId}/read — đánh dấu đã xem */
+    @PatchMapping("/chats/{chatId}/read")
+    public ApiResponse<Void> markRead(@PathVariable String chatId) {
+        markMessagesReadUseCase.execute(resolveUserId(), chatId);
+        return ApiResponse.ok("Messages marked as read");
     }
 }

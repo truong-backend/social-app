@@ -122,6 +122,9 @@ public class Message {
     public String getContent()                   { return content; }
     public List<String> getAttachedFilePaths()   { return Collections.unmodifiableList(attachedFilePaths); }
     public boolean isRead()                      { return isRead; }
+    public void markRead() {
+        this.isRead = true;
+    }
     public LocalDateTime getDeletedForEveryoneAt(){ return deletedForEveryoneAt; }
     public LocalDateTime getDeletedForSenderAt() { return deletedForSenderAt; }
     public LocalDateTime getSentAt()             { return sentAt; }

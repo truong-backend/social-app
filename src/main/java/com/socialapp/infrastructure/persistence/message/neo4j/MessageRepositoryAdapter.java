@@ -13,7 +13,7 @@ import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
-class MessageRepositoryAdapter implements MessageRepository {
+public class MessageRepositoryAdapter implements MessageRepository {
 
     private final MessageNeo4jRepository neo4j;
     private final MessageMapper          mapper;
@@ -66,5 +66,31 @@ class MessageRepositoryAdapter implements MessageRepository {
     @Override
     public void deleteById(String id) {
         neo4j.deleteById(id);
+    }
+
+//    @Override
+//    public Message save(Message message) {
+//        return mapper.toDomain(neo4j.save(mapper.toNode(message)));
+//    }
+
+//    @Override
+//    public Optional<Message> findById(String id) {
+//        return neo4j.findById(id).map(mapper::toDomain);
+//    }
+
+//    @Override
+//    public List<Message> findByChatId(String chatId, int skip, int limit) {
+//        return neo4j.findByChatIdOrderBySentAtDesc(chatId, skip, limit)
+//                .stream().map(mapper::toDomain).toList();
+//    }
+
+    @Override
+    public void markChatMessagesAsRead(String chatId, String readerId) {
+        neo4j.markChatMessagesAsRead(chatId, readerId);
+    }
+
+    @Override
+    public long countUnreadByChatId(String chatId, String userId) {
+        return neo4j.countUnreadByChatId(chatId, userId);
     }
 }
