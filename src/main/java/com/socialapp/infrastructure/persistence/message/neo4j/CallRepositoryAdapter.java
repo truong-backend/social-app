@@ -12,7 +12,7 @@ import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
-class CallRepositoryAdapter implements CallRepository {
+public class CallRepositoryAdapter implements CallRepository {
 
     private final CallNeo4jRepository neo4j;
     private final CallMapper mapper;
@@ -38,4 +38,23 @@ class CallRepositoryAdapter implements CallRepository {
 
         return mapper.toDomain(saved, call.getSenderId(), call.getChatId());
     }
+
+//    @Override
+//    public Call save(Call call) {
+//        return mapper.toDomain(neo4j.save(mapper.toNode(call)));
+//    }
+
+//    @Override
+//    public Optional<Call> findByCallId(String callId) {
+//        return neo4j.findByCallId(callId).map(mapper::toDomain);
+//    }
+
+    @Override
+    public Optional<Call> findActiveCallByChatId(String chatId) {
+        return neo4j.findActiveCallByChatId(chatId).map(node -> {
+            String senderId = neo4j.findSenderIdByCallId(node.getId());
+            return mapper.toDomain(node, senderId, chatId);
+        });
+    }
+
 }

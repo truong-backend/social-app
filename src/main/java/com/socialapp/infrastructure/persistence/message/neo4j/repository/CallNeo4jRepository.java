@@ -3,6 +3,7 @@ package com.socialapp.infrastructure.persistence.message.neo4j.repository;
 import com.socialapp.infrastructure.persistence.message.neo4j.node.CallNode;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.data.neo4j.repository.query.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -10,7 +11,7 @@ import java.util.Optional;
 @Repository
 public interface CallNeo4jRepository extends Neo4jRepository<CallNode, String> {
 
-    Optional<CallNode> findByCallId(String callId);
+//    Optional<CallNode> findByCallId(String callId);
 
     // Lấy senderId qua (User)-[:SENT]→(Call)
     @Query("""
@@ -39,4 +40,10 @@ public interface CallNeo4jRepository extends Neo4jRepository<CallNode, String> {
            MERGE (u)-[:SENT]->(c)
            """)
     void linkUserSentCall(String senderId, String callId);
+
+    @Query("MATCH (c:CallNode {callId: $callId}) RETURN c")
+    Optional<CallNode> findByCallId(@Param("callId") String callId);
+
+    @Query("MATCH (c:CallNode {chatId: $chatId}) WHERE c.endAt IS NULL RETURN c LIMIT 1")
+    Optional<CallNode> findActiveCallByChatId(@Param("chatId") String chatId);
 }

@@ -8,4 +8,5 @@ package com.socialapp.application.shared.port;
 public interface RealtimePublisher {
     void publishToUser(String userId, String eventType, Object payload);
     void publishToChat(String chatId, String eventType, Object payload);
+    void publish(String destination, Object payload);
 }

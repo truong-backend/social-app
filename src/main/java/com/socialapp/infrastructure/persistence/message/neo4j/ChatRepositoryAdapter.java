@@ -66,4 +66,9 @@ class ChatRepositoryAdapter implements ChatRepository {
 
         return mapper.toDomain(saved, chat.getMemberIds());
     }
+
+    @Override
+    public Optional<Chat> findDirectChat(String userId1, String userId2) {
+        return Optional.empty();
+    }
 }

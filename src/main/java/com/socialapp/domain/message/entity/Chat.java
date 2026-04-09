@@ -45,7 +45,17 @@ public class Chat {
             throw new MessageDomainException("User is not a member of this chat");
     }
 
+    public String getOtherMember(String userId) {
+        return memberIds.stream()
+                .filter(id -> !id.equals(userId))
+                .findFirst()
+                .orElseThrow(() -> new com.socialapp.domain.message.exception.MessageDomainException(
+                        "No other member found"));
+    }
+
     public String getId()                    { return id; }
     public List<String> getMemberIds()       { return Collections.unmodifiableList(memberIds); }
     public LocalDateTime getCreatedAt()      { return createdAt; }
+
+
 }

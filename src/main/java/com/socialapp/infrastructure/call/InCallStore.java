@@ -98,4 +98,15 @@ public class InCallStore {
             endCall(callId);
         }
     }
+
+    // Trong InCallStore
+    public void put(String userId, String callId) {
+        inCallMap.put(userId, callId);
+    }
+
+    public void remove(String userId) {
+        inCallMap.remove(userId);
+    }
+
+
 }

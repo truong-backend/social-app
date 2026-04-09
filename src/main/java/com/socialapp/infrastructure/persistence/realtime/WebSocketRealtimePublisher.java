@@ -27,4 +27,9 @@ public class WebSocketRealtimePublisher implements RealtimePublisher {
                 payload
         );
     }
+
+    @Override
+    public void publish(String destination, Object payload) {
+
+    }
 }

@@ -17,4 +17,7 @@ public interface ChatRepository {
     List<Chat> searchByUserId(String query, String userId);
 
     Chat save(Chat chat);
+
+
+    Optional<Chat> findDirectChat(String userId1, String userId2);
 }
