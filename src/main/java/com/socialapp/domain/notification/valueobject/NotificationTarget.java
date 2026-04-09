@@ -11,7 +11,7 @@ public final class NotificationTarget {
     private final NotificationTargetType type;
     private final String targetId;
 
-    private NotificationTarget(NotificationTargetType type, String targetId) {
+    public NotificationTarget(NotificationTargetType type, String targetId) {
         if (type == null)
             throw new IllegalArgumentException("NotificationTargetType must not be null");
         if (targetId == null || targetId.isBlank())

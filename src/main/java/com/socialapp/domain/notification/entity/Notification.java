@@ -63,6 +63,7 @@ public class Notification {
         );
     }
 
+    // Thêm factory method reconstitute (nếu chưa có):
     public static Notification reconstitute(String id, String ownerId, String byUserId,
                                             NotificationAction action, NotificationTarget target,
                                             boolean isRead, LocalDateTime sentAt) {
@@ -79,12 +80,12 @@ public class Notification {
 
     // ── Getters ───────────────────────────────────────────────
 
-    public String getId()                   { return id; }
-    public String getOwnerId()              { return ownerId; }
-    public String getByUserId()             { return byUserId; }
-    public NotificationAction getAction()   { return action; }
-    public NotificationTarget getTarget()   { return target; }
+    public String getId()                      { return id; }
+    public String getOwnerId()                 { return ownerId; }
+    public String getByUserId()                { return byUserId; }
+    public NotificationAction getAction()      { return action; }
+    public NotificationTarget getTarget()      { return target; }
+    public boolean isRead()                    { return isRead; }
+    public LocalDateTime getSentAt()           { return sentAt; }
 
-    public boolean isRead()                 { return isRead; }
-    public LocalDateTime getSentAt()        { return sentAt; }
 }

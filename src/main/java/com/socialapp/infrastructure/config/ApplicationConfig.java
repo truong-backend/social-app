@@ -481,9 +481,9 @@ public class ApplicationConfig {
 
     // ==================== NOTIFICATION USE CASES ====================
 
-    @Bean
-    public GetNotificationsUseCase getNotificationsUseCase(
-            NotificationRepository notificationRepository) {
-        return new GetNotificationsUseCase(notificationRepository);
-    }
+//    @Bean
+//    public GetNotificationsUseCase getNotificationsUseCase(
+//            NotificationRepository notificationRepository) {
+//        return new GetNotificationsUseCase(notificationRepository);
+//    }
 }

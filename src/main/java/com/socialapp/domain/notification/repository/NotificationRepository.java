@@ -6,14 +6,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface NotificationRepository {
-
-    Optional<Notification> findById(String id);
-
+    void save(Notification notification);
     List<Notification> findByOwnerId(String ownerId, int skip, int limit);
-
-    long countUnreadByOwnerId(String ownerId);
-
-    Notification save(Notification notification);
-
+    Optional<Notification> findById(String id);
+    void markAsRead(String notificationId);
+    void markAllAsRead(String ownerId);
     void deleteById(String id);
+    long countUnread(String ownerId);
 }
