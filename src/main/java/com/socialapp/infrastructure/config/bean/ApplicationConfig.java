@@ -1,5 +1,6 @@
 package com.socialapp.infrastructure.config.bean;
 
+import com.socialapp.application.account.usecase.ChangeEmailUseCase;
 import com.socialapp.application.account.usecase.Register.ConfirmEmailUseCase;
 import com.socialapp.application.account.usecase.Register.RegisterUseCase;
 import com.socialapp.application.account.usecase.login.*;
@@ -486,4 +487,9 @@ public class ApplicationConfig {
 //            NotificationRepository notificationRepository) {
 //        return new GetNotificationsUseCase(notificationRepository);
 //    }
+@Bean
+public ChangeEmailUseCase changeEmailUseCase(
+        AccountRepository    accountRepository, AccountDomainService accountDomainService) {
+    return new ChangeEmailUseCase(accountRepository, accountDomainService);
+}
 }

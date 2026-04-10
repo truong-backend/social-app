@@ -87,6 +87,11 @@ public class AccountRepositoryAdapter implements AccountRepository {
     }
 
     @Override
+    public boolean existsByEmail(String email) {
+        return neo4jRepository.existsByEmail(email);
+    }
+
+    @Override
     public Optional<Account> findByUserId(String userId) {
         return neo4jRepository.findByUserId(userId).map(node -> {
             Account account = mapper.toDomain(node);

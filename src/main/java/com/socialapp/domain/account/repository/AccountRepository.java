@@ -16,4 +16,5 @@ public interface AccountRepository {
 
     Account save(Account account);
     void deleteById(String id);
+    boolean existsByEmail(String email);
 }

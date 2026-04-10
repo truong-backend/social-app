@@ -10,7 +10,7 @@ public final class Email {
 
     private final String value;
 
-    private Email(String value) {
+    public Email(String value) {
         if (value == null || value.isBlank())
             throw new IllegalArgumentException("Email must not be blank");
         if (!EMAIL_PATTERN.matcher(value).matches())

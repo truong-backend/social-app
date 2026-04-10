@@ -50,6 +50,10 @@ public class Account {
 
     // ── Factory Methods ───────────────────────────────────────
 
+    public void changeEmail(String newEmailStr) {
+        this.email = new Email(newEmailStr); // tạo value object Email
+        this.isVerified = false; // cần xác thực lại
+    }
     /**
      * Tạo Account mới (đăng ký lần đầu)
      */
@@ -128,6 +132,8 @@ public class Account {
             throw new AccountDomainException("Account must be verified before changing password");
         this.password = newPassword;
     }
+
+
 
     // ── Getters (không có setters — bất biến từ ngoài) ────────
 

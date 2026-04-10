@@ -2,6 +2,7 @@ package com.socialapp.presentation.controller;
 
 import com.socialapp.application.account.dto.request.AccountRequestDtos.*;
 import com.socialapp.application.account.dto.response.AccountResponseDtos.*;
+import com.socialapp.application.account.usecase.ChangeEmailUseCase;
 import com.socialapp.application.account.usecase.DeleteAccountUseCase;
 import com.socialapp.application.account.usecase.Register.ConfirmEmailUseCase;
 import com.socialapp.application.account.usecase.Register.RegisterUseCase;
@@ -28,6 +29,7 @@ public class AuthController {
     private final UpdatePasswordUseCase updatePasswordUseCase;
     private final RefreshTokenUseCase refreshTokenUseCase;
     private final DeleteAccountUseCase deleteAccountUseCase;
+    private final ChangeEmailUseCase changeEmailUseCase;
 
     /** POST /api/auth/register */
     @PostMapping("/register")
@@ -104,5 +106,14 @@ public class AuthController {
         String accountId = SecurityUtil.currentAccountId();
         deleteAccountUseCase.execute(accountId, request.password());
         return ApiResponse.ok("Account deleted");
+    }
+
+    /** PATCH /api/auth/email */
+    @PatchMapping("/email")
+    public ApiResponse<Void> changeEmail(
+            @Valid @RequestBody ChangeEmailRequest request) {
+        String accountId = SecurityUtil.currentAccountId();
+        changeEmailUseCase.execute(accountId, request.newEmail(), request.password());
+        return ApiResponse.ok("Email updated. Please verify your new email.");
     }
 }

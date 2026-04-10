@@ -56,4 +56,8 @@ public class AccountRequestDtos {
     public record DeleteAccountRequest(
             @jakarta.validation.constraints.NotBlank String password
     ) {}
+    public record ChangeEmailRequest(
+            @NotBlank String newEmail,
+            @NotBlank String password
+    ) {}
 }
