@@ -1,14 +1,24 @@
 package com.socialapp.presentation.controller;
 
+<<<<<<< HEAD
 import com.socialapp.application.dto.response.ApiResponse;
 import com.socialapp.application.dto.response.NotificationResponse;
 import com.socialapp.application.usecase.notification.GetNotificationsUseCase;
 import com.socialapp.application.usecase.notification.MarkNotificationReadUseCase;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+=======
+import com.socialapp.application.notification.usecase.*;
+import com.socialapp.application.notification.dto.response.NotificationResponse;
+import com.socialapp.domain.account.repository.AccountRepository;
+import com.socialapp.presentation.util.ApiResponse;
+import com.socialapp.presentation.util.SecurityUtil;
+import lombok.RequiredArgsConstructor;
+>>>>>>> origin/master
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * REST Controller — Notifications
@@ -22,8 +32,17 @@ import java.util.List;
 @RequestMapping("/api/notifications")
 public class NotificationController {
 
+<<<<<<< HEAD
     private final GetNotificationsUseCase     getNotificationsUseCase;
     private final MarkNotificationReadUseCase markNotificationReadUseCase;
+=======
+    private final GetNotificationsUseCase           getNotificationsUseCase;
+    private final MarkNotificationReadUseCase       markReadUseCase;
+    private final MarkAllNotificationsReadUseCase   markAllReadUseCase;
+    private final DeleteNotificationUseCase         deleteUseCase;
+    private final CountUnreadNotificationsUseCase   countUnreadUseCase;
+    private final AccountRepository                 accountRepository;
+>>>>>>> origin/master
 
     public NotificationController(
             GetNotificationsUseCase getNotificationsUseCase,
@@ -72,5 +91,33 @@ public class NotificationController {
 
         markNotificationReadUseCase.markAllRead(userId);
         return ResponseEntity.ok(ApiResponse.ok());
+    }
+
+    /** GET /api/notifications/unread-count */
+    @GetMapping("/unread-count")
+    public ApiResponse<Map<String, Long>> countUnread() {
+        long count = countUnreadUseCase.execute(resolveUserId());
+        return ApiResponse.ok(Map.of("count", count));
+    }
+
+    /** PATCH /api/notifications/{id}/read */
+    @PatchMapping("/{id}/read")
+    public ApiResponse<Void> markRead(@PathVariable String id) {
+        markReadUseCase.execute(resolveUserId(), id);
+        return ApiResponse.ok("Marked as read");
+    }
+
+    /** PATCH /api/notifications/read-all */
+    @PatchMapping("/read-all")
+    public ApiResponse<Void> markAllRead() {
+        markAllReadUseCase.execute(resolveUserId());
+        return ApiResponse.ok("All marked as read");
+    }
+
+    /** DELETE /api/notifications/{id} */
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> delete(@PathVariable String id) {
+        deleteUseCase.execute(resolveUserId(), id);
+        return ApiResponse.ok("Deleted");
     }
 }
