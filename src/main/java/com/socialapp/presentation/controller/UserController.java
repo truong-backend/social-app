@@ -1,102 +1,87 @@
 package com.socialapp.presentation.controller;
 
-import com.socialapp.application.user.dto.request.UserRequestDtos.*;
-import com.socialapp.application.user.dto.response.UserResponseDtos.*;
-import com.socialapp.application.user.usecase.*;
-import com.socialapp.domain.account.repository.AccountRepository;
-import com.socialapp.domain.shared.valueobject.Email;
-import com.socialapp.presentation.util.ApiResponse;
-import com.socialapp.presentation.util.SecurityUtil;
+import com.socialapp.application.dto.request.PageRequest;
+import com.socialapp.application.dto.request.UpdateProfileRequest;
+import com.socialapp.application.dto.response.ApiResponse;
+import com.socialapp.application.dto.response.PageResponse;
+import com.socialapp.application.dto.response.UserResponse;
+import com.socialapp.application.usecase.user.GetUserProfileUseCase;
+import com.socialapp.application.usecase.user.SearchUserUseCase;
+import com.socialapp.application.usecase.user.UpdateProfilePictureUseCase;
+import com.socialapp.application.usecase.user.UpdateProfileUseCase;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-
+/**
+ * REST Controller — User Profile
+ *
+ * GET    /api/users/me                      — Xem profile bản thân
+ * GET    /api/users/{userId}                — Xem profile người khác
+ * PUT    /api/users/me                      — Cập nhật thông tin (name / birthdate / username / bio)
+ * PUT    /api/users/me/profile-picture      — Upload ảnh đại diện
+ * GET    /api/users/search?q=&page=&size=   — Tìm kiếm người dùng theo keyword
+ */
 @RestController
 @RequestMapping("/api/users")
-@RequiredArgsConstructor
 public class UserController {
 
-    private final GetProfileUseCase         getProfileUseCase;
-    private final ChangeNameUseCase         changeNameUseCase;
-    private final ChangeUsernameUseCase     changeUsernameUseCase;
-    private final ChangeBirthdateUseCase    changeBirthdateUseCase;
-    private final ChangeBioUseCase          changeBioUseCase;
+    private final GetUserProfileUseCase       getUserProfileUseCase;
+    private final UpdateProfileUseCase        updateProfileUseCase;
     private final UpdateProfilePictureUseCase updateProfilePictureUseCase;
-    private final SearchUserUseCase         searchUserUseCase;
-    private final AccountRepository         accountRepository;
+    private final SearchUserUseCase           searchUserUseCase;
 
-    // ── Helper: accountId → userId ────────────────────────────
-    private String resolveUserId() {
-        String accountId = SecurityUtil.currentAccountId();
-        return accountRepository.findById(accountId)
-                .orElseThrow().getUserId();
+    public UserController(GetUserProfileUseCase getUserProfileUseCase,
+                          UpdateProfileUseCase updateProfileUseCase,
+                          UpdateProfilePictureUseCase updateProfilePictureUseCase,
+                          SearchUserUseCase searchUserUseCase) {
+        this.getUserProfileUseCase       = getUserProfileUseCase;
+        this.updateProfileUseCase        = updateProfileUseCase;
+        this.updateProfilePictureUseCase = updateProfilePictureUseCase;
+        this.searchUserUseCase           = searchUserUseCase;
     }
 
-    /** GET /api/users/{targetId} */
-    @GetMapping("/{targetId}")
-    public ApiResponse<UserProfileResponse> getProfile(
-            @PathVariable String targetId) {
-        String userId = resolveUserId();
-        return ApiResponse.ok(getProfileUseCase.execute(userId, targetId));
-    }
-
-    /** GET /api/users/me */
+    // GET /api/users/me
     @GetMapping("/me")
-    public ApiResponse<UserProfileResponse> getMyProfile() {
-        String userId = resolveUserId();
-        return ApiResponse.ok(getProfileUseCase.execute(userId, userId));
+    public ResponseEntity<ApiResponse<UserResponse>> getMyProfile(
+            @AuthenticationPrincipal String userId) {
+        return ResponseEntity.ok(ApiResponse.ok(getUserProfileUseCase.execute(userId)));
     }
 
-    /** GET /api/users/search?q=keyword */
-    @GetMapping("/search")
-    public ApiResponse<List<UserSummaryResponse>> search(
-            @RequestParam("q") String keyword) {
-        String userId = resolveUserId();
-        return ApiResponse.ok(searchUserUseCase.execute(keyword, userId));
+    // GET /api/users/{userId}
+    @GetMapping("/{userId}")
+    public ResponseEntity<ApiResponse<UserResponse>> getUserProfile(
+            @PathVariable String userId) {
+        return ResponseEntity.ok(ApiResponse.ok(getUserProfileUseCase.execute(userId)));
     }
 
-    /** PATCH /api/users/me/name */
-    @PatchMapping("/me/name")
-    public ApiResponse<Void> changeName(
-            @Valid @RequestBody ChangeNameRequest request) {
-        var res = changeNameUseCase.execute(resolveUserId(), request);
-        return ApiResponse.ok(res.message());
+    // PUT /api/users/me
+    @PutMapping("/me")
+    public ResponseEntity<ApiResponse<UserResponse>> updateProfile(
+            @AuthenticationPrincipal String userId,
+            @Valid @RequestBody UpdateProfileRequest req) {
+        return ResponseEntity.ok(ApiResponse.ok(updateProfileUseCase.execute(userId, req)));
     }
 
-    /** PATCH /api/users/me/username */
-    @PatchMapping("/me/username")
-    public ApiResponse<Void> changeUsername(
-            @Valid @RequestBody ChangeUsernameRequest request) {
-        var res = changeUsernameUseCase.execute(resolveUserId(), request);
-        return ApiResponse.ok(res.message());
-    }
-
-    /** PATCH /api/users/me/birthdate */
-    @PatchMapping("/me/birthdate")
-    public ApiResponse<Void> changeBirthdate(
-            @Valid @RequestBody ChangeBirthdateRequest request) {
-        var res = changeBirthdateUseCase.execute(resolveUserId(), request);
-        return ApiResponse.ok(res.message());
-    }
-
-    /** PATCH /api/users/me/bio */
-    @PatchMapping("/me/bio")
-    public ApiResponse<Void> changeBio(
-            @Valid @RequestBody ChangeBioRequest request) {
-        var res = changeBioUseCase.execute(resolveUserId(), request);
-        return ApiResponse.ok(res.message());
-    }
-
-    /** PATCH /api/users/me/profile-picture (multipart) */
-    @PatchMapping(value = "/me/profile-picture",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ApiResponse<Void> updateProfilePicture(
+    // PUT /api/users/me/profile-picture
+    @PutMapping(value = "/me/profile-picture", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<UserResponse>> updateProfilePicture(
+            @AuthenticationPrincipal String userId,
             @RequestPart("file") MultipartFile file) {
-        var res = updateProfilePictureUseCase.execute(resolveUserId(), file);
-        return ApiResponse.ok(res.message());
+        return ResponseEntity.ok(ApiResponse.ok(
+                updateProfilePictureUseCase.execute(userId, file)));
+    }
+
+    // GET /api/users/search
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<PageResponse<UserResponse>>> searchUsers(
+            @RequestParam String q,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(ApiResponse.ok(
+                searchUserUseCase.execute(q, new PageRequest(page, size))));
     }
 }

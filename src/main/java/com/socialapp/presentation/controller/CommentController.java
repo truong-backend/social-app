@@ -1,98 +1,138 @@
 package com.socialapp.presentation.controller;
 
-import com.socialapp.application.comment.dto.request.CommentRequestDtos.*;
-import com.socialapp.application.comment.dto.response.CommentResponseDtos.*;
-import com.socialapp.application.comment.usecase.*;
-import com.socialapp.application.user.dto.response.UserResponseDtos;
-import com.socialapp.domain.account.repository.AccountRepository;
-import com.socialapp.presentation.util.ApiResponse;
-import com.socialapp.presentation.util.SecurityUtil;
+import com.socialapp.application.dto.request.CreateCommentRequest;
+import com.socialapp.application.dto.request.EditCommentRequest;
+import com.socialapp.application.dto.response.ApiResponse;
+import com.socialapp.application.dto.response.CommentResponse;
+import com.socialapp.application.usecase.comment.AddCommentUseCase;
+import com.socialapp.application.usecase.comment.AttachFileToCommentUseCase;
+import com.socialapp.application.usecase.comment.DeleteCommentUseCase;
+import com.socialapp.application.usecase.comment.EditCommentUseCase;
+import com.socialapp.application.usecase.comment.LikeCommentUseCase;
+import com.socialapp.application.usecase.comment.ReplyCommentUseCase;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-
+/**
+ * REST Controller — Comments
+ *
+ * POST   /api/posts/{postId}/comments                               — Thêm bình luận
+ * PUT    /api/posts/{postId}/comments/{commentId}                   — Chỉnh sửa bình luận
+ * DELETE /api/posts/{postId}/comments/{commentId}                   — Xóa bình luận
+ * POST   /api/posts/{postId}/comments/{commentId}/files             — Đính kèm file vào bình luận
+ * POST   /api/posts/{postId}/comments/{commentId}/like              — Thích bình luận
+ * DELETE /api/posts/{postId}/comments/{commentId}/like              — Bỏ thích bình luận
+ * POST   /api/posts/{postId}/comments/{commentId}/replies           — Trả lời bình luận
+ *
+ * Domain rules:
+ *   - Chỉ author mới được sửa / xóa bình luận của mình
+ *   - Mỗi bình luận chỉ đính kèm được 1 file (overwrite nếu gọi lại)
+ */
 @RestController
-@RequiredArgsConstructor
+@RequestMapping("/api/posts/{postId}/comments")
 public class CommentController {
 
-    private final CreateCommentUseCase  createCommentUseCase;
-    private final ReplyCommentUseCase   replyCommentUseCase;
-    private final UpdateCommentUseCase  updateCommentUseCase;
-    private final DeleteCommentUseCase  deleteCommentUseCase;
-    private final LikeCommentUseCase    likeCommentUseCase;
-    private final UnlikeCommentUseCase  unlikeCommentUseCase;
-    private final AccountRepository     accountRepository;
+    private final AddCommentUseCase          addCommentUseCase;
+    private final EditCommentUseCase         editCommentUseCase;
+    private final DeleteCommentUseCase       deleteCommentUseCase;
+    private final AttachFileToCommentUseCase attachFileToCommentUseCase;
+    private final LikeCommentUseCase         likeCommentUseCase;
+    private final ReplyCommentUseCase        replyCommentUseCase;
 
-    private String resolveUserId() {
-        return accountRepository.findById(SecurityUtil.currentAccountId())
-                .orElseThrow().getUserId();
+    public CommentController(AddCommentUseCase addCommentUseCase,
+                             EditCommentUseCase editCommentUseCase,
+                             DeleteCommentUseCase deleteCommentUseCase,
+                             AttachFileToCommentUseCase attachFileToCommentUseCase,
+                             LikeCommentUseCase likeCommentUseCase,
+                             ReplyCommentUseCase replyCommentUseCase) {
+        this.addCommentUseCase          = addCommentUseCase;
+        this.editCommentUseCase         = editCommentUseCase;
+        this.deleteCommentUseCase       = deleteCommentUseCase;
+        this.attachFileToCommentUseCase = attachFileToCommentUseCase;
+        this.likeCommentUseCase         = likeCommentUseCase;
+        this.replyCommentUseCase        = replyCommentUseCase;
     }
 
-    /** POST /api/posts/{postId}/comments */
-    @PostMapping(value = "/api/posts/{postId}/comments",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<CommentResponse> create(
+    // POST /api/posts/{postId}/comments
+    @PostMapping
+    public ResponseEntity<ApiResponse<CommentResponse>> addComment(
+            @AuthenticationPrincipal String userId,
             @PathVariable String postId,
-            @RequestPart("data") @Valid CreateCommentRequest request,
-            @RequestPart(value = "files", required = false) List<MultipartFile> files) {
-        return ApiResponse.ok(
-                createCommentUseCase.execute(resolveUserId(), postId, request, files));
+            @Valid @RequestBody CreateCommentRequest req) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.ok(addCommentUseCase.execute(userId, postId, req)));
     }
 
-    /** POST /api/posts/{postId}/comments/{commentId}/replies */
-    @PostMapping(value = "/api/posts/{postId}/comments/{commentId}/replies",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<CommentResponse> reply(
+    // PUT /api/posts/{postId}/comments/{commentId}
+    @PutMapping("/{commentId}")
+    public ResponseEntity<ApiResponse<CommentResponse>> editComment(
+            @AuthenticationPrincipal String userId,
             @PathVariable String postId,
             @PathVariable String commentId,
-            @RequestPart("data") @Valid ReplyCommentRequest request,
-            @RequestPart(value = "files", required = false) List<MultipartFile> files) {
-        return ApiResponse.ok(
-                replyCommentUseCase.execute(resolveUserId(), postId, commentId, request, files));
+            @Valid @RequestBody EditCommentRequest req) {
+        return ResponseEntity.ok(ApiResponse.ok(
+                editCommentUseCase.execute(userId, postId, commentId, req)));
     }
 
-    /** PUT /api/comments/{commentId} */
-    @PutMapping(value = "/api/comments/{commentId}",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ApiResponse<CommentResponse> update(
+    // DELETE /api/posts/{postId}/comments/{commentId}
+    @DeleteMapping("/{commentId}")
+    public ResponseEntity<ApiResponse<Void>> deleteComment(
+            @AuthenticationPrincipal String userId,
+            @PathVariable String postId,
+            @PathVariable String commentId) {
+        deleteCommentUseCase.execute(userId, postId, commentId);
+        return ResponseEntity.ok(ApiResponse.ok());
+    }
+
+    // POST /api/posts/{postId}/comments/{commentId}/files
+    @PostMapping(value = "/{commentId}/files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<CommentResponse>> attachFile(
+            @AuthenticationPrincipal String userId,
+            @PathVariable String postId,
             @PathVariable String commentId,
-            @RequestPart("data") @Valid UpdateCommentRequest request,
-            @RequestPart(value = "files", required = false) List<MultipartFile> files) {
-        return ApiResponse.ok(
-                updateCommentUseCase.execute(resolveUserId(), commentId, request, files));
+            @RequestPart("file") MultipartFile file) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.ok(
+                        attachFileToCommentUseCase.execute(userId, postId, commentId, file)));
     }
 
-    /** DELETE /api/comments/{commentId} */
-    @DeleteMapping("/api/comments/{commentId}")
-    public ApiResponse<Void> delete(@PathVariable String commentId) {
-        boolean isAdmin = SecurityUtil.hasRole("ADMIN");
-        var res = deleteCommentUseCase.execute(resolveUserId(), commentId, isAdmin);
-        return ApiResponse.ok(res.message());
+    // POST /api/posts/{postId}/comments/{commentId}/like
+    @PostMapping("/{commentId}/like")
+    public ResponseEntity<ApiResponse<Void>> likeComment(
+            @AuthenticationPrincipal String userId,
+            @PathVariable String postId,
+            @PathVariable String commentId) {
+        likeCommentUseCase.like(userId, postId, commentId);
+        return ResponseEntity.ok(ApiResponse.ok());
     }
 
-    /** POST /api/comments/{commentId}/like */
-    @PostMapping("/api/comments/{commentId}/like")
-    public ApiResponse<Void> like(@PathVariable String commentId) {
-        var res = likeCommentUseCase.execute(resolveUserId(), commentId);
-        return ApiResponse.ok(res.message());
+    // DELETE /api/posts/{postId}/comments/{commentId}/like
+    @DeleteMapping("/{commentId}/like")
+    public ResponseEntity<ApiResponse<Void>> unlikeComment(
+            @AuthenticationPrincipal String userId,
+            @PathVariable String postId,
+            @PathVariable String commentId) {
+        likeCommentUseCase.unlike(userId, postId, commentId);
+        return ResponseEntity.ok(ApiResponse.ok());
     }
 
-    /** DELETE /api/comments/{commentId}/like */
-    @DeleteMapping("/api/comments/{commentId}/like")
-    public ApiResponse<Void> unlike(@PathVariable String commentId) {
-        var res = unlikeCommentUseCase.execute(resolveUserId(), commentId);
-        return ApiResponse.ok(res.message());
+    // POST /api/posts/{postId}/comments/{commentId}/replies
+    @PostMapping("/{commentId}/replies")
+    public ResponseEntity<ApiResponse<CommentResponse>> replyComment(
+            @AuthenticationPrincipal String userId,
+            @PathVariable String postId,
+            @PathVariable String commentId,
+            @Valid @RequestBody CreateCommentRequest req) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.ok(
+                        replyCommentUseCase.execute(userId, postId, commentId, req)));
     }
-
-//    @GetMapping("/api/posts/{postId}/comments")
-//    public ApiResponse<List<>> getComments (@PathVariable String postId) {
-//        var res = unlikeCommentUseCase.execute(resolveUserId(), postId);
-//        return ApiResponse.ok(res.message());
-//    }
 }

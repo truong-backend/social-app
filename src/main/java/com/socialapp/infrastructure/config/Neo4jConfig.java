@@ -1,15 +1,19 @@
 package com.socialapp.infrastructure.config;
 
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.neo4j.core.transaction.Neo4jTransactionManager;
-import org.neo4j.driver.Driver;
+import org.springframework.data.neo4j.config.EnableNeo4jAuditing;
+import org.springframework.data.neo4j.repository.config.EnableNeo4jRepositories;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @Configuration
+@EnableNeo4jAuditing
+@EnableTransactionManagement
+@EnableNeo4jRepositories(
+        basePackages = "com.socialapp.infrastructure.adapter.persistence.neo4j.repository"
+)
 public class Neo4jConfig {
-
-    @Bean
-    public Neo4jTransactionManager transactionManager(Driver driver) {
-        return new Neo4jTransactionManager(driver);
-    }
+    // Driver, URI, credentials đặt trong application.yml:
+    // spring.neo4j.uri=bolt://localhost:7687
+    // spring.neo4j.authentication.username=neo4j
+    // spring.neo4j.authentication.password=secret
 }

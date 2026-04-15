@@ -33,14 +33,6 @@ public class SocialAppApplication {
 		System.setProperty("MINIO_SECRET_KEY", dotenv.get("MINIO_SECRET_KEY"));
 		System.setProperty("MINIO_BUCKET", dotenv.get("MINIO_BUCKET"));
 
-		System.setProperty("STRINGEE_API_KEY_SID", dotenv.get("STRINGEE_API_KEY_SID"));
-		System.setProperty("STRINGEE_API_KEY_SECRET", dotenv.get("STRINGEE_API_KEY_SECRET"));
-
-//		System.setProperty("ZEGOCLOUD_APP_ID", dotenv.get("ZEGOCLOUD_APP_ID"));
-//		System.setProperty("ZEGOCLOUD_SERVER_SECRET", dotenv.get("ZEGOCLOUD_SERVER_SECRET"));
-
-
-
 		SpringApplication.run(SocialAppApplication.class, args);
 	}
 }

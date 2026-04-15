@@ -1,91 +1,95 @@
 package com.socialapp.presentation.controller;
 
-import com.socialapp.application.account.dto.request.AccountRequestDtos.*;
-import com.socialapp.application.account.dto.response.AccountResponseDtos.*;
-import com.socialapp.application.account.usecase.Register.ConfirmEmailUseCase;
-import com.socialapp.application.account.usecase.Register.RegisterUseCase;
-import com.socialapp.application.account.usecase.login.ConfirmResetCodeUseCase;
-import com.socialapp.application.account.usecase.login.LoginUseCase;
-import com.socialapp.application.account.usecase.login.PrepareResetPasswordUseCase;
-import com.socialapp.application.account.usecase.login.UpdatePasswordUseCase;
-import com.socialapp.application.account.usecase.logout.LogoutUseCase;
-import com.socialapp.presentation.util.ApiResponse;
-import com.socialapp.presentation.util.SecurityUtil;
+import com.socialapp.application.dto.request.ChangePasswordRequest;
+import com.socialapp.application.dto.request.LoginRequest;
+import com.socialapp.application.dto.request.RegisterRequest;
+import com.socialapp.application.dto.request.VerifyEmailRequest;
+import com.socialapp.application.dto.response.AccountResponse;
+import com.socialapp.application.dto.response.ApiResponse;
+import com.socialapp.application.dto.response.AuthResponse;
+import com.socialapp.application.usecase.auth.ChangePasswordUseCase;
+import com.socialapp.application.usecase.auth.LoginUseCase;
+import com.socialapp.application.usecase.auth.RegisterUseCase;
+import com.socialapp.application.usecase.auth.ResendVerifyCodeUseCase;
+import com.socialapp.application.usecase.auth.VerifyEmailUseCase;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * REST Controller — Authentication & Account
+ *
+ * Public endpoints:
+ *   POST /api/auth/register          — Đăng ký tài khoản mới
+ *   POST /api/auth/login             — Đăng nhập, nhận JWT
+ *   POST /api/auth/verify-email      — Xác thực email bằng code
+ *   POST /api/auth/resend-verify     — Gửi lại mã xác thực
+ *
+ * Authenticated endpoints:
+ *   PUT  /api/auth/change-password   — Đổi mật khẩu (yêu cầu JWT)
+ */
 @RestController
 @RequestMapping("/api/auth")
-@RequiredArgsConstructor
 public class AuthController {
 
-    private final RegisterUseCase registerUseCase;
-    private final ConfirmEmailUseCase confirmEmailUseCase;
-    private final LoginUseCase loginUseCase;
-    private final LogoutUseCase logoutUseCase;
-    private final PrepareResetPasswordUseCase prepareResetUseCase;
-    private final ConfirmResetCodeUseCase confirmResetCodeUseCase;
-    private final UpdatePasswordUseCase updatePasswordUseCase;
+    private final RegisterUseCase         registerUseCase;
+    private final LoginUseCase            loginUseCase;
+    private final VerifyEmailUseCase      verifyEmailUseCase;
+    private final ResendVerifyCodeUseCase resendVerifyCodeUseCase;
+    private final ChangePasswordUseCase   changePasswordUseCase;
 
-    /** POST /api/auth/register */
+    public AuthController(RegisterUseCase registerUseCase,
+                          LoginUseCase loginUseCase,
+                          VerifyEmailUseCase verifyEmailUseCase,
+                          ResendVerifyCodeUseCase resendVerifyCodeUseCase,
+                          ChangePasswordUseCase changePasswordUseCase) {
+        this.registerUseCase         = registerUseCase;
+        this.loginUseCase            = loginUseCase;
+        this.verifyEmailUseCase      = verifyEmailUseCase;
+        this.resendVerifyCodeUseCase = resendVerifyCodeUseCase;
+        this.changePasswordUseCase   = changePasswordUseCase;
+    }
+
+    // POST /api/auth/register
     @PostMapping("/register")
-    @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<RegisterResponse> register(
-            @Valid @RequestBody RegisterRequest request) {
-        return ApiResponse.ok(registerUseCase.execute(request));
+    public ResponseEntity<ApiResponse<AccountResponse>> register(
+            @Valid @RequestBody RegisterRequest req) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.ok(registerUseCase.execute(req)));
     }
 
-    /** POST /api/auth/confirm-email */
-    @PostMapping("/confirm-email")
-    public ApiResponse<AuthResponse> confirmEmail(
-            @Valid @RequestBody ConfirmEmailRequest request) {
-//        String accountId = SecurityUtil.currentAccountId();
-//        return ApiResponse.ok(confirmEmailUseCase.execute(accountId, request));
-        return ApiResponse.ok(confirmEmailUseCase.execute( request));
-    }
-
-    /** POST /api/auth/login */
+    // POST /api/auth/login
     @PostMapping("/login")
-    public ApiResponse<AuthResponse> login(
-            @Valid @RequestBody LoginRequest request) {
-        return ApiResponse.ok(loginUseCase.execute(request));
+    public ResponseEntity<ApiResponse<AuthResponse>> login(
+            @Valid @RequestBody LoginRequest req) {
+        return ResponseEntity.ok(ApiResponse.ok(loginUseCase.execute(req)));
     }
 
-    /** POST /api/auth/logout */
-    @PostMapping("/logout")
-    public ApiResponse<Void> logout(
-            @RequestHeader("Authorization") String authHeader) {
-        String token = authHeader.replace("Bearer ", "");
-        logoutUseCase.execute(token);
-        return ApiResponse.ok("Logged out successfully");
+    // POST /api/auth/verify-email
+    @PostMapping("/verify-email")
+    public ResponseEntity<ApiResponse<Void>> verifyEmail(
+            @Valid @RequestBody VerifyEmailRequest req) {
+        verifyEmailUseCase.execute(req);
+        return ResponseEntity.ok(ApiResponse.ok());
     }
 
-    /** POST /api/auth/prepare-reset-password */
-    @PostMapping("/prepare-reset-password")
-    public ApiResponse<Void> prepareReset(
-            @Valid @RequestBody PrepareResetPasswordRequest request) {
-        var res = prepareResetUseCase.execute(request);
-        return ApiResponse.ok(res.message());
+    // POST /api/auth/resend-verify
+    @PostMapping("/resend-verify")
+    public ResponseEntity<ApiResponse<Void>> resendVerify(
+            @RequestParam String accountId) {
+        resendVerifyCodeUseCase.execute(accountId);
+        return ResponseEntity.ok(ApiResponse.ok());
     }
 
-    /** POST /api/auth/confirm-reset-code */
-    @PostMapping("/confirm-reset-code")
-    public ApiResponse<Void> confirmResetCode(
-            @Valid @RequestBody ConfirmResetCodeRequest request) {
-//        String accountId = SecurityUtil.currentAccountId();
-//        var res = confirmResetCodeUseCase.execute(accountId, request);
-        var res = confirmResetCodeUseCase.execute( request);
-        return ApiResponse.ok(res.message());
-    }
-
-    /** PUT /api/auth/update-password */
-    @PutMapping("/update-password")
-    public ApiResponse<Void> updatePassword(
-            @Valid @RequestBody UpdatePasswordRequest request) {
-        String accountId = SecurityUtil.currentAccountId();
-        var res = updatePasswordUseCase.execute(accountId, request);
-        return ApiResponse.ok(res.message());
+    // PUT /api/auth/change-password
+    @PutMapping("/change-password")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            @AuthenticationPrincipal String accountId,
+            @Valid @RequestBody ChangePasswordRequest req) {
+        changePasswordUseCase.execute(accountId, req);
+        return ResponseEntity.ok(ApiResponse.ok());
     }
 }
