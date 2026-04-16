@@ -1,87 +1,49 @@
+version: '3.8'
+name: social-network
+
 services:
-
-  # ─── Spring Boot Backend ───────────────────────────────────────
-  backend:
-    build:
-      context: ./social-app
-      dockerfile: Dockerfile
-    container_name: socialapp-backend
-    restart: unless-stopped
+  neo4j:
+    image: neo4j:5
+    container_name: neo4j
     ports:
-      - "8080:8080"
+      - "7474:7474"
+      - "7687:7687"
     environment:
-      # Neo4j (console.neo4j.io)
-      NEO4J_URI: ${NEO4J_URI}
-      NEO4J_USERNAME: ${NEO4J_USERNAME}
-      NEO4J_PASSWORD: ${NEO4J_PASSWORD}
-
-      # MinIO (chạy cùng compose)
-      MINIO_URL: http://minio:9000
-      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
-      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
-      MINIO_BUCKET: ${MINIO_BUCKET:-socialapp}
-      # URL công khai để browser load ảnh — IP hoặc domain VPS
-      MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL}
-
-      # JWT
-      JWT_SECRET: ${JWT_SECRET}
-
-      # Gmail SMTP
-      MAIL_USERNAME: ${MAIL_USERNAME}
-      MAIL_PASSWORD: ${MAIL_PASSWORD}
-    depends_on:
-      minio:
-        condition: service_healthy
-    networks:
-      - socialapp-net
-
-  # ─── MinIO Object Storage ──────────────────────────────────────
-  minio:
-    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
-    container_name: socialapp-minio
-    restart: unless-stopped
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
-      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+      - NEO4J_AUTH=${NEO4J_USER}/${NEO4J_PASS}
+      - USER=${NEO4J_USER}
+      - PASS=${NEO4J_PASS}
     volumes:
-      - minio_data:/data
-    command: server /data --console-address ":9001"
-    healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - socialapp-net
+      - neo4j_data:/data
+      - ./neo4j.dump:/var/lib/neo4j/import/neo4j.dump
+      - ./init-neo4j.sh:/init-neo4j.sh
+    command: ["/bin/bash", "/init-neo4j.sh"]
+    restart: unless-stopped
 
-  # ─── MinIO Init (tạo bucket + set public, chạy 1 lần) ─────────
-  minio-init:
-    image: minio/mc:latest
-    container_name: socialapp-minio-init
-    restart: no
-    depends_on:
-      minio:
-        condition: service_healthy
-    environment:
-      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
-      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
-      MINIO_BUCKET: ${MINIO_BUCKET:-socialapp}
-    entrypoint: >
-      sh -c "
-        mc alias set local http://minio:9000 $$MINIO_ACCESS_KEY $$MINIO_SECRET_KEY &&
-        mc mb --ignore-existing local/$$MINIO_BUCKET &&
-        mc anonymous set download local/$$MINIO_BUCKET &&
-        echo 'MinIO bucket ready'
-      "
-    networks:
-      - socialapp-net
+  redis:
+    image: redis:7.2
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+#  api:
+#    build:
+#      dockerfile: Dockerfile
+#    container_name: api
+#    volumes:
+#      - ./upload:/app/
+#      - ./data:/app/data
+#    env_file:
+#      - .env
+#    ports:
+#      - "80:80"
+#    depends_on:
+#      - neo4j
+#      - redis
+#    restart: no
 
 volumes:
-  minio_data:
-
-networks:
-  socialapp-net:
-    driver: bridge
+  neo4j_data:
+  redis_data:

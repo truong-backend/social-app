@@ -1,13 +1,25 @@
-FROM eclipse-temurin:17-jdk-alpine AS build
-WORKDIR /app
-COPY .mvn .mvn
-COPY mvnw pom.xml ./
-RUN chmod +x mvnw && ./mvnw dependency:go-offline
-COPY src ./src
-RUN ./mvnw clean package -DskipTests
+FROM maven:3.9.9-amazoncorretto-17 AS build
 
-FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+
+RUN mvn package -DskipTests
+
+# Runtime image
+FROM amazoncorretto:17.0.12-alpine3.17
+WORKDIR /app
+
+# Copy jar từ stage build
 COPY --from=build /app/target/*.jar app.jar
-EXPOSE 8080
-ENTRYPOINT ["java", "-Duser.timezone=Asia/Ho_Chi_Minh", "-jar", "app.jar"]
+
+# Copy thư mục upload từ máy host vào container
+COPY upload upload
+
+# Tạo thư mục /data
+RUN mkdir /data
+
+# Nếu bạn muốn mount volume để giữ dữ liệu, có thể thêm:
+VOLUME ["/data"]
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
