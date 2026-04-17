@@ -28,7 +28,7 @@ spring:
       username: ${REDIS_USERNAME}
       password: ${REDIS_PASSWORD}
       ssl:
-        enabled: true
+        enabled: false
   datasource:
     url: jdbc:sqlite:/data/online_users.db
   jpa:
@@ -50,6 +50,7 @@ spring:
             required: true
           ssl:
             trust: smtp.gmail.com
+
 server:
   servlet:
     session:
@@ -60,16 +61,19 @@ server:
 jwt:
   access-token:
     key: ${JWT_ACCESS_TOKEN_KEY}
-    duration: ${JWT_ACCESS_TOKEN_DURATION} # seconds
+    duration: ${JWT_ACCESS_TOKEN_DURATION}
   refresh-token:
-    duration: ${JWT_REFRESH_TOKEN_DURATION} # days
+    duration: ${JWT_REFRESH_TOKEN_DURATION}
+
 origin:
   front-end: ${FRONTEND_ORIGIN}
   self: ${SELF_ORIGIN}
+
 stringee:
   api:
     sid: ${STRINGEE_API_SID}
     secret-key: ${STRINGEE_API_SECRET_KEY}
+
 logging:
   level:
     root: error

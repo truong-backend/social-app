@@ -2,7 +2,12 @@ FROM maven:3.9.9-amazoncorretto-17 AS build
 
 WORKDIR /app
 COPY pom.xml .
+COPY mvnw .
+COPY .mvn .mvn
 COPY src ./src
+
+# Fix CRLF line endings và cấp quyền execute cho mvnw
+RUN sed -i 's/\r//' mvnw && chmod +x mvnw
 
 RUN mvn package -DskipTests
 
@@ -13,13 +18,10 @@ WORKDIR /app
 # Copy jar từ stage build
 COPY --from=build /app/target/*.jar app.jar
 
-# Copy thư mục upload từ máy host vào container
-COPY upload upload
+# Tạo thư mục upload và /data
+RUN mkdir -p /app/upload /data
 
-# Tạo thư mục /data
-RUN mkdir /data
-
-# Nếu bạn muốn mount volume để giữ dữ liệu, có thể thêm:
-VOLUME ["/data"]
+# Mount volume để giữ dữ liệu
+VOLUME ["/data", "/app/upload"]
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
