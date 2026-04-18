@@ -1,0 +1,91 @@
+spring:
+  application:
+    name: social-network-api
+  ai:
+    openai:
+      api-key: ${GEMINI_KEY}
+      chat:
+        base-url: https://generativelanguage.googleapis.com
+        completions-path: /v1beta/openai/chat/completions
+        options:
+          model: gemini-2.0-flash
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 105MB
+  neo4j:
+    uri: ${NEO4J_URI}
+    authentication:
+      username: ${NEO4J_USER}
+      password: ${NEO4J_PASS}
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      timeout: 60000
+      repositories:
+        enabled: true
+      username: ${REDIS_USERNAME}
+      password: ${REDIS_PASSWORD}
+      ssl:
+        enabled: false
+  datasource:
+    url: jdbc:sqlite:/data/online_users.db
+  jpa:
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+  mail:
+    port: 587
+    username: ${MAIL}
+    host: smtp.gmail.com
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          ssl:
+            trust: smtp.gmail.com
+
+server:
+  servlet:
+    session:
+      cookie:
+        same-site: lax
+  port: 2003
+
+jwt:
+  access-token:
+    key: ${JWT_ACCESS_TOKEN_KEY}
+    duration: ${JWT_ACCESS_TOKEN_DURATION}
+  refresh-token:
+    duration: ${JWT_REFRESH_TOKEN_DURATION}
+
+origin:
+  front-end: ${FRONTEND_ORIGIN}
+  self: ${SELF_ORIGIN}
+
+stringee:
+  api:
+    sid: ${STRINGEE_API_SID}
+    secret-key: ${STRINGEE_API_SECRET_KEY}
+
+logging:
+  level:
+    root: error
+    com:
+      stu:
+        socialnetworkapi: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,prometheus"
+  endpoint:
+    health:
+      show-details: always
