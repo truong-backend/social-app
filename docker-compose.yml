@@ -1,66 +1,49 @@
+# docker-compose.yml — nhánh back-end của social-app
 version: '3.8'
 name: social-network
 
 services:
-  neo4j:
-    image: neo4j:5
-    container_name: neo4j
-    ports:
-      - "7474:7474"
-      - "7687:7687"
-    environment:
-      - NEO4J_AUTH=${NEO4J_USER}/${NEO4J_PASS}
-      - USER=${NEO4J_USER}
-      - PASS=${NEO4J_PASS}
+  redis-social:
+    image: redis:7.2-alpine
+    container_name: social-redis
     volumes:
-      - neo4j_data:/data
-      - ./neo4j.dump:/var/lib/neo4j/import/neo4j.dump
-      - ./init-neo4j.sh:/init-neo4j.sh
-    command: ["/bin/bash", "/init-neo4j.sh"]
-    restart: unless-stopped
-
-  redis:
-    image: redis:7.2
-    container_name: redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
+      - redis_social_data:/data
+    networks:
+      - social-net
     restart: unless-stopped
 
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: api
+    image: ghcr.io/truong-backend/social-app-backend:latest
+    container_name: social-api
+    env_file:
+      - /opt/social-app/.env
     volumes:
-      - ./.env:/app/.env
-      - ./upload:/app/upload
-      - ./data:/data
+      - /opt/social-app/upload:/app/upload
+      - /opt/social-app/data:/data
     ports:
       - "2003:2003"
     depends_on:
-      - neo4j
-      - redis
+      - redis-social
+    networks:
+      - social-net
     restart: unless-stopped
 
   frontend:
-    build:
-      context: ../social-app-fe
-      dockerfile: Dockerfile
-      # NEXT_PUBLIC_* phải truyền lúc BUILD vì Next.js nhúng thẳng vào JS bundle
-      args:
-        - NEXT_PUBLIC_API_URL=http://YOUR_VPS_IP:2003
-        - NEXT_PUBLIC_SOCKET_ENDPOINT=http://YOUR_VPS_IP:2003/ws
-    container_name: frontend
+    image: ghcr.io/truong-backend/social-app-frontend:latest
+    container_name: social-frontend
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=production
+      NODE_ENV: production
     depends_on:
       - api
+    networks:
+      - social-net
     restart: unless-stopped
 
+networks:
+  social-net:
+    driver: bridge
+
 volumes:
-  neo4j_data:
-  redis_data:
+  redis_social_data:
