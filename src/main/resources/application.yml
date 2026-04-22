@@ -37,18 +37,19 @@ spring:
     hibernate:
       ddl-auto: update
   mail:
-    port: 587
-    username: ${MAIL}
     host: smtp.gmail.com
+    port: 465
+    username: ${MAIL}
     password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
           auth: true
           starttls:
-            enable: true
-            required: true
+            enable: false
+            required: false
           ssl:
+            enable: true
             trust: smtp.gmail.com
 
 server:
