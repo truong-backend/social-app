@@ -4,7 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="069b736b-0e6d-4b3d-af43-6e4a296b7724" name="Changes" comment="Update deploy hetzner" />
+    <list default="true" id="069b736b-0e6d-4b3d-af43-6e4a296b7724" name="Changes" comment="&quot;fix: Gmail SMTP port 465 SSL (Hetzner blocks 587)&quot;">
+      <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -145,12 +148,21 @@
       <option name="project" value="LOCAL" />
       <updated>1776890400007</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="&quot;fix: Gmail SMTP port 465 SSL (Hetzner blocks 587)&quot;">
+      <option name="closed" value="true" />
+      <created>1776898235812</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1776898235812</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Update deploy hetzner" />
-    <option name="LAST_COMMIT_MESSAGE" value="Update deploy hetzner" />
+    <MESSAGE value="&quot;fix: Gmail SMTP port 465 SSL (Hetzner blocks 587)&quot;" />
+    <option name="LAST_COMMIT_MESSAGE" value="&quot;fix: Gmail SMTP port 465 SSL (Hetzner blocks 587)&quot;" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/social_app$SocialNetworkApiApplication.ic" NAME="SocialNetworkApiApplication Coverage Results" MODIFIED="1776389746974" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
