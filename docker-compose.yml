@@ -1,21 +1,36 @@
+# docker-compose.yml — social-app (back-end + Neo4j self-hosted)
+# ─────────────────────────────────────────────────────────────────
+# Toàn bộ port map trên VPS (không trùng nhau):
+#   quan-ao  : 8081, 9000, 9001
+#   diem-danh: 8080, 8082, 9003, 9004
+#   social   : 2003, 3000  ← Neo4j KHÔNG expose ra host
+# ─────────────────────────────────────────────────────────────────
 version: '3.8'
 name: social-network
 
 services:
+  # ── Neo4j self-hosted ────────────────────────────────────────────────────────
   neo4j:
     image: neo4j:5.20-community
     container_name: social-neo4j
     environment:
-      NEO4J_AUTH: neo4j/123456789
+      NEO4J_AUTH: neo4j/${NEO4J_PASS}
       NEO4J_PLUGINS: '["apoc"]'
       NEO4J_dbms_security_procedures_unrestricted: apoc.*
       NEO4J_server_memory_heap_initial__size: 512m
       NEO4J_server_memory_heap_max__size: 1G
       NEO4J_server_memory_pagecache_size: 512m
+    env_file:
+      - /opt/social-app/.env
     volumes:
       - neo4j_data:/data
       - neo4j_logs:/logs
       - /opt/social-app/neo4j-import:/var/lib/neo4j/import
+    # Port 7474/7687 KHÔNG expose ra host — giao tiếp nội bộ qua social-net
+    # Bỏ comment CHỈ KHI debug tạm thời (không trùng với project khác)
+    # ports:
+    #   - "7474:7474"   # Neo4j Browser
+    #   - "7687:7687"   # Bolt
     networks:
       - social-net
     restart: unless-stopped
@@ -26,6 +41,7 @@ services:
       retries: 5
       start_period: 60s
 
+  # ── Redis ────────────────────────────────────────────────────────────────────
   redis-social:
     image: redis:7.2-alpine
     container_name: social-redis
@@ -35,6 +51,7 @@ services:
       - social-net
     restart: unless-stopped
 
+  # ── API Backend ──────────────────────────────────────────────────────────────
   api:
     image: ghcr.io/truong-backend/social-app-backend:latest
     container_name: social-api
@@ -54,6 +71,7 @@ services:
       - social-net
     restart: unless-stopped
 
+  # ── Frontend ─────────────────────────────────────────────────────────────────
   frontend:
     image: ghcr.io/truong-backend/social-app-frontend:latest
     container_name: social-frontend
@@ -61,6 +79,9 @@ services:
       - "3000:3000"
     environment:
       NODE_ENV: production
+      # Dùng cho server-side proxy (route.js /api/files/[id])
+      # Gọi thẳng BE container qua Docker internal network — không qua Nginx/internet
+      BACKEND_INTERNAL_URL: http://social-api:2003
     depends_on:
       - api
     networks:
