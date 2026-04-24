@@ -1,10 +1,16 @@
 /**
  * /api/files/[id] — proxy server-side để tránh Mixed Content.
  *
- * Browser (HTTPS/HTTP) → GET /v1/files/<id>
- *   → rewrite (next.config.mjs) → /api/files/<id>
- *   → fetch server-side → backend:2003/v1/files/<id>
+ * Browser (HTTPS) → GET /v1/files/<id>
+ *   → rewrite (next.config.mjs) → /api/files/<id>   (Next.js server)
+ *   → fetch nội bộ → BACKEND_INTERNAL_URL/v1/files/<id>  (container-to-container)
  *   → stream về browser
+ *
+ * Tại sao dùng BACKEND_INTERNAL_URL thay vì NEXT_PUBLIC_API_URL?
+ * - NEXT_PUBLIC_API_URL = https://mangxahoi.deploy-my-project.site/api
+ *   → server-side gọi ra ngoài internet rồi vào lại qua Nginx → chậm, dễ lỗi TLS
+ * - BACKEND_INTERNAL_URL = http://social-api:2003
+ *   → gọi thẳng container BE trong cùng Docker network → nhanh, ổn định
  */
 export async function GET(request, { params }) {
   const { id } = await params;
@@ -13,7 +19,14 @@ export async function GET(request, { params }) {
     return new Response('Missing file id', { status: 400 });
   }
 
-  const backendBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:2003';
+  // BACKEND_INTERNAL_URL: server-side only (không NEXT_PUBLIC_)
+  // Trỏ thẳng tới container BE qua Docker internal network
+  // Fallback về NEXT_PUBLIC_API_URL cho môi trường dev local
+  const backendBase =
+    process.env.BACKEND_INTERNAL_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    'http://localhost:2003';
+
   const fileUrl = `${backendBase}/v1/files/${encodeURIComponent(id)}`;
 
   try {
@@ -25,8 +38,10 @@ export async function GET(request, { params }) {
       return new Response('File not found', { status: backendResponse.status });
     }
 
-    const contentType = backendResponse.headers.get('Content-Type') || 'application/octet-stream';
-    const contentDisposition = backendResponse.headers.get('Content-Disposition') || '';
+    const contentType =
+      backendResponse.headers.get('Content-Type') || 'application/octet-stream';
+    const contentDisposition =
+      backendResponse.headers.get('Content-Disposition') || '';
 
     return new Response(backendResponse.body, {
       status: 200,
