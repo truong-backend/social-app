@@ -12,6 +12,7 @@ const nextConfig = {
       'localhost',
       'pocpoc.online',
       'api.pocpoc.online',
+      'mangxahoi.deploy-my-project.site',
     ],
     remotePatterns: [
       {
@@ -32,6 +33,11 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'api.pocpoc.online',
+        pathname: '/v1/files/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'mangxahoi.deploy-my-project.site',  // ← thêm
         pathname: '/v1/files/**',
       },
     ],
