@@ -4,9 +4,10 @@ import com.stu.socialnetworkapi.entity.Account;
 import com.stu.socialnetworkapi.entity.User;
 import com.stu.socialnetworkapi.enums.AccountRole;
 import com.stu.socialnetworkapi.repository.neo4j.AccountRepository;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -16,27 +17,27 @@ import java.util.UUID;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class DataInitializer {
+public class DataInitializer implements ApplicationRunner {
 
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
 
     // ── Admin mặc định ──────────────────────────────────────────────
-    private static final String ADMIN_EMAIL      = "admin@gmail.com";
-    private static final String ADMIN_PASSWORD   = "Admin@123";
-    private static final String ADMIN_GIVEN_NAME = "Admin";
+    private static final String ADMIN_EMAIL       = "admin@gmail.com";
+    private static final String ADMIN_PASSWORD    = "Admin@123";
+    private static final String ADMIN_GIVEN_NAME  = "Admin";
     private static final String ADMIN_FAMILY_NAME = "Default";
-    private static final String ADMIN_USERNAME   = "admin";
+    private static final String ADMIN_USERNAME    = "admin";
 
     // ── User mặc định ───────────────────────────────────────────────
-    private static final String USER_EMAIL       = "user@gmail.com";
-    private static final String USER_PASSWORD    = "User@123";
-    private static final String USER_GIVEN_NAME  = "User";
-    private static final String USER_FAMILY_NAME = "Default";
-    private static final String USER_USERNAME    = "defaultuser";
+    private static final String USER_EMAIL        = "user@gmail.com";
+    private static final String USER_PASSWORD     = "User@123";
+    private static final String USER_GIVEN_NAME   = "User";
+    private static final String USER_FAMILY_NAME  = "Default";
+    private static final String USER_USERNAME     = "defaultuser";
 
-    @PostConstruct
-    public void initDefaultAccounts() {
+    @Override
+    public void run(ApplicationArguments args) {
         initAdmin();
         initDefaultUser();
     }
@@ -47,8 +48,11 @@ public class DataInitializer {
             return;
         }
 
+        // Account.id và User.id phải cùng UUID — theo convention của RegisterServiceImpl
+        UUID sharedId = UUID.randomUUID();
+
         User adminUser = User.builder()
-                .id(UUID.randomUUID())
+                .id(sharedId)
                 .givenName(ADMIN_GIVEN_NAME)
                 .familyName(ADMIN_FAMILY_NAME)
                 .username(ADMIN_USERNAME)
@@ -56,7 +60,7 @@ public class DataInitializer {
                 .build();
 
         Account admin = Account.builder()
-                .id(UUID.randomUUID())
+                .id(sharedId)
                 .email(ADMIN_EMAIL)
                 .password(passwordEncoder.encode(ADMIN_PASSWORD))
                 .role(AccountRole.ADMIN)
@@ -74,8 +78,11 @@ public class DataInitializer {
             return;
         }
 
+        // Account.id và User.id phải cùng UUID — theo convention của RegisterServiceImpl
+        UUID sharedId = UUID.randomUUID();
+
         User userInfo = User.builder()
-                .id(UUID.randomUUID())
+                .id(sharedId)
                 .givenName(USER_GIVEN_NAME)
                 .familyName(USER_FAMILY_NAME)
                 .username(USER_USERNAME)
@@ -83,7 +90,7 @@ public class DataInitializer {
                 .build();
 
         Account user = Account.builder()
-                .id(UUID.randomUUID())
+                .id(sharedId)
                 .email(USER_EMAIL)
                 .password(passwordEncoder.encode(USER_PASSWORD))
                 .role(AccountRole.USER)
