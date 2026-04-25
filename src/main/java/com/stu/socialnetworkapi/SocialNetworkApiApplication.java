@@ -34,7 +34,7 @@ public class SocialNetworkApiApplication {
     CommandLineRunner seedAdmin(AccountRepository accountRepository,
                                 PasswordEncoder passwordEncoder) {
         return args -> {
-            String adminEmail = "admin@admin.com";
+            String adminEmail = "honguyententruongthanh@gmail.com";
 
             boolean exists = accountRepository.findByEmailAndRoleIs(adminEmail, AccountRole.ADMIN)
                     .isPresent();
