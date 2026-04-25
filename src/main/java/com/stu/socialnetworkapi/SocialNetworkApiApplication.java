@@ -4,12 +4,14 @@ import com.stu.socialnetworkapi.entity.Account;
 import com.stu.socialnetworkapi.entity.User;
 import com.stu.socialnetworkapi.enums.AccountRole;
 import com.stu.socialnetworkapi.repository.neo4j.AccountRepository;
+import com.stu.socialnetworkapi.repository.neo4j.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -32,39 +34,46 @@ public class SocialNetworkApiApplication {
 
     @Bean
     CommandLineRunner seedAdmin(AccountRepository accountRepository,
+                                UserRepository userRepository,
                                 PasswordEncoder passwordEncoder) {
         return args -> {
-            String adminEmail = "honguyententruongthanh@gmail.com";
+            final String adminEmail    = "honguyententruongthanh@gmail.com";
+            final String adminUsername = "adminMxh";
 
-            boolean exists = accountRepository.findByEmailAndRoleIs(adminEmail, AccountRole.ADMIN)
-                    .isPresent();
+            boolean accountExists  = accountRepository.findByEmailAndRoleIs(adminEmail, AccountRole.ADMIN).isPresent();
+            boolean usernameExists = userRepository.existsByUsername(adminUsername);
 
-            if (exists) {
-                log.info("[Seed] Admin account already exists — skipping.");
+            if (accountExists || usernameExists) {
+                log.info("[Seed] Admin already exists — skipping.");
                 return;
             }
 
-            UUID id = UUID.randomUUID();
+            try {
+                UUID id = UUID.randomUUID();
 
-            User user = User.builder()
-                    .id(id)
-                    .username("admin")
-                    .givenName("Admin")
-                    .familyName("System")
-                    .birthdate(LocalDate.of(2000, 1, 1))
-                    .build();
+                User user = User.builder()
+                        .id(id)
+                        .username(adminUsername)
+                        .givenName("Admin")
+                        .familyName("System")
+                        .birthdate(LocalDate.of(2000, 1, 1))
+                        .build();
 
-            Account admin = Account.builder()
-                    .id(id)
-                    .email(adminEmail)
-                    .password(passwordEncoder.encode("Admin@123"))
-                    .role(AccountRole.ADMIN)
-                    .isVerified(true)
-                    .user(user)
-                    .build();
+                Account admin = Account.builder()
+                        .id(id)
+                        .email(adminEmail)
+                        .password(passwordEncoder.encode("Admin@123"))
+                        .role(AccountRole.ADMIN)
+                        .isVerified(true)
+                        .user(user)
+                        .build();
 
-            accountRepository.save(admin);
-            log.info("[Seed] Admin account created — email: {}", adminEmail);
+                accountRepository.save(admin);
+                log.info("[Seed] Admin account created — email: {}", adminEmail);
+
+            } catch (DataIntegrityViolationException e) {
+                log.warn("[Seed] Constraint hit, admin already exists — skipping. Detail: {}", e.getMessage());
+            }
         };
     }
 }
