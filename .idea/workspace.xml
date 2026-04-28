@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="069b736b-0e6d-4b3d-af43-6e4a296b7724" name="Changes" comment="&quot;fix: Gmail SMTP port 465 SSL (Hetzner blocks 587)&quot;&#10;Ta tài khoản" />
+    <list default="true" id="069b736b-0e6d-4b3d-af43-6e4a296b7724" name="Changes" comment="&quot;fix: Gmail SMTP port 465 SSL (Hetzner blocks 587)&quot;&#10;Ta tài khoản">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -45,18 +47,19 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Docker.docker-compose.yml: Compose Deployment.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;Spring Boot.SocialNetworkApiApplication.executor&quot;: &quot;Run&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;back-end&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/Truong/Desktop/ProjectCompleted/MangXaHoi/Deploy/social-app-be&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Docker.docker-compose.yml: Compose Deployment.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "Spring Boot.SocialNetworkApiApplication.executor": "Run",
+    "git-widget-placeholder": "back-end",
+    "kotlin-language-version-configured": "true",
+    "last_directory_selection": "C:/Users/Truong/Desktop/ProjectCompleted/MangXaHoi/Deploy/social-app-be/upload",
+    "last_opened_file_path": "C:/Users/Truong/Desktop/ProjectCompleted/MangXaHoi/Deploy/social-app-be"
   }
-}</component>
+}]]></component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -264,7 +267,39 @@
       <option name="project" value="LOCAL" />
       <updated>1777112639302</updated>
     </task>
-    <option name="localTasksCounter" value="25" />
+    <task id="LOCAL-00025" summary="&quot;fix: Gmail SMTP port 465 SSL (Hetzner blocks 587)&quot;&#10;Ta tài khoản">
+      <option name="closed" value="true" />
+      <created>1777112992376</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1777112992376</updated>
+    </task>
+    <task id="LOCAL-00026" summary="&quot;fix: Gmail SMTP port 465 SSL (Hetzner blocks 587)&quot;&#10;Ta tài khoản">
+      <option name="closed" value="true" />
+      <created>1777376241308</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1777376241308</updated>
+    </task>
+    <task id="LOCAL-00027" summary="&quot;fix: Gmail SMTP port 465 SSL (Hetzner blocks 587)&quot;&#10;Ta tài khoản">
+      <option name="closed" value="true" />
+      <created>1777378058385</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1777378058385</updated>
+    </task>
+    <task id="LOCAL-00028" summary="&quot;fix: Gmail SMTP port 465 SSL (Hetzner blocks 587)&quot;&#10;Ta tài khoản">
+      <option name="closed" value="true" />
+      <created>1777379549271</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1777379549271</updated>
+    </task>
+    <option name="localTasksCounter" value="29" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
