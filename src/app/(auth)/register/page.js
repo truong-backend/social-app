@@ -143,362 +143,290 @@ const FormFields = ({ mode, formData, setFormData, showPassword, setShowPassword
   );
 };
 
-// ============================================================
-// Google Login Button Component
-// ============================================================
-const GoogleLoginButton = ({ onSuccess, onError, loading }) => {
-  const buttonRef = useRef(null);
-
-  useEffect(() => {
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    if (!clientId) {
-      console.warn("NEXT_PUBLIC_GOOGLE_CLIENT_ID chưa được cấu hình");
-      return;
-    }
-
-    // Load Google Identity Services script
-    const loadGSI = () => {
-      if (window.google?.accounts) {
-        initializeGSI();
-        return;
-      }
-      const script = document.createElement("script");
-      script.src = "https://accounts.google.com/gsi/client";
-      script.async = true;
-      script.defer = true;
-      script.onload = initializeGSI;
-      document.head.appendChild(script);
-    };
-
-    const initializeGSI = () => {
-      if (!window.google?.accounts?.id) return;
-      window.google.accounts.id.initialize({
-        client_id: clientId,
-        callback: (response) => {
-          if (response.credential) {
-            onSuccess(response.credential);
-          } else {
-            onError("Không nhận được credential từ Google");
-          }
-        },
-        auto_select: false,
-        cancel_on_tap_outside: true,
-      });
-
-      if (buttonRef.current) {
-        window.google.accounts.id.renderButton(buttonRef.current, {
-          type: "standard",
-          theme: "outline",
-          size: "large",
-          text: "signin_with",
-          shape: "rectangular",
-          logo_alignment: "left",
-          width: buttonRef.current.offsetWidth || 320,
-        });
-      }
-    };
-
-    loadGSI();
-  }, [onSuccess, onError]);
-
-  return (
-    <div className="w-full flex justify-center">
-      <div
-        ref={buttonRef}
-        className="w-full"
-        style={{ minHeight: 44, opacity: loading ? 0.6 : 1, pointerEvents: loading ? "none" : "auto" }}
-      />
-    </div>
-  );
-};
-
-// Loading component
+// Loading component để hiển thị khi đang load search params
 const AuthPageLoading = () => (
   <div className="min-h-screen bg-background text-foreground flex flex-col">
     <main className="flex-grow flex flex-col md:flex-row h-full">
-      <div className="flex items-center justify-center flex-1">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      {/* Left Side */}
+      <div className="w-full md:w-1/2 h-screen flex items-center justify-center bg-muted relative">
+        <Image src="/Connect.png" alt="Network illustration" width={400} height={400}
+          className="max-w-full h-auto object-contain" priority />
+      </div>
+
+      {/* Right Side */}
+      <div className="w-full md:w-1/2 min-h-screen flex items-center justify-center p-6 bg-background">
+        <div className="w-full max-w-md text-card-foreground rounded-xl p-8 shadow-xl bg-[var(--card)]">
+          <div className="flex justify-center items-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <span className="ml-2 text-muted-foreground">Đang tải...</span>
+          </div>
+        </div>
       </div>
     </main>
   </div>
 );
 
-// ============================================================
-// Main Auth Form
-// ============================================================
-function AuthFormContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
+// Main component tách riêng để có thể wrap trong Suspense
+function AuthPageContent() {
   const [mode, setMode] = useState("login");
-  const [formData, setFormData] = useState({
-    email: "", password: "", confirmPassword: "",
-    givenName: "", familyName: "", birthdate: "",
-  });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
-  const [message, setMessage] = useState("");
-  const [verifyMessage, setVerifyMessage] = useState("");
-  const [verifying, setVerifying] = useState(false);
+
   const [showResendButton, setShowResendButton] = useState(false);
-  const [ref, { height }] = useMeasure();
+  const [formData, setFormData] = useState({
+    email: "", password: "", confirmPassword: "", givenName: "", familyName: "", birthdate: "",
+  });
+  const [messages, setMessages] = useState({ verify: "", general: "" });
+  const [status, setStatus] = useState({ verifying: false, loading: false });
 
-  // Xử lý verify email từ URL
-  useEffect(() => {
-    const token = searchParams.get("token");
-    const verifyEmail = searchParams.get("verifyEmail");
+  const formRef = useRef(null);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [formBoundsRef, { height }] = useMeasure();
 
-    if (token && verifyEmail) {
-      setVerifying(true);
-      api.post(`/v1/register/verify`, { token, email: verifyEmail })
-        .then(() => setVerifyMessage("✅ Email đã được xác thực thành công! Bạn có thể đăng nhập ngay."))
-        .catch((error) => setVerifyMessage(`❌ ${parseApiError(error)}`))
-        .finally(() => setVerifying(false));
-    }
-  }, [searchParams]);
-
-  const handleSubmit = useCallback(async (e) => {
-    e.preventDefault();
-    setMessage("");
-
-    const validationError = validateForm(mode, formData);
-    if (validationError) { setMessage(validationError); return; }
-
-    setLoading(true);
-    try {
-      if (mode === "login") {
-        const { data } = await api.post("/v1/auth/login", {
-          email: formData.email,
-          password: formData.password,
-        });
-        const token = data.body?.token;
-        if (!token) throw new Error("Không nhận được token");
-
-        const decoded = jwtDecode(token);
-        const userId = decoded.sub;
-        const username = decoded.username;
-
-        setAuthToken(token, userId, username);
-        router.push("/home");
-      } else {
-        await api.post("/v1/register", {
-          email: formData.email,
-          password: formData.password,
-          givenName: formData.givenName,
-          familyName: formData.familyName,
-          birthdate: formData.birthdate,
-        });
-        setMessage("✅ Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.");
-        setShowResendButton(true);
-      }
-    } catch (error) {
-      const errMsg = parseApiError(error);
-      const data = error.response?.data;
-      if (data?.body?.time) {
-        setMessage(`🔒 Tài khoản bị khóa đến ${formatLockoutTime(data.body.time)}`);
-      } else if (data?.body?.remainingAttempts) {
-        setMessage(`❌ ${errMsg}. Còn ${data.body.remainingAttempts} lần thử.`);
-      } else {
-        setMessage(`❌ ${errMsg}`);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [mode, formData, router]);
-
-  // ============================================================
-  // Google OAuth Handler
-  // ============================================================
-  const handleGoogleSuccess = useCallback(async (idToken) => {
-    setGoogleLoading(true);
-    setMessage("");
-    try {
-      const { data } = await api.post("/v1/auth/google", { idToken });
-      const token = data.body?.token;
-      if (!token) throw new Error("Không nhận được token từ server");
-
-      const decoded = jwtDecode(token);
-      const userId = decoded.sub;
-      const username = decoded.username;
-
-      setAuthToken(token, userId, username);
-      router.push("/home");
-    } catch (error) {
-      setMessage(`❌ Đăng nhập Google thất bại: ${parseApiError(error)}`);
-    } finally {
-      setGoogleLoading(false);
-    }
-  }, [router]);
-
-  const handleGoogleError = useCallback((errorMsg) => {
-    setMessage(`❌ Lỗi Google: ${errorMsg}`);
-  }, []);
+  const clearForm = () => {
+    setFormData({ email: "", password: "", confirmPassword: "", givenName: "", familyName: "", birthdate: "" });
+    setShowResendButton(false);
+  };
 
   const handleResend = async () => {
-    if (!formData.email) { setMessage("❌ Vui lòng nhập email"); return; }
+    const email = searchParams.get("email") || formData.email;
+    if (!email) {
+      setMessages(prev => ({ ...prev, general: "❌ Vui lòng nhập email trước khi gửi lại" }));
+      return;
+    }
+
+    setStatus(prev => ({ ...prev, loading: true }));
     try {
-      await api.post("/v1/register/resend-verify", { email: formData.email });
-      setMessage("✅ Đã gửi lại email xác thực!");
+      const res = await api.post(`/v1/register/resend-email?email=${email}`);
+      if (res.data.code === 200) {
+        setMessages(prev => ({ ...prev, general: "✅ Đã gửi lại email xác thực! Vui lòng kiểm tra hộp thư." }));
+        setShowResendButton(false);
+      }
     } catch (error) {
-      setMessage(`❌ ${parseApiError(error)}`);
+      setMessages(prev => ({ ...prev, general: `❌ Gửi lại email thất bại: ${parseApiError(error)}` }));
+    } finally {
+      setStatus(prev => ({ ...prev, loading: false }));
     }
   };
 
+  // Email verification
+  useEffect(() => {
+    const verifyEmail = async () => {
+      const emailParam = searchParams.get("email");
+      const codeParam = searchParams.get("code");
+      if (!emailParam || !codeParam) return;
+
+      setStatus(prev => ({ ...prev, verifying: true }));
+      try {
+        const res = await api.patch("/v1/register/verify",
+          { email: emailParam, code: codeParam },
+          { headers: { "Content-Type": "application/json" }, timeout: 10000 }
+        );
+
+        if (res.data.code === 200) {
+          setMessages(prev => ({ ...prev, verify: "✅ Xác thực email thành công! Bạn có thể đăng nhập." }));
+          setMode("login");
+        }
+      } catch (error) {
+        if (error.response?.data?.code === 1009) {
+          setMessages(prev => ({ ...prev, verify: "❌ Mã xác thực hết hạn hoặc không hợp lệ" }));
+          setShowResendButton(true);
+        } else {
+          setMessages(prev => ({ ...prev, verify: `❌ Xác thực thất bại: ${parseApiError(error)}` }));
+        }
+      } finally {
+        setStatus(prev => ({ ...prev, verifying: false }));
+      }
+    };
+
+    verifyEmail();
+  }, [searchParams]);
+
+  const handleRegister = async () => {
+    setStatus(prev => ({ ...prev, loading: true }));
+    try {
+      const res = await api.post("/v1/register", {
+        email: formData.email, password: formData.password,
+        givenName: formData.givenName, familyName: formData.familyName, birthdate: formData.birthdate,
+      });
+
+      if (res.data.code === 200) {
+        setMessages(prev => ({ ...prev, general: "✅ Đăng ký thành công! Vui lòng kiểm tra email để xác thực." }));
+        setMode("login");
+        clearForm();
+      }
+    } catch (error) {
+      const code = error.response?.data?.code;
+      if (code === 2009) {
+        setMessages(prev => ({ ...prev, general: "❌ Email chưa xác thực, vui lòng kiểm tra email của bạn" }));
+        setShowResendButton(true);
+      } else if (code === 1012) {
+        setMessages(prev => ({ ...prev, general: "❌ Email này đã được đăng ký" }));
+      } else {
+        setMessages(prev => ({ ...prev, general: `❌ Đăng ký thất bại: ${parseApiError(error)}` }));
+      }
+    } finally {
+      setStatus(prev => ({ ...prev, loading: false }));
+    }
+  };
+
+  const handleLogin = async () => {
+    setStatus(prev => ({ ...prev, loading: true }));
+    try {
+      const res = await api.post("/v1/auth/login", { email: formData.email, password: formData.password });
+
+      if (res.data.code === 200 && res.data.body.token) {
+        const token = res.data.body.token;
+        const decoded = jwtDecode(token);
+
+        // Store auth data
+        const authData = { role: decoded.scope, accessToken: token, userId: decoded.sub, userName: decoded.username };
+        Object.entries(authData).forEach(([key, value]) => localStorage.setItem(key, value));
+
+        if (setAuthToken(token, decoded.sub, decoded.username)) {
+          setMessages(prev => ({ ...prev, general: "✅ Đăng nhập thành công!" }));
+          setFormData(prev => ({ ...prev, email: "", password: "" }));
+          setTimeout(() => window.location.href = "/home", 500);
+        } else {
+          setMessages(prev => ({ ...prev, general: "⚠️ Đăng nhập thành công nhưng có lỗi khi đồng bộ hóa phiên làm việc" }));
+          setTimeout(() => router.push("/index"), 1200);
+        }
+      } else if (res.data.code === 1003) {
+        const remainingAttempts = res.data.body?.remainingAttempts || 0;
+        setMessages(prev => ({ ...prev, general: `❌ Thông tin đăng nhập không chính xác. Còn lại ${remainingAttempts} lần thử.` }));
+      } else if (res.data.code === 1002) {
+        const lockoutTime = formatLockoutTime(res.data.body?.time);
+        setMessages(prev => ({ ...prev, general: `🔒 Tài khoản tạm thời bị khóa do đăng nhập sai quá nhiều lần. Thời gian mở khóa: ${lockoutTime}` }));
+      } else {
+        setMessages(prev => ({ ...prev, general: `❌ ${res.data.message || "Đăng nhập thất bại"}` }));
+      }
+    } catch (error) {
+      const errorData = error.response?.data;
+      if (errorData?.code === 1003) {
+        const remainingAttempts = errorData.body?.remainingAttempts || 0;
+        setMessages(prev => ({ ...prev, general: `❌ Thông tin đăng nhập không chính xác. Còn lại ${remainingAttempts} lần thử.` }));
+      } else if (errorData?.code === 1002) {
+        const lockoutTime = formatLockoutTime(errorData.body?.time);
+        setMessages(prev => ({ ...prev, general: `🔒 Tài khoản tạm thời bị khóa do đăng nhập sai quá nhiều lần. Thời gian mở khóa: ${lockoutTime}` }));
+      } else {
+        setMessages(prev => ({ ...prev, general: `❌ Đăng nhập thất bại: ${parseApiError(error)}` }));
+      }
+    } finally {
+      setStatus(prev => ({ ...prev, loading: false }));
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessages(prev => ({ ...prev, general: "" }));
+
+    const validationError = validateForm(mode, formData);
+    if (validationError) {
+      setMessages(prev => ({ ...prev, general: validationError }));
+      return;
+    }
+
+    mode === "register" ? await handleRegister() : await handleLogin();
+  };
+
+  const scrollToForm = () => formRef.current?.scrollIntoView({ behavior: "smooth" });
   const toggleMode = () => {
     setMode(prev => prev === "login" ? "register" : "login");
-    setMessage("");
-    setVerifyMessage("");
+    setMessages({ verify: "", general: "" });
     setShowResendButton(false);
   };
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <main className="flex-grow flex flex-col md:flex-row h-full">
-        {/* Left Side - Banner */}
-        <div className="hidden md:flex flex-col justify-center items-start bg-primary text-primary-foreground p-12 md:w-1/2 lg:w-3/5">
-          <div className="max-w-md">
-            <div className="flex items-center gap-3 mb-8">
-              <Image src="/pocpoc.png" alt="PocPoc Logo" width={48} height={48} className="rounded-xl" />
-              <h1 className="text-3xl font-bold">PocPoc</h1>
-            </div>
-            <h2 className="text-4xl font-bold leading-tight mb-4">
-              Kết nối với bạn bè và thế giới xung quanh bạn
-            </h2>
-            <p className="text-lg opacity-80">
-              Chia sẻ câu chuyện, gặp gỡ bạn mới và luôn được là chính mình trên PocPoc.
-            </p>
+        {/* Left Side */}
+        <div className="w-full md:w-1/2 h-screen flex items-center justify-center bg-muted relative">
+          <Image src="/Connect.png" alt="Network illustration" width={400} height={400}
+            className="max-w-full h-auto object-contain" priority />
+          <div className="absolute bottom-10 left-0 right-0 flex justify-center md:hidden">
+            <button onClick={scrollToForm}
+              className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-full shadow-lg hover:opacity-90 transition-opacity">
+              Go to {mode} <ArrowDown className="h-4 w-4" />
+            </button>
           </div>
         </div>
 
-        {/* Right Side - Form */}
-        <div className="flex flex-col justify-center items-center p-6 md:p-12 md:w-1/2 lg:w-2/5">
-          <div className="w-full max-w-sm">
-            {/* Mobile Logo */}
-            <div className="flex md:hidden items-center gap-2 mb-8">
-              <Image src="/pocpoc.png" alt="PocPoc Logo" width={36} height={36} className="rounded-lg" />
-              <span className="text-xl font-bold">PocPoc</span>
+        {/* Right Side */}
+        <div ref={formRef} className="w-full md:w-1/2 min-h-screen flex items-center justify-center p-6 bg-background">
+          <div className="w-full max-w-md text-card-foreground rounded-xl p-8 shadow-xl bg-[var(--card)]" style={{ overflow: "hidden" }}>
+            <div>
+              {showResendButton ? (
+                <h1 className="text-2xl font-bold mb-4">Xác thực email</h1>
+              ) : <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-bold">{mode === "login" ? "Đăng nhập" : "Tạo tài khoản mới"}</h1>
+                <button onClick={toggleMode} className="text-sm text-muted-foreground hover:text-foreground transition">
+                  <ArrowLeftRight className="inline-block w-4 h-4 mr-1" />
+                  {mode === "login" ? "Đăng ký" : "Đăng nhập"}
+                </button>
+              </div>}
+              <MessageDisplay message={messages.general} verifyMessage={messages.verify} verifying={status.verifying} />
             </div>
 
-            <motion.div animate={{ height }} className="overflow-hidden">
-              <div ref={ref}>
+            {showResendButton ? (
+              <div className="flex flex-col items-center gap-2">
+                <Button onClick={handleResend} className=" w-full text-md text-white bg-black px-3 py-2 rounded hover:underline">
+                  Gửi lại email xác thực 📩
+                </Button>
+                <p className="text-sm">Hoặc</p>
+                <Button onClick={() => {
+                  window.location.href = "/register";
+                }} className="w-full py-2">
+                  Đăng nhập
+                </Button>
+              </div>
+            ) : <motion.div animate={{ height }} transition={{ duration: 0.3, ease: "easeInOut" }} style={{ overflow: "hidden" }}>
+              <div ref={formBoundsRef}>
                 <AnimatePresence mode="wait">
-                  <MotionContainer key={mode} modeKey={mode} effect="fadeUp" duration={0.2}>
-                    <div className="space-y-4">
-                      <div>
-                        <h2 className="text-2xl font-bold text-foreground">
-                          {mode === "login" ? "Đăng nhập" : "Tạo tài khoản"}
-                        </h2>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {mode === "login"
-                            ? "Chào mừng trở lại! Vui lòng đăng nhập để tiếp tục."
-                            : "Tạo tài khoản miễn phí để bắt đầu kết nối!"}
-                        </p>
-                      </div>
+                  <MotionContainer key={mode} modeKey={mode} effect="fadeUp">
 
-                      <MessageDisplay
-                        message={message}
-                        verifyMessage={verifyMessage}
-                        verifying={verifying}
-                      />
-
-                      {/* ===== GOOGLE LOGIN BUTTON ===== */}
-                      <div className="space-y-3">
-                        <GoogleLoginButton
-                          onSuccess={handleGoogleSuccess}
-                          onError={handleGoogleError}
-                          loading={googleLoading || loading}
-                        />
-
-                        {googleLoading && (
-                          <p className="text-center text-sm text-muted-foreground animate-pulse">
-                            🔄 Đang xác thực với Google...
-                          </p>
-                        )}
-
-                        {/* Divider */}
-                        <div className="flex items-center gap-3">
-                          <div className="flex-1 border-t border-border" />
-                          <span className="text-xs text-muted-foreground">hoặc</span>
-                          <div className="flex-1 border-t border-border" />
-                        </div>
-                      </div>
-                      {/* ===== END GOOGLE LOGIN BUTTON ===== */}
-
-                      <form onSubmit={handleSubmit} className="space-y-4">
-                        <FormFields
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                      <FormFields
                           mode={mode}
                           formData={formData}
                           setFormData={setFormData}
                           showPassword={showPassword}
                           setShowPassword={setShowPassword}
-                          loading={loading}
-                          verifying={verifying}
                           showConfirmPassword={showConfirmPassword}
                           setShowConfirmPassword={setShowConfirmPassword}
-                          showResendButton={showResendButton}
-                          onResend={handleResend}
-                        />
+                          loading={status.loading}
+                          verifying={status.verifying}
+                      />
 
-                        {showResendButton && (
-                          <button
-                            type="button"
-                            onClick={handleResend}
-                            className="text-sm text-primary hover:underline"
-                          >
-                            Gửi lại email xác thực
-                          </button>
-                        )}
+                      <Button type="submit" disabled={status.loading || status.verifying} className="w-full py-2">
+                        {status.loading ? "Loading..." : mode === "login" ? "Đăng nhập" : "Đăng ký"}
+                      </Button>
 
-                        {mode === "login" && (
-                          <div className="text-right">
-                            <Link href="/forgot-password" className="text-sm text-primary hover:underline">
-                              Quên mật khẩu?
-                            </Link>
-                          </div>
-                        )}
-
-                        <Button
-                          type="submit"
-                          className="w-full"
-                          disabled={loading || verifying || googleLoading}
-                        >
-                          {loading
-                            ? "⏳ Đang xử lý..."
-                            : mode === "login" ? "Đăng nhập" : "Đăng ký"}
-                        </Button>
-                      </form>
-
-                      <div className="text-center">
-                        <button
-                          type="button"
-                          onClick={toggleMode}
-                          className="text-sm text-primary hover:underline flex items-center gap-1 mx-auto"
-                          disabled={loading || googleLoading}
-                        >
-                          <ArrowLeftRight className="w-3 h-3" />
-                          {mode === "login"
-                            ? "Chưa có tài khoản? Đăng ký ngay"
-                            : "Đã có tài khoản? Đăng nhập"}
-                        </button>
+                      <div className="mt-6 text-center text-sm text-muted-foreground">
+                        <div>
+                          Quên mật khẩu?{" "}
+                          <Link href="/forgot-password" className="text-blue-500 dark:text-blue-400 hover:underline">
+                            Tạo mật khẩu mới
+                          </Link>
+                        </div>
                       </div>
-                    </div>
+                    </form>
                   </MotionContainer>
                 </AnimatePresence>
               </div>
-            </motion.div>
+            </motion.div>}
           </div>
-        </div>
-      </main>
-    </div>
+        </div >
+      </main >
+    </div >
   );
 }
 
-export default function RegisterPage() {
+// Export default component với Suspense wrapper
+export default function AuthPage() {
   return (
     <Suspense fallback={<AuthPageLoading />}>
-      <AuthFormContent />
+      <AuthPageContent />
     </Suspense>
   );
 }
