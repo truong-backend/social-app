@@ -125,7 +125,7 @@ const FormFields = ({ mode, formData, setFormData, showPassword, setShowPassword
 };
 
 // ============================================================
-// Google Login Button — luôn hiển thị, không phụ thuộc renderButton
+// Google Login Button — luôn hiển thị, không phụ thuộc renderButton //
 // ============================================================
 const GoogleLoginButton = ({ onSuccess, onError, loading }) => {
   const [gsiReady, setGsiReady] = useState(false);
