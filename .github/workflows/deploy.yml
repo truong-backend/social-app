@@ -1,12 +1,12 @@
 name: Deploy Frontend — Social App
-
+ 
 on:
   push:
     branches: [front-end]
-
+ 
 env:
   IMAGE_NAME: truong-backend/social-app-frontend
-
+ 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -28,7 +28,6 @@ jobs:
           build-args: |
             NEXT_PUBLIC_API_URL=https://mangxahoi.deploy-my-project.site/api
             NEXT_PUBLIC_SOCKET_ENDPOINT=https://mangxahoi.deploy-my-project.site/ws
-            NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
       - uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
