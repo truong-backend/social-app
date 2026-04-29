@@ -16,14 +16,19 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/v1/files")
 public class FileController {
+
     private final FileService fileService;
 
+    /**
+     * Stream the file directly from MinIO through the backend.
+     * The Cache-Control header lets clients/CDNs cache the response for 1 hour.
+     */
     @GetMapping("/{id}")
     public ResponseEntity<Resource> load(@PathVariable String id) {
         FileResponse file = fileService.load(id);
         return ResponseEntity.ok()
                 .header("Content-Disposition", "inline; filename=\"" + file.getName() + "\"")
-                .header(HttpHeaders.CACHE_CONTROL, "public, max-age=3600, immutable") // Cache file trong 1 tieng
+                .header(HttpHeaders.CACHE_CONTROL, "public, max-age=3600, immutable")
                 .contentType(MediaType.parseMediaType(file.getContentType()))
                 .body(file.getResource());
     }

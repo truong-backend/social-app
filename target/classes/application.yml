@@ -1,6 +1,8 @@
 spring:
   application:
     name: social-network-api
+
+  # ===================== AI (Gemini) =====================
   ai:
     openai:
       api-key: ${GEMINI_KEY}
@@ -9,15 +11,21 @@ spring:
         completions-path: /v1beta/openai/chat/completions
         options:
           model: gemini-2.0-flash
+
+  # ===================== FILE UPLOAD =====================
   servlet:
     multipart:
       max-file-size: 10MB
       max-request-size: 105MB
+
+  # ===================== NEO4J =====================
   neo4j:
     uri: ${NEO4J_URI}
     authentication:
       username: ${NEO4J_USER}
       password: ${NEO4J_PASS}
+
+  # ===================== REDIS =====================
   data:
     redis:
       host: ${REDIS_HOST}
@@ -29,17 +37,22 @@ spring:
       password: ${REDIS_PASSWORD}
       ssl:
         enabled: false
+
+  # ===================== DATABASE (SQLite) =====================
   datasource:
     url: jdbc:sqlite:/data/online_users.db
+
   jpa:
     database-platform: org.hibernate.community.dialect.SQLiteDialect
     show-sql: true
     hibernate:
       ddl-auto: update
+
+  # ===================== MAIL (BREVO FIXED) =====================
   mail:
-    port: 587
-    username: ${MAIL}
-    host: smtp.gmail.com
+    host: ${MAIL_HOST:smtp-relay.brevo.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
     password: ${MAIL_PASSWORD}
     properties:
       mail:
@@ -49,8 +62,9 @@ spring:
             enable: true
             required: true
           ssl:
-            trust: smtp.gmail.com
+            enable: false
 
+# ===================== SERVER =====================
 server:
   servlet:
     session:
@@ -58,6 +72,7 @@ server:
         same-site: lax
   port: 2003
 
+# ===================== JWT =====================
 jwt:
   access-token:
     key: ${JWT_ACCESS_TOKEN_KEY}
@@ -65,15 +80,18 @@ jwt:
   refresh-token:
     duration: ${JWT_REFRESH_TOKEN_DURATION}
 
+# ===================== ORIGIN =====================
 origin:
   front-end: ${FRONTEND_ORIGIN}
   self: ${SELF_ORIGIN}
 
+# ===================== STRINGEE =====================
 stringee:
   api:
     sid: ${STRINGEE_API_SID}
     secret-key: ${STRINGEE_API_SECRET_KEY}
 
+# ===================== LOGGING =====================
 logging:
   level:
     root: error
@@ -81,6 +99,7 @@ logging:
       stu:
         socialnetworkapi: DEBUG
 
+# ===================== ACTUATOR =====================
 management:
   endpoints:
     web:
@@ -89,3 +108,14 @@ management:
   endpoint:
     health:
       show-details: always
+# ===================== GOOGLE OAUTH2 =====================
+google:
+  client-id: ${GOOGLE_CLIENT_ID}
+
+# ===================== MINIO =====================
+minio:
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin}
+  bucket: ${MINIO_BUCKET:social-app}
+  presigned-url-expiry: ${MINIO_PRESIGNED_EXPIRY:3600} # seconds
