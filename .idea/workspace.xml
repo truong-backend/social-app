@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="069b736b-0e6d-4b3d-af43-6e4a296b7724" name="Changes" comment="&quot;fix: Gmail SMTP port 465 SSL (Hetzner blocks 587)&quot;&#10;Ta tài khoản">
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/config/GsonConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/config/GsonConfig.java" afterDir="false" />
-    </list>
+    <list default="true" id="069b736b-0e6d-4b3d-af43-6e4a296b7724" name="Changes" comment="&quot;fix: Gmail SMTP port 465 SSL (Hetzner blocks 587)&quot;&#10;Ta tài khoản" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -315,7 +313,15 @@
       <option name="project" value="LOCAL" />
       <updated>1777486068027</updated>
     </task>
-    <option name="localTasksCounter" value="31" />
+    <task id="LOCAL-00031" summary="&quot;fix: Gmail SMTP port 465 SSL (Hetzner blocks 587)&quot;&#10;Ta tài khoản">
+      <option name="closed" value="true" />
+      <created>1777488182527</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1777488182527</updated>
+    </task>
+    <option name="localTasksCounter" value="32" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

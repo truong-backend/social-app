@@ -1,6 +1,6 @@
 package com.stu.socialnetworkapi.event;
 
-import com.nimbusds.jose.shaded.gson.Gson;
+import com.google.gson.Gson;
 import com.stu.socialnetworkapi.repository.neo4j.KeywordRepository;
 import com.stu.socialnetworkapi.service.itf.KeywordExtractorService;
 import jakarta.annotation.PostConstruct;

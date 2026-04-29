@@ -1,6 +1,6 @@
 package com.stu.socialnetworkapi.event;
 
-import com.nimbusds.jose.shaded.gson.Gson;
+import com.google.gson.Gson;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
