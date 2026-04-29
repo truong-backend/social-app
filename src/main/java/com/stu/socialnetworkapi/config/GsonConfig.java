@@ -1,13 +1,21 @@
 package com.stu.socialnetworkapi.config;
 
-import com.nimbusds.jose.shaded.gson.Gson;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 @Configuration
 public class GsonConfig {
+
     @Bean
+    @Primary
+    @ConditionalOnMissingBean(name = "gson")
     public Gson gson() {
-        return new Gson();
+        return new GsonBuilder()
+                .serializeNulls()
+                .create();
     }
 }
