@@ -4,18 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="069b736b-0e6d-4b3d-af43-6e4a296b7724" name="Changes" comment="&quot;fix: Gmail SMTP port 465 SSL (Hetzner blocks 587)&quot;&#10;Ta tài khoản">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/config/WebSocketConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/config/WebSocketConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test-upload/17006d5d-e3c7-49f4-b46e-d2752476137a" beforeDir="false" afterPath="$PROJECT_DIR$/.env.local" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test-upload/ea20791c-e44e-4360-aa8d-ff89bace397e" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/upload/1606602c-0da3-451b-b37c-c90bb03ce32c.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/upload/25f37536-6a84-410e-a823-7c75f6c90195.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/upload/7da916ad-6be6-49b7-b73b-7c5fee7dc3ac.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/upload/7fdcd2de-f77b-44fe-ba58-796cc627696e.png" beforeDir="false" />
-    </list>
+    <list default="true" id="069b736b-0e6d-4b3d-af43-6e4a296b7724" name="Changes" comment="update" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -340,7 +329,15 @@
       <option name="project" value="LOCAL" />
       <updated>1777489072770</updated>
     </task>
-    <option name="localTasksCounter" value="33" />
+    <task id="LOCAL-00033" summary="update">
+      <option name="closed" value="true" />
+      <created>1778323928171</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1778323928171</updated>
+    </task>
+    <option name="localTasksCounter" value="34" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -358,7 +355,8 @@
     <MESSAGE value="Update deploy hetzner" />
     <MESSAGE value="&quot;fix: Gmail SMTP port 465 SSL (Hetzner blocks 587)&quot;" />
     <MESSAGE value="&quot;fix: Gmail SMTP port 465 SSL (Hetzner blocks 587)&quot;&#10;Ta tài khoản" />
-    <option name="LAST_COMMIT_MESSAGE" value="&quot;fix: Gmail SMTP port 465 SSL (Hetzner blocks 587)&quot;&#10;Ta tài khoản" />
+    <MESSAGE value="update" />
+    <option name="LAST_COMMIT_MESSAGE" value="update" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/social_app$SocialNetworkApiApplication.ic" NAME="SocialNetworkApiApplication Coverage Results" MODIFIED="1776389746974" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
