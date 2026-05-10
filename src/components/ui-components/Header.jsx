@@ -2,55 +2,51 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { PlusSquare } from "lucide-react";
 import { useRouter } from "next/navigation";
 import api, { clearSession } from "@/utils/axios";
 import NewPostModal from "../social-app-component/CreatePostForm";
 import useAppStore from "@/store/ZustandStore";
 
-export default function Header({ }) {
+export default function Header() {
   const router = useRouter();
   const [showPostModal, setShowPostModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const clearAllData = useAppStore(state => state.clearAllData);
+  const clearAllData = useAppStore((state) => state.clearAllData);
 
   return (
     <>
       <header
-        className="w-full px-6 flex items-center justify-between bg-[var(--background)]"
-        style={{ height: "64px", paddingTop: "0.5rem", paddingBottom: "0.5rem" }}
+        className="w-full flex items-center justify-between bg-[var(--background)] border-b border-[var(--border)] px-4 md:px-6"
+        style={{ height: "60px" }}
       >
-
-        {/* Center - Logo */}
-        <div className="sm:block w-1/3 flex justify-center">
-          <Link href="/home" className="font-bold text-2xl text-[var(--foreground)]">
+        {/* Logo - Instagram style */}
+        <div className="flex items-center">
+          <Link
+            href="/home"
+            className="font-bold text-xl tracking-tight text-[var(--foreground)] font-serif italic"
+            style={{ fontFamily: "'Billabong', 'Grand Hotel', cursive, Arial" }}
+          >
             pocpoc
           </Link>
         </div>
 
-        <div className="flex justify-end space-x-2 items-center  px-4">
-          <div
-            role="group"
-            aria-label="Add and Messages"
-            className="h-12 bg-[var(--card)] rounded-full flex items-center"
+        {/* Right actions */}
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            aria-label="Tạo bài viết"
+            title="Tạo bài viết"
+            onClick={() => setShowPostModal(true)}
+            disabled={isLoggingOut}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-[var(--foreground)] hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-colors disabled:opacity-50"
           >
-            <button
-              type="button"
-              aria-label="Add"
-              onClick={() => setShowPostModal(true)}
-              className="w-32 h-12 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-700 transition rounded-full px-2"
-              disabled={isLoggingOut} // ✅ Disable during logout
-            >
-              <Plus size={24} className="text-[var(--foreground)] " />
-              <span className="pl-2">Đăng bài</span>
-            </button>
-
-
-          </div>
+            <PlusSquare size={22} strokeWidth={1.5} />
+            <span className="hidden sm:inline">Đăng bài</span>
+          </button>
         </div>
       </header>
 
-      {/* 📌 Modal tạo bài viết */}
       {showPostModal && !isLoggingOut && (
         <NewPostModal
           isOpen={showPostModal}

@@ -5,154 +5,142 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import MotionContainer from "@/components/ui-components/MotionContainer";
 import {
-  UserCircle, Lock, Ban, Flag,
-  FileText, Database, MessageCircle, MessageSquare, Mail,
-  Sun, ArrowLeft,
+  UserCircle, Lock, Ban,
+  Sun, ArrowLeft, ChevronRight,
 } from "lucide-react";
-import {pageMetadata, usePageMetadata} from "@/utils/clientMetadata";
+import { usePageMetadata, pageMetadata } from "@/utils/clientMetadata";
 
 const groupedMenuItems = [
   {
-    title: "Tài khoản",
+    title: "Cài đặt tài khoản",
     items: [
-      { id: "personalinfo", icon: UserCircle, label: "Thông tin cá nhân" },
-      { id: "privacy", icon: Lock, label: "Bảo mật & Quyền riêng tư" },
-    ]
+      { id: "personalinfo", icon: UserCircle, label: "Chỉnh sửa trang cá nhân" },
+      { id: "privacy", icon: Lock, label: "Quyền riêng tư tài khoản" },
+      { id: "blockedlist", icon: Ban, label: "Nội dung bạn đã ẩn" },
+    ],
   },
   {
-    title: "Tương tác",
+    title: "Cài đặt hiển thị",
     items: [
-      // { id: "connections", icon: Users, label: "Bạn bè & Kết nối" },
-      { id: "blockedlist", icon: Ban, label: "Danh sách chặn" },
-    ]
+      { id: "display", icon: Sun, label: "Chế độ tối" },
+    ],
   },
-
-  {
-    title: "Ngôn ngữ và hiển thị",
-    items: [
-      { id: "display", icon: Sun, label: "Hiển thị" },
-    ]
-  },
-  {
-    title: "Version 1.0.0",
-    items: []
-  }
 ];
 
 export default function SettingsLayout({ children }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [showSidebar, setShowSidebar] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(true);
 
   usePageMetadata(pageMetadata.settings());
 
-  // Check if device is mobile
   useEffect(() => {
-    const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    checkIsMobile();
-    window.addEventListener('resize', checkIsMobile);
-
-    return () => window.removeEventListener('resize', checkIsMobile);
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
   }, []);
 
-  // Handle mobile navigation
   useEffect(() => {
     if (isMobile) {
-      // If we're on a specific settings page, hide sidebar
-      const isOnSettingsSubpage = pathname !== '/settings' && pathname.startsWith('/settings/');
-      setShowSidebar(!isOnSettingsSubpage);
+      const isSubpage = pathname !== "/settings" && pathname.startsWith("/settings/");
+      setShowSidebar(!isSubpage);
     } else {
-      // Always show sidebar on desktop
       setShowSidebar(true);
     }
   }, [pathname, isMobile]);
 
-  const handleBackToSidebar = () => {
-    if (isMobile) {
-      router.push('/settings');
-    }
-  };
-
   const getCurrentPageTitle = () => {
     for (const group of groupedMenuItems) {
       for (const item of group.items) {
-        if (pathname.endsWith(item.id)) {
-          return item.label;
-        }
+        if (pathname.endsWith(item.id)) return item.label;
       }
     }
-    return 'Cài đặt';
+    return "Cài đặt";
   };
 
   return (
-      <div className="flex h-screen w-full bg-[var(--background)] text-[var(--foreground)]">
-        {/* Sidebar */}
-        <aside className={`
-        ${isMobile ? (showSidebar ? 'w-full' : 'hidden') : 'w-[280px]'} 
-        border-r border-[var(--border)] p-6 overflow-y-auto
-        ${isMobile ? 'fixed inset-0 z-10 bg-[var(--background)]' : ''}
-      `}>
-          <h2 className="text-sm text-[var(--muted-foreground)] font-semibold mb-6">
-            Cài đặt người dùng
-          </h2>
-          <nav className="space-y-6">
-            {groupedMenuItems.map((group, idx) => (
-                <div key={idx} className="space-y-2">
-                  <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider px-2">
-                    {group.title}
-                  </h3>
-                  {group.items.map((item, subIdx) => (
-                      <Link
-                          key={subIdx}
-                          href={`/settings/${item.id}`}
-                          className={`w-full flex items-center gap-3 text-left px-4 py-3 rounded-md hover:bg-[var(--muted)] transition-colors ${
-                              pathname.endsWith(item.id) ? "bg-[var(--muted)]" : ""
-                          } ${isMobile ? 'py-4' : 'py-2'}`}
-                          onClick={() => {
-                            if (isMobile) {
-                              setShowSidebar(false);
-                            }
-                          }}
-                      >
-                        <item.icon className="w-5 h-5 text-[var(--foreground)]" />
-                        <span className={`font-medium ${isMobile ? 'text-base' : 'text-sm'}`}>
-                    {item.label}
-                  </span>
-                      </Link>
-                  ))}
-                </div>
-            ))}
-          </nav>
-        </aside>
+    <div className="flex min-h-screen w-full bg-[var(--background)] text-[var(--foreground)]">
+      {/* Sidebar */}
+      <aside
+        className={`
+          ${isMobile ? (showSidebar ? "w-full" : "hidden") : "w-[320px] min-w-[320px]"}
+          border-r border-[var(--border)] overflow-y-auto
+          ${isMobile ? "fixed inset-0 z-10 bg-[var(--background)]" : ""}
+        `}
+      >
+        {/* Sidebar header */}
+        <div className="px-6 py-5 border-b border-[var(--border)]">
+          <h2 className="text-xl font-bold tracking-tight">Cài đặt</h2>
+        </div>
 
-        {/* Main content */}
-        <main className={`
-        flex-1 overflow-y-auto space-y-6
-        ${isMobile ? (showSidebar ? 'hidden' : 'w-full p-4') : 'p-8'}
-      `}>
-          {/* Mobile header with back button */}
-          {isMobile && !showSidebar && (
-              <div className="flex items-center gap-4 pb-4 border-b border-[var(--border)] mb-6">
-                <button
-                    onClick={handleBackToSidebar}
-                    className="flex items-center gap-2 text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-                <h1 className="text-lg font-semibold text-[var(--foreground)]">
-                  {getCurrentPageTitle()}
-                </h1>
-              </div>
-          )}
+        <nav className="py-2">
+          {groupedMenuItems.map((group, idx) => (
+            <div key={idx}>
+              <p className="px-6 pt-5 pb-2 text-[11px] font-semibold text-[var(--muted-foreground)] uppercase tracking-widest">
+                {group.title}
+              </p>
+              {group.items.map((item) => {
+                const isActive = pathname.endsWith(item.id);
+                return (
+                  <Link
+                    key={item.id}
+                    href={`/settings/${item.id}`}
+                    onClick={() => isMobile && setShowSidebar(false)}
+                    className={`
+                      flex items-center justify-between px-6 py-3 
+                      hover:bg-[var(--muted)] transition-colors
+                      ${isActive ? "bg-[var(--muted)]" : ""}
+                    `}
+                  >
+                    <div className="flex items-center gap-3">
+                      <item.icon
+                        className={`w-5 h-5 ${isActive ? "text-[var(--foreground)]" : "text-[var(--muted-foreground)]"}`}
+                      />
+                      <span className={`text-sm ${isActive ? "font-semibold" : "font-normal"}`}>
+                        {item.label}
+                      </span>
+                    </div>
+                    {isMobile && (
+                      <ChevronRight className="w-4 h-4 text-[var(--muted-foreground)]" />
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
 
-          <MotionContainer modeKey={pathname} effect="fadeUp" duration={0.25}>
-            {children}
-          </MotionContainer>
-        </main>
-      </div>
+          <div className="px-6 pt-8 pb-4">
+            <p className="text-xs text-[var(--muted-foreground)]">Phiên bản 1.0.0</p>
+          </div>
+        </nav>
+      </aside>
+
+      {/* Main content */}
+      <main
+        className={`
+          flex-1 overflow-y-auto
+          ${isMobile ? (showSidebar ? "hidden" : "block") : "block"}
+        `}
+      >
+        {/* Mobile back header */}
+        {isMobile && !showSidebar && (
+          <div className="flex items-center gap-3 px-4 py-4 border-b border-[var(--border)] sticky top-0 bg-[var(--background)] z-10">
+            <button
+              onClick={() => router.push("/settings")}
+              className="p-1 -ml-1 rounded-full hover:bg-[var(--muted)] transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <h1 className="text-base font-semibold">{getCurrentPageTitle()}</h1>
+          </div>
+        )}
+
+        <MotionContainer modeKey={pathname} effect="fadeUp" duration={0.25}>
+          {children}
+        </MotionContainer>
+      </main>
+    </div>
   );
 }

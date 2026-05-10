@@ -254,11 +254,11 @@ export default function ProfilePage() {
   );
 
   const renderFiles = () => (
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+      <div className="bg-white:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         {files.length > 0 ? (
             <div>
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Media Files</h3>
+                <h3 className="text-xl font-semibold text-gray-900 ">Media Files</h3>
                 <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-medium px-2.5 py-0.5 rounded-full">
               {files.length} files
             </span>

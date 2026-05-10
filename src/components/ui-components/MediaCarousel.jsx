@@ -62,14 +62,14 @@ export default function MediaCarousel({ media, page, setPage }) {
 
     return (
         <div
-            className="relative bg-black overflow-hidden w-full flex items-center justify-center min-h-[400px]"
+            className="relative bg-black overflow-hidden w-full flex items-center justify-center min-h-[400px] h-full"
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
         >
             <AnimatePresence initial={false} custom={page.direction}>
                 <motion.div
                     key={currentIndex}
-                    className="flex items-center justify-center w-full h-full"
+                    className="flex items-center justify-center w-full h-full absolute inset-0"
                     custom={page.direction}
                     variants={variants}
                     initial="enter"
@@ -88,16 +88,16 @@ export default function MediaCarousel({ media, page, setPage }) {
                             onError={() => setHasError(true)}
                         />
                     ) : (
+                        <div className="relative w-full h-full">
                         <Image
                             src={currentMedia}
                             alt={`Post media ${currentIndex + 1}`}
-                            width={0}
-                            height={0}
-                            sizes="100vw"
+                            fill
                             unoptimized
-                            className="max-w-full max-h-full object-contain"
+                            className="object-contain"
                             onError={() => setHasError(true)}
                         />
+                        </div>
                     )}
                 </motion.div>
             </AnimatePresence>

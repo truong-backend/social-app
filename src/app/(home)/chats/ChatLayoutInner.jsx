@@ -7,12 +7,32 @@ import useAppStore from "@/store/ZustandStore";
 import useIsMobile from "@/hooks/useIsMobile";
 import { pageMetadata, usePageMetadata } from "@/utils/clientMetadata";
 import { useSearchParams, useRouter } from "next/navigation";
+import { Edit, MessageCircle } from "lucide-react";
+
+function EmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center h-full gap-4 text-center px-8">
+      <div className="w-24 h-24 rounded-full border-2 border-[var(--foreground)] flex items-center justify-center">
+        <MessageCircle size={48} strokeWidth={1} className="text-[var(--foreground)]" />
+      </div>
+      <div>
+        <h3 className="text-xl font-semibold text-[var(--foreground)] mb-1">
+          Tin nhắn của bạn
+        </h3>
+        <p className="text-sm text-[var(--muted-foreground)]">
+          Gửi tin nhắn riêng tư cho bạn bè.
+        </p>
+      </div>
+    </div>
+  );
+}
 
 export default function ChatLayoutInner() {
   const [selectedChatId, setSelectedChatId] = useState(null);
   const [targetUser, setTargetUser] = useState(null);
   const [chatListKey, setChatListKey] = useState(0);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [currentUsername, setCurrentUsername] = useState("");
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -27,6 +47,9 @@ export default function ChatLayoutInner() {
   usePageMetadata(pageMetadata.chats());
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      setCurrentUsername(localStorage.getItem("userName") || "");
+    }
     const timer = setTimeout(() => setIsInitializing(false), 100);
     return () => clearTimeout(timer);
   }, []);
@@ -40,7 +63,7 @@ export default function ChatLayoutInner() {
         setSelectedChatId(chatIdFromUrl);
         setTargetUser(selectedChat.target);
       }
-    } else {
+    } else if (!chatIdFromUrl) {
       setSelectedChatId(null);
       setTargetUser(null);
     }
@@ -64,7 +87,7 @@ export default function ChatLayoutInner() {
       setTargetUser(user);
       setChatListKey((prev) => prev + 1);
     } catch (error) {
-      console.error("❌ Error in chat creation flow:", error);
+      console.error("Error in chat creation flow:", error);
     }
   };
 
@@ -79,73 +102,109 @@ export default function ChatLayoutInner() {
     setTargetUser(null);
   };
 
-  const shouldShowChatList = !targetUser || !isMobile;
-  const shouldShowChatBox = !!targetUser;
-  const shouldShowChatSkeleton = !targetUser && !isMobile;
-
   if (isInitializing) {
     return (
-      <div className="pt-16 flex h-[calc(100vh-64px)] bg-[var(--background)] text-[var(--foreground)] items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-          <p className="text-muted-foreground">Loading chat...</p>
-        </div>
+      <div className="flex items-center justify-center" style={{ height: "100%" }}>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--foreground)]" />
       </div>
     );
   }
 
-  return (
-    <div className="md:mt-16 flex h-[calc(100vh-64px)] bg-[var(--background)] text-[var(--foreground)] transition-colors duration-500 p-2 sm:p-4 gap-4">
-      {shouldShowChatList && (
-        <aside className="w-full md:w-[40%] lg:w-[340px] h-full md:h-auto max-h-[calc(100vh-72px)] md:max-h-none rounded-2xl bg-[var(--card)] border border-[var(--border)] p-2 md:p-4 overflow-y-auto shadow-sm">
-          <ChatList
-            key={chatListKey}
-            onSelectChat={handleSelectChat}
-            selectedChatId={selectedChatId}
-          />
-        </aside>
-      )}
-
-      {shouldShowChatBox && (
-        <main className="w-full md:w-[60%] md:flex-1 rounded-2xl bg-[var(--card)] border border-[var(--border)] overflow-y-auto shadow-sm">
+  // Mobile
+  if (isMobile) {
+    if (targetUser) {
+      return (
+        <div className="fixed inset-0 z-50 bg-[var(--background)]">
           <ChatBox
             chatId={selectedChatId}
             targetUser={targetUser}
             onBack={handleBackToList}
             onChatCreated={handleChatCreated}
           />
-        </main>
-      )}
+        </div>
+      );
+    }
+    return (
+      <div className="flex flex-col h-full bg-[var(--background)]">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
+          <span className="text-base font-semibold text-[var(--foreground)]">
+            {currentUsername}
+          </span>
+          <Edit size={22} strokeWidth={1.5} className="text-[var(--foreground)]" />
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          <ChatList
+            key={chatListKey}
+            onSelectChat={handleSelectChat}
+            selectedChatId={selectedChatId}
+          />
+        </div>
+      </div>
+    );
+  }
 
-      {shouldShowChatSkeleton && (
-        <main className="w-full md:h-full md:w-[60%] md:flex-1 rounded-2xl bg-[var(--card)] border border-[var(--border)] overflow-y-auto shadow-sm">
-          <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-            <div className="mb-6">
-              <div className="w-24 h-24 mx-auto mb-4 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 rounded-full flex items-center justify-center">
-                <svg
-                  className="w-12 h-12 text-blue-500 dark:text-blue-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                  />
-                </svg>
-              </div>
-            </div>
-            <h3 className="text-xl font-semibold text-[var(--foreground)] mb-2">
-              Chưa có cuộc trò chuyện được chọn
-            </h3>
-            <p className="text-[var(--muted-foreground)] mb-4 max-w-md">
-              Chọn một cuộc trò chuyện từ danh sách bên trái hoặc bắt đầu cuộc trò chuyện mới để bắt đầu nhắn tin.
-            </p>
-          </div>
-        </main>
-      )}
+  // Desktop — dùng negative margin để thoát khỏi max-width của layout cha
+  return (
+    <div
+      className="flex bg-[var(--background)] text-[var(--foreground)]"
+      style={{
+        height: "100vh",
+        marginLeft: "-9999px",
+        paddingLeft: "9999px",
+        marginRight: "-9999px",
+        paddingRight: "9999px",
+        overflow: "hidden",
+      }}
+    >
+      {/* Left panel */}
+      <div
+        className="flex flex-col border-r border-[var(--border)] flex-shrink-0 h-full overflow-hidden"
+        style={{ width: "397px" }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border)]">
+          <span className="text-base font-bold text-[var(--foreground)]">
+            {currentUsername}
+          </span>
+          <button
+            title="Tạo tin nhắn mới"
+            className="text-[var(--foreground)] hover:text-[var(--muted-foreground)] transition-colors"
+          >
+            <Edit size={22} strokeWidth={1.5} />
+          </button>
+        </div>
+
+        {/* Messages / Requests label */}
+        <div className="flex items-center justify-between px-6 py-3">
+          <span className="text-base font-semibold text-[var(--foreground)]">Tin nhắn</span>
+          <button className="text-sm font-semibold text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors">
+            Yêu cầu
+          </button>
+        </div>
+
+        {/* Chat list */}
+        <div className="flex-1 overflow-y-auto">
+          <ChatList
+            key={chatListKey}
+            onSelectChat={handleSelectChat}
+            selectedChatId={selectedChatId}
+          />
+        </div>
+      </div>
+
+      {/* Right panel */}
+      <div className="flex-1 flex flex-col overflow-hidden h-full">
+        {targetUser ? (
+          <ChatBox
+            chatId={selectedChatId}
+            targetUser={targetUser}
+            onBack={handleBackToList}
+            onChatCreated={handleChatCreated}
+          />
+        ) : (
+          <EmptyState />
+        )}
+      </div>
     </div>
   );
 }
