@@ -348,6 +348,11 @@ export default function SidebarNavigation() {
       label: "Search",
     },
     {
+      href: "/reels",
+      icon: <Film size={24} strokeWidth={pathname === "/reels" ? 2.5 : 1.5} />,
+      label: "Reels",
+    },
+    {
       href: "/chats",
       icon: (
         <span className="relative inline-flex">
