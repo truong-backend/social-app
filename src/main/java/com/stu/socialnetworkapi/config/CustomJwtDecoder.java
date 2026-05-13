@@ -14,6 +14,7 @@ import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
+
 public class CustomJwtDecoder implements JwtDecoder {
     @Value("${jwt.access-token.key}")
     private String key;
