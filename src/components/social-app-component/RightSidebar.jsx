@@ -21,8 +21,9 @@ export default function RightSidebar({ token }) {
       const avatar = localStorage.getItem("profilePictureUrl") || null;
       const givenName = localStorage.getItem("givenName") || "";
       const familyName = localStorage.getItem("familyName") || "";
-      const fullName = (givenName + " " + familyName).trim() || userName;
-      if (userName) setCurrentUser({ username: userName, id: userId, avatar, fullName });
+      const fullName = (familyName + " " + givenName).trim() || userName;
+      if (userName)
+        setCurrentUser({ username: userName, id: userId, avatar, fullName });
     }
   }, []);
 
@@ -67,14 +68,15 @@ export default function RightSidebar({ token }) {
   };
 
   const getUserDisplayName = (user) => {
-    const given = user?.givenName || "";
     const family = user?.familyName || "";
-    const full = (given + " " + family).trim();
+    const given = user?.givenName || "";
+    const full = (family + " " + given).trim();
     return full || user?.username || "Người dùng";
   };
 
   const getMutualText = (user) => {
-    if (user?.mutualFriendsCount > 0) return user.mutualFriendsCount + " bạn chung";
+    if (user?.mutualFriendsCount > 0)
+      return user.mutualFriendsCount + " bạn chung";
     return "Gợi ý cho bạn";
   };
 
@@ -88,31 +90,38 @@ export default function RightSidebar({ token }) {
       {/* Current user */}
       {currentUser && (
         <div className="flex items-center justify-between px-2 mb-2">
-          <Link href={"/profile/" + currentUser.username} className="flex items-center gap-3 group">
+          <Link
+            href={"/profile/" + currentUser.username}
+            className="flex items-center gap-3 group"
+          >
             {currentUser.avatar ? (
               <img
                 src={currentUser.avatar}
                 alt={currentUser.username}
                 className="w-11 h-11 rounded-full object-cover flex-shrink-0 border border-[var(--border)]"
-                onError={(e) => { e.target.style.display = "none"; e.target.nextSibling.style.display = "flex"; }}
+                onError={(e) => {
+                  e.target.style.display = "none";
+                  e.target.nextSibling.style.display = "flex";
+                }}
               />
             ) : null}
             <div
               className="w-11 h-11 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-bold border border-[var(--border)]"
               style={{
                 display: currentUser.avatar ? "none" : "flex",
-                background: "linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045)",
+                background:
+                  "linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045)",
                 color: "#fff",
               }}
             >
-              {getInitial(currentUser.username)}
+              {getInitial(currentUser.fullName || currentUser.username)}
             </div>
             <div className="min-w-0">
               <p className="text-sm font-semibold text-[var(--foreground)] truncate leading-tight">
-                {currentUser.username}
+                {currentUser.fullName || currentUser.username}
               </p>
               <p className="text-xs text-[var(--muted-foreground)] truncate">
-                {currentUser.fullName || "Trang cá nhân"}
+                {currentUser.username}
               </p>
             </div>
           </Link>
@@ -120,7 +129,7 @@ export default function RightSidebar({ token }) {
             href="/settings/personalinfo"
             className="text-xs font-semibold text-blue-500 hover:text-blue-400 transition-colors flex-shrink-0"
           >
-            Chuyển
+            Cài đặt
           </Link>
         </div>
       )}
@@ -161,8 +170,14 @@ export default function RightSidebar({ token }) {
               const uid = user?.id || user?.userId || user?.username;
               const followState = followingIds[uid];
               return (
-                <div key={uid} className="flex items-center justify-between gap-2">
-                  <Link href={"/profile/" + (user?.username || "")} className="flex items-center gap-3 min-w-0 flex-1 group">
+                <div
+                  key={uid}
+                  className="flex items-center justify-between gap-2"
+                >
+                  <Link
+                    href={"/profile/" + (user?.username || "")}
+                    className="flex items-center gap-3 min-w-0 flex-1 group"
+                  >
                     {user?.profilePictureUrl ? (
                       <img
                         src={user.profilePictureUrl}
@@ -173,7 +188,8 @@ export default function RightSidebar({ token }) {
                       <div
                         className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-bold border border-[var(--border)]"
                         style={{
-                          background: "linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045)",
+                          background:
+                            "linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045)",
                           color: "#fff",
                         }}
                       >
@@ -191,16 +207,23 @@ export default function RightSidebar({ token }) {
                   </Link>
                   <button
                     onClick={() => handleFollow(uid)}
-                    disabled={followState === "loading" || followState === "sent"}
-                    className={"text-xs font-semibold flex-shrink-0 transition-colors " + (
-                      followState === "sent"
+                    disabled={
+                      followState === "loading" || followState === "sent"
+                    }
+                    className={
+                      "text-xs font-semibold flex-shrink-0 transition-colors " +
+                      (followState === "sent"
                         ? "text-[var(--muted-foreground)] cursor-default"
                         : followState === "loading"
                           ? "text-[var(--muted-foreground)] cursor-wait"
-                          : "text-blue-500 hover:text-blue-400"
-                    )}
+                          : "text-blue-500 hover:text-blue-400")
+                    }
                   >
-                    {followState === "sent" ? "Đã gửi" : followState === "loading" ? "..." : "Theo dõi"}
+                    {followState === "sent"
+                      ? "Đã gửi"
+                      : followState === "loading"
+                        ? "..."
+                        : "Theo dõi"}
                   </button>
                 </div>
               );
@@ -234,8 +257,17 @@ export default function RightSidebar({ token }) {
       {/* Footer */}
       <div className="px-2 pb-4">
         <div className="flex flex-wrap gap-x-2 gap-y-1 text-[10px] text-[var(--muted-foreground)]">
-          {["Giới thiệu", "Trợ giúp", "Báo chí", "API", "Việc làm", "Quyền riêng tư"].map((item) => (
-            <span key={item} className="cursor-pointer hover:underline">{item}</span>
+          {[
+            "Giới thiệu",
+            "Trợ giúp",
+            "Báo chí",
+            "API",
+            "Việc làm",
+            "Quyền riêng tư",
+          ].map((item) => (
+            <span key={item} className="cursor-pointer hover:underline">
+              {item}
+            </span>
           ))}
         </div>
         <p className="text-[10px] text-[var(--muted-foreground)] mt-2">

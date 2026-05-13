@@ -292,10 +292,10 @@ export default function SidebarNavigation() {
       active: false,
     },
     {
-      href: "/home",
-      icon: <Film size={26} strokeWidth={1.5} />,
+      href: "/reels",
+      icon: <Film size={26} strokeWidth={pathname === "/reels" ? 2.5 : 1.5} />,
       label: "Reels",
-      active: false,
+      active: pathname === "/reels",
     },
     {
       href: "/chats",

@@ -132,7 +132,8 @@ function MainLayoutContent({ children }) {
   const hideRightSidebar =
     pathname.startsWith("/settings") ||
     pathname.startsWith("/search") ||
-    pathname.startsWith("/chats");
+    pathname.startsWith("/chats") ||
+    pathname.startsWith("/reels");
 
   const isHomePage = pathname === "/home" || pathname === "/";
 

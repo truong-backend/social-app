@@ -168,7 +168,8 @@ export default function ProfileHeader({
           {/* Username row + buttons */}
           <div className="flex flex-wrap items-center gap-3 mb-4">
             <h2 className="text-xl font-light text-[var(--foreground)] truncate">
-              {profileData?.username}
+              {profileData?.familyName} {profileData?.givenName}  
+              {/* {profileData?.username} */}
             </h2>
 
             {isOwnProfile ? (
@@ -232,7 +233,7 @@ export default function ProfileHeader({
           {/* Full name + bio */}
           <div className="text-sm space-y-0.5">
             <p className="font-semibold text-[var(--foreground)]">
-              {profileData?.givenName} {profileData?.familyName}
+              {/* {profileData?.givenName} {profileData?.familyName} */}
             </p>
             {profileData?.bio && (
               <p className="text-[var(--foreground)] whitespace-pre-wrap leading-snug">{profileData.bio}</p>
