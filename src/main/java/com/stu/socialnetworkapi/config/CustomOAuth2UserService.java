@@ -4,7 +4,6 @@ import com.stu.socialnetworkapi.entity.Account;
 import com.stu.socialnetworkapi.entity.User;
 import com.stu.socialnetworkapi.repository.neo4j.AccountRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -13,6 +12,7 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.Map;
 import java.util.UUID;
 
@@ -37,7 +37,6 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
             throw new OAuth2AuthenticationException("Email not found from Google");
         }
 
-        // Tìm account theo email, nếu chưa có thì tạo mới
         accountRepository.findByEmail(email).orElseGet(() -> {
             UUID newId = UUID.randomUUID();
 
@@ -46,6 +45,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                     .username(newId.toString())
                     .givenName(givenName)
                     .familyName(familyName)
+                    .birthdate(LocalDate.of(2000, 1, 1))
                     .build();
 
             Account newAccount = Account.builder()
@@ -54,6 +54,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                     .password(passwordEncoder.encode(UUID.randomUUID().toString()))
                     .user(newUser)
                     .isVerified(true)
+                    .isDeleted(false)
                     .build();
 
             return accountRepository.save(newAccount);
