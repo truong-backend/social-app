@@ -29,4 +29,5 @@ public class AdminUserViewResponse extends UserCommonInformationResponse {
     boolean isVerified;
     boolean isDeleted;
     ZonedDateTime deletedAt;
+    boolean isAdmin;
 }

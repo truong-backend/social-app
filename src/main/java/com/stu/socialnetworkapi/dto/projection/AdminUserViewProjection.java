@@ -25,6 +25,7 @@ public record AdminUserViewProjection(
         ZonedDateTime registrationDate,
         boolean isVerified,
         boolean isDeleted,
-        ZonedDateTime deletedAt
+        ZonedDateTime deletedAt,
+        boolean isAdmin
 ) {
 }
