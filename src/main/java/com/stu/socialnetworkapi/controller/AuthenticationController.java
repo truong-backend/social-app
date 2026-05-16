@@ -1,5 +1,6 @@
 package com.stu.socialnetworkapi.controller;
 
+import com.stu.socialnetworkapi.dto.request.GoogleLoginRequest;
 import com.stu.socialnetworkapi.dto.request.LoginRequest;
 import com.stu.socialnetworkapi.dto.response.ApiResponse;
 import com.stu.socialnetworkapi.dto.response.AuthenticationResponse;
@@ -45,5 +46,11 @@ public class AuthenticationController  {
         return ApiResponse.success();
     }
 
+    @PostMapping("/google")
+    public ApiResponse<AuthenticationResponse> loginWithGoogle(
+            @Valid @RequestBody GoogleLoginRequest request,
+            HttpServletResponse response) {
+        return ApiResponse.success(authenticationService.loginWithGoogle(request, response));
+    }
 
 }

@@ -1,5 +1,6 @@
 package com.stu.socialnetworkapi.service.itf;
 
+import com.stu.socialnetworkapi.dto.request.GoogleLoginRequest;
 import com.stu.socialnetworkapi.dto.request.LoginRequest;
 import com.stu.socialnetworkapi.dto.response.AuthenticationResponse;
 import jakarta.servlet.http.HttpServletResponse;
@@ -12,4 +13,6 @@ public interface AuthenticationService {
     AuthenticationResponse refresh(String token);
 
     void logout(String token, HttpServletResponse response);
+
+    AuthenticationResponse loginWithGoogle(GoogleLoginRequest request, HttpServletResponse response);
 }

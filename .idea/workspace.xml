@@ -5,17 +5,40 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="069b736b-0e6d-4b3d-af43-6e4a296b7724" name="Changes" comment="chore: add docker files and env from tracking">
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/controller/StoryController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/response/StoryGroupResponse.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/response/StoryResponse.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/response/StoryViewerResponse.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/entity/Story.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/repository/neo4j/StoryRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/impl/StoryServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/itf/StoryService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/request/GoogleLoginRequest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/stu/socialnetworkapi/config/WebSocketConfig.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/stu/socialnetworkapi/config/WebSocketConfig.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/controller/AuthenticationController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/controller/AuthenticationController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/impl/AuthenticationServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/impl/AuthenticationServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/itf/AuthenticationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/itf/AuthenticationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/stu/socialnetworkapi/config/CustomJwtDecoder.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/stu/socialnetworkapi/config/CustomJwtDecoder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/stu/socialnetworkapi/config/RedisConfig.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/stu/socialnetworkapi/controller/AuthenticationController.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/stu/socialnetworkapi/controller/StatisticsControllerV2.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/stu/socialnetworkapi/enums/CallType.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/stu/socialnetworkapi/enums/Language.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/stu/socialnetworkapi/event/PostsLoadedEventListener.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/stu/socialnetworkapi/indicator/CustomHealthIndicator.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/stu/socialnetworkapi/service/impl/AuthenticationServiceImpl.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/stu/socialnetworkapi/service/impl/FileServiceImpl.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/stu/socialnetworkapi/service/impl/UpdatePasswordServiceImpl.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/stu/socialnetworkapi/service/itf/AuthenticationService.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/stu/socialnetworkapi/service/itf/AuthenticationService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/stu/socialnetworkapi/util/NotificationCleaner.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/stu/socialnetworkapi/validation/annotation/ImageAndVideoOnly.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/stu/socialnetworkapi/validation/validator/ImageAndVideoOnlyValidator.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/stu/socialnetworkapi/validation/validator/ValidFileListValidator.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/stu/socialnetworkapi/validation/validator/ValidFileValidator.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/test-classes/com/stu/socialnetworkapi/service/impl/AuthenticationServiceImplTest.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/test-classes/com/stu/socialnetworkapi/service/impl/RegisterServiceImplTest.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/test-classes/com/stu/socialnetworkapi/validation/validator/AgeValidatorTest.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/test-classes/com/stu/socialnetworkapi/validation/validator/ImageAndVideoOnlyValidatorTest.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/test-classes/com/stu/socialnetworkapi/validation/validator/ImageFileValidatorTest.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/test-classes/com/stu/socialnetworkapi/validation/validator/ImagesAndVideosOnlyValidatorTest.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/test-classes/com/stu/socialnetworkapi/validation/validator/OnlyLetterValidatorTest.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/test-classes/com/stu/socialnetworkapi/validation/validator/PasswordValidatorTest.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/test-classes/com/stu/socialnetworkapi/validation/validator/UsernameValidatorTest.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/test-classes/com/stu/socialnetworkapi/validation/validator/ValidFileListValidatorTest.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/test-classes/com/stu/socialnetworkapi/validation/validator/ValidFileValidatorTest.class" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -421,7 +444,15 @@
       <option name="project" value="LOCAL" />
       <updated>1778656069028</updated>
     </task>
-    <option name="localTasksCounter" value="43" />
+    <task id="LOCAL-00043" summary="chore: add docker files and env from tracking">
+      <option name="closed" value="true" />
+      <created>1778667578922</created>
+      <option name="number" value="00043" />
+      <option name="presentableId" value="LOCAL-00043" />
+      <option name="project" value="LOCAL" />
+      <updated>1778667578922</updated>
+    </task>
+    <option name="localTasksCounter" value="44" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
