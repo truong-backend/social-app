@@ -1,6 +1,5 @@
 package com.stu.socialnetworkapi.controller;
 
-import com.stu.socialnetworkapi.dto.request.GoogleLoginRequest;
 import com.stu.socialnetworkapi.dto.request.LoginRequest;
 import com.stu.socialnetworkapi.dto.response.ApiResponse;
 import com.stu.socialnetworkapi.dto.response.AuthenticationResponse;
@@ -13,44 +12,34 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/v1/auth")
-public class AuthenticationController  {
+public class AuthenticationController {
     private final AuthenticationService authenticationService;
 
     @PostMapping("/login")
     public ApiResponse<AuthenticationResponse> authenticate(
             @Valid @RequestBody LoginRequest request,
             HttpServletResponse response) {
-        return ApiResponse.success(authenticationService
-                .authenticate(request, response));
+        return ApiResponse.success(authenticationService.authenticate(request, response));
     }
 
     @PostMapping("/login-admin")
     public ApiResponse<AuthenticationResponse> authenticateAdmin(
             @Valid @RequestBody LoginRequest request,
             HttpServletResponse response) {
-        return ApiResponse.success(authenticationService
-                .authenticateAdmin(request, response));
+        return ApiResponse.success(authenticationService.authenticateAdmin(request, response));
     }
 
     @PostMapping("/refresh")
-    public ApiResponse<AuthenticationResponse> refresh(@CookieValue(name = "token", required = false) String token) {
+    public ApiResponse<AuthenticationResponse> refresh(
+            @CookieValue(name = "token", required = false) String token) {
         return ApiResponse.success(authenticationService.refresh(token));
     }
 
     @DeleteMapping("/logout")
     public ApiResponse<Void> logout(
             @CookieValue(name = "token", required = false) String refreshToken,
-            HttpServletResponse response
-    ) {
+            HttpServletResponse response) {
         authenticationService.logout(refreshToken, response);
         return ApiResponse.success();
     }
-
-    @PostMapping("/google")
-    public ApiResponse<AuthenticationResponse> loginWithGoogle(
-            @Valid @RequestBody GoogleLoginRequest request,
-            HttpServletResponse response) {
-        return ApiResponse.success(authenticationService.loginWithGoogle(request, response));
-    }
-
 }

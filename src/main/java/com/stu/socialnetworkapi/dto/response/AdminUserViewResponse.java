@@ -1,6 +1,5 @@
 package com.stu.socialnetworkapi.dto.response;
 
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -28,4 +27,6 @@ public class AdminUserViewResponse extends UserCommonInformationResponse {
     String email;
     ZonedDateTime registrationDate;
     boolean isVerified;
+    boolean isDeleted;
+    ZonedDateTime deletedAt;
 }

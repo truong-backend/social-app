@@ -25,6 +25,10 @@ public enum ErrorCode {
     EXPIRED_TOKEN(1014, "Expired token", HttpStatus.BAD_REQUEST),
     VERIFICATION_CODE_REQUIRED(1015, "Verification code is required", HttpStatus.BAD_REQUEST),
     ACCOUNT_VERIFIED(1016, "Account verified", HttpStatus.CONFLICT),
+    ACCOUNT_DELETED(1017, "Account has been deleted", HttpStatus.FORBIDDEN),
+    ACCOUNT_NOT_DELETED(1018, "Account is not deleted", HttpStatus.BAD_REQUEST),
+    CANNOT_DELETE_YOURSELF(1019, "Cannot delete your own account", HttpStatus.FORBIDDEN),
+    CANNOT_DELETE_ADMIN(1020, "Cannot delete an admin account", HttpStatus.FORBIDDEN),
 
     GIVEN_NAME_REQUIRED(2000, "Given name is required", HttpStatus.BAD_REQUEST),
     FAMILY_NAME_REQUIRED(2001, "Family name is required", HttpStatus.BAD_REQUEST),

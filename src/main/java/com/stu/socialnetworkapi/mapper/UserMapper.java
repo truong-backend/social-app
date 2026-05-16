@@ -195,6 +195,8 @@ public class UserMapper {
                 .registrationDate(projection.registrationDate())
                 .email(projection.email())
                 .isVerified(projection.isVerified())
+                .isDeleted(projection.isDeleted())
+                .deletedAt(projection.deletedAt())
                 .isOnline(online.isOnline())
                 .lastOnline(online.getLastOnline())
                 .build();

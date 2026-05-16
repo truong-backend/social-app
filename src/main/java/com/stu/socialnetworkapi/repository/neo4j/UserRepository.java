@@ -327,7 +327,40 @@ public interface UserRepository extends Neo4jRepository<User, UUID> {
                        callCount,
                        account.email AS email,
                        account.isVerified AS isVerified,
-                       user.createdAt AS registrationDate
+                       user.createdAt AS registrationDate,
+                       account.isDeleted AS isDeleted,
+                       account.deletedAt AS deletedAt
             """)
+
     List<AdminUserViewProjection> getAllUsers(long skip, long limit);
+
+    @Query("""
+            MATCH (user:User {id: $userId})
+            MATCH (user)<-[:HAS_INFO]-(account:Account)
+            OPTIONAL MATCH (user)-[:HAS_PROFILE_PICTURE]->(profilePic:File)
+            RETURN user.id AS userId,
+                   user.username AS username,
+                   user.givenName AS givenName,
+                   user.familyName AS familyName,
+                   user.bio AS bio,
+                   user.birthdate AS birthdate,
+                   profilePic.id AS profilePictureId,
+                   0 AS friendCount,
+                   0 AS postCount,
+                   0 AS blockCount,
+                   0 AS requestSentCount,
+                   0 AS requestReceivedCount,
+                   0 AS commentCount,
+                   0 AS uploadedFileCount,
+                   0 AS messageCount,
+                   0 AS callCount,
+                   account.email AS email,
+                   user.createdAt AS registrationDate,
+                   account.isVerified AS isVerified,
+                   account.isDeleted AS isDeleted,
+                   account.deletedAt AS deletedAt
+            LIMIT 1
+            """)
+    Optional<AdminUserViewProjection> findAdminViewByUserId(UUID userId);
 }
+

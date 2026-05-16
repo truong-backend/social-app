@@ -49,4 +49,10 @@ public interface UserService {
 
     @PreAuthorize("hasAnyAuthority('ADMIN')")
     List<OnlineUserLog> getOnlineUserLogs(LocalDateTime from, LocalDateTime to);
+
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
+    void softDeleteAccount(UUID userId);
+
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
+    void restoreAccount(UUID userId);
 }

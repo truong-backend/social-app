@@ -7,6 +7,7 @@ import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.Relationship;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 @Node
@@ -23,6 +24,11 @@ public class Account {
     @Builder.Default
     AccountRole role = AccountRole.USER;
     boolean isVerified;
+
+    // Soft delete fields
+    @Builder.Default
+    boolean isDeleted = false;
+    ZonedDateTime deletedAt;
 
     @ToString.Exclude
     @EqualsAndHashCode.Exclude

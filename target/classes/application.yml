@@ -48,7 +48,7 @@ spring:
     hibernate:
       ddl-auto: update
 
-  # ===================== MAIL (BREVO FIXED) =====================
+  # ===================== MAIL =====================
   mail:
     host: ${MAIL_HOST:smtp-relay.brevo.com}
     port: ${MAIL_PORT:587}
@@ -64,13 +64,25 @@ spring:
           ssl:
             enable: false
 
+  # ===================== GOOGLE OAUTH2 =====================
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope: email, profile
+
 # ===================== SERVER =====================
 server:
+  port: 2003
+  forward-headers-strategy: framework
   servlet:
     session:
       cookie:
-        same-site: lax
-  port: 2003
+        same-site: none
+        secure: true
 
 # ===================== JWT =====================
 jwt:
@@ -84,6 +96,11 @@ jwt:
 origin:
   front-end: ${FRONTEND_ORIGIN}
   self: ${SELF_ORIGIN}
+
+# ===================== OAUTH2 REDIRECT =====================
+app:
+  oauth2:
+    frontend-redirect-url: ${OAUTH2_FRONTEND_REDIRECT:http://localhost:3000/oauth2/callback}
 
 # ===================== STRINGEE =====================
 stringee:
@@ -108,9 +125,6 @@ management:
   endpoint:
     health:
       show-details: always
-# ===================== GOOGLE OAUTH2 =====================
-google:
-  client-id: ${GOOGLE_CLIENT_ID}
 
 # ===================== MINIO =====================
 minio:
@@ -118,4 +132,4 @@ minio:
   access-key: ${MINIO_ACCESS_KEY:minioadmin}
   secret-key: ${MINIO_SECRET_KEY:minioadmin}
   bucket: ${MINIO_BUCKET:social-app}
-  presigned-url-expiry: ${MINIO_PRESIGNED_EXPIRY:3600} # seconds
+  presigned-url-expiry: ${MINIO_PRESIGNED_EXPIRY:3600}

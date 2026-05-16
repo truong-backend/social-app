@@ -4,14 +4,17 @@ import com.stu.socialnetworkapi.dto.projection.UserProfileProjection;
 import com.stu.socialnetworkapi.dto.request.Neo4jPageable;
 import com.stu.socialnetworkapi.dto.response.AdminUserViewResponse;
 import com.stu.socialnetworkapi.dto.response.UserProfileResponse;
+import com.stu.socialnetworkapi.entity.Account;
 import com.stu.socialnetworkapi.entity.File;
 import com.stu.socialnetworkapi.entity.User;
 import com.stu.socialnetworkapi.entity.sqlite.OnlineUserLog;
+import com.stu.socialnetworkapi.enums.AccountRole;
 import com.stu.socialnetworkapi.enums.BlockStatus;
 import com.stu.socialnetworkapi.event.UpdateUsernameEvent;
 import com.stu.socialnetworkapi.exception.ApiException;
 import com.stu.socialnetworkapi.exception.ErrorCode;
 import com.stu.socialnetworkapi.mapper.UserMapper;
+import com.stu.socialnetworkapi.repository.neo4j.AccountRepository;
 import com.stu.socialnetworkapi.repository.neo4j.BlockRepository;
 import com.stu.socialnetworkapi.repository.neo4j.UserRepository;
 import com.stu.socialnetworkapi.repository.sqlite.OnlineUserLogRepository;
@@ -26,6 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,6 +43,7 @@ public class UserServiceImpl implements UserService {
     private final BlockRepository blockRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final OnlineUserLogRepository onlineUserLogRepository;
+    private final AccountRepository accountRepository;
 
     @Override
     public User getCurrentUserRequiredAuthentication() {
@@ -182,6 +187,43 @@ public class UserServiceImpl implements UserService {
     @PreAuthorize("hasAnyAuthority('ADMIN')")
     public List<OnlineUserLog> getOnlineUserLogs(LocalDateTime from, LocalDateTime to) {
         return onlineUserLogRepository.findByTimestampBetween(from, to);
+    }
+
+    @Override
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
+    public void softDeleteAccount(UUID userId) {
+        // Không cho xóa chính tài khoản admin đang đăng nhập
+        UUID currentUserId = jwtUtil.getUserIdRequiredAuthentication();
+        if (currentUserId.equals(userId)) {
+            throw new ApiException(ErrorCode.CANNOT_DELETE_YOURSELF);
+        }
+
+        Account account = accountRepository.findById(userId)
+                .orElseThrow(() -> new ApiException(ErrorCode.ACCOUNT_NOT_FOUND));
+
+        // Không cho xóa tài khoản ADMIN khác
+        if (account.getRole() == AccountRole.ADMIN) {
+            throw new ApiException(ErrorCode.CANNOT_DELETE_ADMIN);
+        }
+
+        if (account.isDeleted())
+            throw new ApiException(ErrorCode.ACCOUNT_DELETED);
+
+        account.setDeleted(true);
+        account.setDeletedAt(ZonedDateTime.now());
+        accountRepository.save(account);
+    }
+
+    @Override
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
+    public void restoreAccount(UUID userId) {
+        Account account = accountRepository.findById(userId)
+                .orElseThrow(() -> new ApiException(ErrorCode.ACCOUNT_NOT_FOUND));
+        if (!account.isDeleted())
+            throw new ApiException(ErrorCode.ACCOUNT_NOT_DELETED);
+        account.setDeleted(false);
+        account.setDeletedAt(null);
+        accountRepository.save(account);
     }
 
     private void validateGetUserProfile(UUID currentUserId, UUID targetUserId) {

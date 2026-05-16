@@ -22,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -101,5 +102,17 @@ public class UserController {
             MultipartFile file
     ) {
         return ApiResponse.success(userService.updateProfilePicture(file));
+    }
+
+    @DeleteMapping("/admin/{userId}/soft-delete")
+    public ApiResponse<Void> softDeleteAccount(@PathVariable UUID userId) {
+        userService.softDeleteAccount(userId);
+        return ApiResponse.success();
+    }
+
+    @PatchMapping("/admin/{userId}/restore")
+    public ApiResponse<Void> restoreAccount(@PathVariable UUID userId) {
+        userService.restoreAccount(userId);
+        return ApiResponse.success();
     }
 }

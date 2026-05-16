@@ -23,6 +23,8 @@ public record AdminUserViewProjection(
         int callCount,
         String email,
         ZonedDateTime registrationDate,
-        boolean isVerified
+        boolean isVerified,
+        boolean isDeleted,
+        ZonedDateTime deletedAt
 ) {
 }
