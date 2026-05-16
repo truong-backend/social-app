@@ -28,6 +28,7 @@ jobs:
           build-args: |
             NEXT_PUBLIC_API_URL=https://mangxahoi.deploy-my-project.site/api
             NEXT_PUBLIC_SOCKET_ENDPOINT=https://mangxahoi.deploy-my-project.site/ws
+            NEXT_PUBLIC_GOOGLE_CLIENT_ID=176404193195-jheo3d57jo8qvnho2kpf860so1cf66q1.apps.googleusercontent.com
       - uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
