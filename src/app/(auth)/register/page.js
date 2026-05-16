@@ -11,6 +11,7 @@ import Button from "@/components/ui-components/Button";
 import Link from "next/link";
 import api, { setAuthToken } from "@/utils/axios";
 import { jwtDecode } from "jwt-decode";
+import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 
 // Helper functions
 const parseApiError = (error) => {
@@ -508,6 +509,74 @@ function AuthPageContent() {
       setStatus((prev) => ({ ...prev, loading: false }));
     }
   };
+
+  // ============================================================
+  // GOOGLE LOGIN HANDLER
+  // ============================================================
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setStatus((prev) => ({ ...prev, loading: true }));
+    setMessages({ verify: "", general: "" });
+    try {
+      const res = await api.post("/v1/auth/google", {
+        googleToken: credentialResponse.credential,
+      });
+
+      if (res.data.code === 200 && res.data.body?.token) {
+        const token = res.data.body.token;
+        const decoded = jwtDecode(token);
+
+        const authData = {
+          role: decoded.scope,
+          accessToken: token,
+          userId: decoded.sub,
+          userName: decoded.username,
+        };
+        Object.entries(authData).forEach(([key, value]) =>
+          localStorage.setItem(key, value),
+        );
+
+        if (setAuthToken(token, decoded.sub, decoded.username)) {
+          try {
+            const profileRes = await api.get(`/v1/users/${decoded.username}`);
+            const profile = profileRes.data?.body || profileRes.data;
+            if (profile?.givenName)
+              localStorage.setItem("givenName", profile.givenName);
+            if (profile?.familyName)
+              localStorage.setItem("familyName", profile.familyName);
+            if (profile?.profilePictureUrl)
+              localStorage.setItem("profilePictureUrl", profile.profilePictureUrl);
+          } catch (_) {}
+
+          setMessages((prev) => ({
+            ...prev,
+            general: "✅ Đăng nhập Google thành công!",
+          }));
+          setTimeout(() => (window.location.href = "/home"), 500);
+        }
+      } else {
+        setMessages((prev) => ({
+          ...prev,
+          general: `❌ ${res.data.message || "Đăng nhập Google thất bại"}`,
+        }));
+      }
+    } catch (error) {
+      setMessages((prev) => ({
+        ...prev,
+        general: `❌ Đăng nhập Google thất bại: ${parseApiError(error)}`,
+      }));
+    } finally {
+      setStatus((prev) => ({ ...prev, loading: false }));
+    }
+  };
+
+  const handleGoogleError = () => {
+    setMessages((prev) => ({
+      ...prev,
+      general: "❌ Đăng nhập Google thất bại. Vui lòng thử lại.",
+    }));
+  };
+  // ============================================================
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessages((prev) => ({ ...prev, general: "" }));
@@ -530,134 +599,158 @@ function AuthPageContent() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <main className="flex-grow flex flex-col md:flex-row h-full">
-        {/* Left Side */}
-        <div className="w-full md:w-1/2 h-screen flex items-center justify-center bg-muted relative">
-          <Image
-            src="/Connect.png"
-            alt="Network illustration"
-            width={400}
-            height={400}
-            className="max-w-full h-auto object-contain"
-            priority
-          />
-          <div className="absolute bottom-10 left-0 right-0 flex justify-center md:hidden">
-            <button
-              onClick={scrollToForm}
-              className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-full shadow-lg hover:opacity-90 transition-opacity"
-            >
-              Go to {mode} <ArrowDown className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Right Side */}
-        <div
-          ref={formRef}
-          className="w-full md:w-1/2 min-h-screen flex items-center justify-center p-6 bg-background"
-        >
-          <div
-            className="w-full max-w-md text-card-foreground rounded-xl p-8 shadow-xl bg-[var(--card)]"
-            style={{ overflow: "hidden" }}
-          >
-            <div>
-              {showResendButton ? (
-                <h1 className="text-2xl font-bold mb-4">Xác thực email</h1>
-              ) : (
-                <div className="flex justify-between items-center mb-6">
-                  <h1 className="text-2xl font-bold">
-                    {mode === "login" ? "Đăng nhập" : "Tạo tài khoản mới"}
-                  </h1>
-                  <button
-                    onClick={toggleMode}
-                    className="text-sm text-muted-foreground hover:text-foreground transition"
-                  >
-                    <ArrowLeftRight className="inline-block w-4 h-4 mr-1" />
-                    {mode === "login" ? "Đăng ký" : "Đăng nhập"}
-                  </button>
-                </div>
-              )}
-              <MessageDisplay
-                message={messages.general}
-                verifyMessage={messages.verify}
-                verifying={status.verifying}
-              />
-            </div>
-
-            {showResendButton ? (
-              <div className="flex flex-col items-center gap-2">
-                <Button
-                  onClick={handleResend}
-                  className=" w-full text-md text-white bg-black px-3 py-2 rounded hover:underline"
-                >
-                  Gửi lại email xác thực 📩
-                </Button>
-                <p className="text-sm">Hoặc</p>
-                <Button
-                  onClick={() => {
-                    window.location.href = "/register";
-                  }}
-                  className="w-full py-2"
-                >
-                  Đăng nhập
-                </Button>
-              </div>
-            ) : (
-              <motion.div
-                animate={{ height }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                style={{ overflow: "hidden" }}
+    <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}>
+      <div className="min-h-screen bg-background text-foreground flex flex-col">
+        <main className="flex-grow flex flex-col md:flex-row h-full">
+          {/* Left Side */}
+          <div className="w-full md:w-1/2 h-screen flex items-center justify-center bg-muted relative">
+            <Image
+              src="/Connect.png"
+              alt="Network illustration"
+              width={400}
+              height={400}
+              className="max-w-full h-auto object-contain"
+              priority
+            />
+            <div className="absolute bottom-10 left-0 right-0 flex justify-center md:hidden">
+              <button
+                onClick={scrollToForm}
+                className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-full shadow-lg hover:opacity-90 transition-opacity"
               >
-                <div ref={formBoundsRef}>
-                  <AnimatePresence mode="wait">
-                    <MotionContainer key={mode} modeKey={mode} effect="fadeUp">
-                      <form onSubmit={handleSubmit} className="space-y-6">
-                        <FormFields
-                          mode={mode}
-                          formData={formData}
-                          setFormData={setFormData}
-                          showPassword={showPassword}
-                          setShowPassword={setShowPassword}
-                          showConfirmPassword={showConfirmPassword}
-                          setShowConfirmPassword={setShowConfirmPassword}
-                          loading={status.loading}
-                          verifying={status.verifying}
-                        />
-
-                        <Button
-                          type="submit"
-                          disabled={status.loading || status.verifying}
-                          className="w-full py-2"
-                        >
-                          {status.loading
-                            ? "Loading..."
-                            : mode === "login"
-                              ? "Đăng nhập"
-                              : "Đăng ký"}
-                        </Button>
-
-                        <div className="mt-6 text-center text-sm text-muted-foreground">
-                          <div>
-                            Quên mật khẩu?{" "}
-                            <Link
-                              href="/forgot-password"
-                              className="text-blue-500 dark:text-blue-400 hover:underline"
-                            >
-                              Tạo mật khẩu mới
-                            </Link>
-                          </div>
-                        </div>
-                      </form>
-                    </MotionContainer>
-                  </AnimatePresence>
-                </div>
-              </motion.div>
-            )}
+                Go to {mode} <ArrowDown className="h-4 w-4" />
+              </button>
+            </div>
           </div>
-        </div>
-      </main>
-    </div>
+
+          {/* Right Side */}
+          <div
+            ref={formRef}
+            className="w-full md:w-1/2 min-h-screen flex items-center justify-center p-6 bg-background"
+          >
+            <div
+              className="w-full max-w-md text-card-foreground rounded-xl p-8 shadow-xl bg-[var(--card)]"
+              style={{ overflow: "hidden" }}
+            >
+              <div>
+                {showResendButton ? (
+                  <h1 className="text-2xl font-bold mb-4">Xác thực email</h1>
+                ) : (
+                  <div className="flex justify-between items-center mb-6">
+                    <h1 className="text-2xl font-bold">
+                      {mode === "login" ? "Đăng nhập" : "Tạo tài khoản mới"}
+                    </h1>
+                    <button
+                      onClick={toggleMode}
+                      className="text-sm text-muted-foreground hover:text-foreground transition"
+                    >
+                      <ArrowLeftRight className="inline-block w-4 h-4 mr-1" />
+                      {mode === "login" ? "Đăng ký" : "Đăng nhập"}
+                    </button>
+                  </div>
+                )}
+                <MessageDisplay
+                  message={messages.general}
+                  verifyMessage={messages.verify}
+                  verifying={status.verifying}
+                />
+              </div>
+
+              {showResendButton ? (
+                <div className="flex flex-col items-center gap-2">
+                  <Button
+                    onClick={handleResend}
+                    className=" w-full text-md text-white bg-black px-3 py-2 rounded hover:underline"
+                  >
+                    Gửi lại email xác thực 📩
+                  </Button>
+                  <p className="text-sm">Hoặc</p>
+                  <Button
+                    onClick={() => {
+                      window.location.href = "/register";
+                    }}
+                    className="w-full py-2"
+                  >
+                    Đăng nhập
+                  </Button>
+                </div>
+              ) : (
+                <motion.div
+                  animate={{ height }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  style={{ overflow: "hidden" }}
+                >
+                  <div ref={formBoundsRef}>
+                    <AnimatePresence mode="wait">
+                      <MotionContainer key={mode} modeKey={mode} effect="fadeUp">
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                          <FormFields
+                            mode={mode}
+                            formData={formData}
+                            setFormData={setFormData}
+                            showPassword={showPassword}
+                            setShowPassword={setShowPassword}
+                            showConfirmPassword={showConfirmPassword}
+                            setShowConfirmPassword={setShowConfirmPassword}
+                            loading={status.loading}
+                            verifying={status.verifying}
+                          />
+
+                          <Button
+                            type="submit"
+                            disabled={status.loading || status.verifying}
+                            className="w-full py-2"
+                          >
+                            {status.loading
+                              ? "Loading..."
+                              : mode === "login"
+                                ? "Đăng nhập"
+                                : "Đăng ký"}
+                          </Button>
+
+                          {/* ===== GOOGLE LOGIN BUTTON ===== */}
+                          <div className="relative flex items-center py-1">
+                            <div className="flex-grow border-t border-input"></div>
+                            <span className="flex-shrink mx-3 text-xs text-muted-foreground">
+                              hoặc
+                            </span>
+                            <div className="flex-grow border-t border-input"></div>
+                          </div>
+
+                          <div className="flex justify-center">
+                            <GoogleLogin
+                              onSuccess={handleGoogleSuccess}
+                              onError={handleGoogleError}
+                              useOneTap={false}
+                              text={mode === "login" ? "signin_with" : "signup_with"}
+                              shape="rectangular"
+                              logo_alignment="left"
+                              width="100%"
+                            />
+                          </div>
+                          {/* ============================= */}
+
+                          <div className="mt-6 text-center text-sm text-muted-foreground">
+                            <div>
+                              Quên mật khẩu?{" "}
+                              <Link
+                                href="/forgot-password"
+                                className="text-blue-500 dark:text-blue-400 hover:underline"
+                              >
+                                Tạo mật khẩu mới
+                              </Link>
+                            </div>
+                          </div>
+                        </form>
+                      </MotionContainer>
+                    </AnimatePresence>
+                  </div>
+                </motion.div>
+              )}
+            </div>
+          </div>
+        </main>
+      </div>
+    </GoogleOAuthProvider>
   );
 }
 
