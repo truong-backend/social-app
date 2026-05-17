@@ -1,5 +1,6 @@
 "use client";
 import { X, Eye } from "lucide-react";
+import { normalizeFileUrl } from "@/utils/normalizeFileUrl";
 
 /**
  * StoryViewersModal — hiển thị danh sách người đã xem story
@@ -48,22 +49,40 @@ export default function StoryViewersModal({ open, onClose, viewers = [] }) {
               <p className="text-[var(--foreground)] opacity-50 text-sm">Chưa có ai xem story này</p>
             </div>
           ) : (
-            viewers.map((v) => (
-              <div key={v.userId} className="flex items-center gap-3 px-5 py-3 hover:bg-[var(--card)] transition-colors">
-                <img
-                  src={v.avatar}
-                  alt={v.displayName}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm text-[var(--foreground)] truncate">{v.displayName}</p>
-                  <p className="text-xs text-[var(--foreground)] opacity-50">@{v.username}</p>
+            viewers.map((v) => {
+              const avatarUrl = normalizeFileUrl(v.avatar);
+              return (
+                <div key={v.userId} className="flex items-center gap-3 px-5 py-3 hover:bg-[var(--card)] transition-colors">
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt={v.displayName}
+                      className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                      onError={(e) => {
+                        e.target.style.display = "none";
+                        e.target.nextSibling && (e.target.nextSibling.style.display = "flex");
+                      }}
+                    />
+                  ) : null}
+                  <div
+                    className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-bold text-white"
+                    style={{
+                      display: avatarUrl ? "none" : "flex",
+                      background: "linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045)",
+                    }}
+                  >
+                    {v.displayName?.charAt(0)?.toUpperCase() || "?"}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm text-[var(--foreground)] truncate">{v.displayName}</p>
+                    <p className="text-xs text-[var(--foreground)] opacity-50">@{v.username}</p>
+                  </div>
+                  <span className="text-xs text-[var(--foreground)] opacity-40 flex-shrink-0">
+                    {formatTime(v.viewedAt)}
+                  </span>
                 </div>
-                <span className="text-xs text-[var(--foreground)] opacity-40 flex-shrink-0">
-                  {formatTime(v.viewedAt)}
-                </span>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>

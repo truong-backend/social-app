@@ -1,6 +1,7 @@
 "use client";
 import { useRef } from "react";
 import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { normalizeFileUrl } from "@/utils/normalizeFileUrl";
 
 export default function StoryBar({
   myStories = [],
@@ -70,7 +71,7 @@ function MyStoryCard({ myStories, hasMyStory, onOpenCreate, onOpenMyStory }) {
         {hasMyStory && firstStory?.mediaUrl ? (
           firstStory.mediaType === "video" ? (
             <video
-              src={firstStory.mediaUrl}
+              src={normalizeFileUrl(firstStory.mediaUrl)}
               className="absolute inset-0 w-full h-full object-cover"
               muted
               playsInline
@@ -78,7 +79,7 @@ function MyStoryCard({ myStories, hasMyStory, onOpenCreate, onOpenMyStory }) {
             />
           ) : (
             <img
-              src={firstStory.mediaUrl}
+              src={normalizeFileUrl(firstStory.mediaUrl)}
               alt="My story"
               className="absolute inset-0 w-full h-full object-cover"
             />
@@ -126,6 +127,7 @@ function FriendStoryCard({ group, onClick }) {
   const firstStory = group.stories[0];
   const hasNew = group.hasNewStory || group.stories.some((s) => !s.isViewed);
   const allViewed = group.stories.every((s) => s.isViewed);
+  const avatarUrl = normalizeFileUrl(group.avatar);
 
   return (
     <div className="flex-shrink-0 w-[110px] cursor-pointer group" onClick={onClick}>
@@ -134,7 +136,7 @@ function FriendStoryCard({ group, onClick }) {
         {firstStory?.mediaUrl ? (
           firstStory.mediaType === "video" ? (
             <video
-              src={firstStory.mediaUrl}
+              src={normalizeFileUrl(firstStory.mediaUrl)}
               className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               muted
               playsInline
@@ -142,7 +144,7 @@ function FriendStoryCard({ group, onClick }) {
             />
           ) : (
             <img
-              src={firstStory.mediaUrl}
+              src={normalizeFileUrl(firstStory.mediaUrl)}
               alt={group.displayName}
               className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
@@ -171,11 +173,26 @@ function FriendStoryCard({ group, onClick }) {
             }`}
           >
             <div className="bg-[var(--background)] rounded-full p-[2px]">
-              <img
-                src={group.avatar}
-                alt={group.displayName}
-                className="w-9 h-9 rounded-full object-cover"
-              />
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={group.displayName}
+                  className="w-9 h-9 rounded-full object-cover"
+                  onError={(e) => {
+                    e.target.style.display = "none";
+                    e.target.nextSibling && (e.target.nextSibling.style.display = "flex");
+                  }}
+                />
+              ) : null}
+              <div
+                className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                style={{
+                  display: avatarUrl ? "none" : "flex",
+                  background: "linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045)",
+                }}
+              >
+                {group.displayName?.charAt(0)?.toUpperCase() || "?"}
+              </div>
             </div>
           </div>
         </div>
