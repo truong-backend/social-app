@@ -15,8 +15,8 @@ spring:
   # ===================== FILE UPLOAD =====================
   servlet:
     multipart:
-      max-file-size: 10MB
-      max-request-size: 105MB
+      max-file-size: 200MB
+      max-request-size: 500MB
 
   # ===================== NEO4J =====================
   neo4j:
@@ -73,6 +73,7 @@ spring:
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
             scope: email, profile
+            redirect-uri: ${GOOGLE_REDIRECT_URI}
 
 # ===================== SERVER =====================
 server:
@@ -100,7 +101,7 @@ origin:
 # ===================== OAUTH2 REDIRECT =====================
 app:
   oauth2:
-    frontend-redirect-url: ${OAUTH2_FRONTEND_REDIRECT:http://localhost:3000/oauth2/callback}
+    frontend-redirect-url: ${OAUTH2_FRONTEND_REDIRECT}
 
 # ===================== STRINGEE =====================
 stringee:

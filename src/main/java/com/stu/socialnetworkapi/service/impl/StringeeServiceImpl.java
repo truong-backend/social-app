@@ -116,12 +116,18 @@ public class StringeeServiceImpl implements StringeeService {
                     break;
                 case "failed":
                     System.out.println("❌ Cuộc gọi thất bại - Call ID: " + callId);
+                    // ✅ FIX: Cleanup Redis state so users can call again
+                    inCallRepository.cleanupPrepared(callerUsername, calleeUsername);
                     break;
                 case "busy":
                     System.out.println("📵 Máy bận - Call ID: " + callId);
+                    // ✅ FIX: Cleanup Redis state
+                    inCallRepository.cleanupPrepared(callerUsername, calleeUsername);
                     break;
                 case "timeout":
                     System.out.println("⏰ Hết thời gian chờ - Call ID: " + callId);
+                    // ✅ FIX: Cleanup Redis state
+                    inCallRepository.cleanupPrepared(callerUsername, calleeUsername);
                     break;
                 default:
                     System.out.println("❓ Call status không xác định: " + callStatus + " - Call ID: " + callId);

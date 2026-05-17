@@ -87,4 +87,15 @@ public class InCallRepository {
     public boolean isInCall(String username) {
         return redisTemplate != null && redisTemplate.hasKey(INCALL_KEY + username);
     }
+    public void cleanupPrepared(String caller, String callee) {
+        try {
+            redisTemplate.delete(PREPARED_FOR_CALL_KEY + caller + ":" + callee);
+            redisTemplate.delete(PREPARED_FOR_CALL_KEY + callee + ":" + caller);
+            redisTemplate.delete(INCALL_KEY + caller);
+            redisTemplate.delete(INCALL_KEY + callee);
+            log.info("Cleaned up call state for {} and {}", caller, callee);
+        } catch (Exception e) {
+            log.error("Error in cleanupPrepared", e);
+        }
+    }
 }
