@@ -33,58 +33,57 @@ const CallVideo = ({onCallEnd}) => {
     // Sync state with actual stream track states
     useEffect(() => {
         if (localStream) {
-            console.log("Thang -4");
             const videoTracks = localStream.getVideoTracks();
             const audioTracks = localStream.getAudioTracks();
-
             setIsCameraOn(videoTracks.length > 0 && videoTracks[0].enabled);
             setIsMicOn(audioTracks.length > 0 && audioTracks[0].enabled);
-
             console.log("[DEBUG] Stream state updated - Camera:", videoTracks.length > 0 && videoTracks[0].enabled, "Mic:", audioTracks.length > 0 && audioTracks[0].enabled);
         }
     }, [localStream]);
 
-    useEffect(() => {
-        if (localStream && localVideoRef.current && isCameraOn) {
-            console.log("[DEBUG] Refreshing local video element");
-            // Force refresh video element
-            localVideoRef.current.srcObject = null;
-            localVideoRef.current.srcObject = localStream;
-
-            localVideoRef.current.play().catch(error => {
-                console.warn("[DEBUG] Local video refresh play failed:", error);
-            });
-        }
-    }, [localStream, isCameraOn]);
     // Setup local video
     useEffect(() => {
         if (localStream && localVideoRef.current) {
-            console.log("Thang -5");
-
             console.log("[DEBUG] Assigning local stream to video element");
             localVideoRef.current.srcObject = localStream;
-
             localVideoRef.current.play().catch(error => {
                 console.warn("[DEBUG] Local video autoplay failed:", error);
                 setAutoplayError(true);
             });
         }
-    }, [localStream]);
+    }, [localStream, isCameraOn]);
 
-    // Setup remote video
+    // ✅ FIX: Setup remote video với retry loop
+    // Nếu remoteVideoRef chưa mount khi stream arrive thì thử lại sau 100ms
     useEffect(() => {
-        if (remoteStream && remoteVideoRef.current) {
-            console.log("[DEBUG] Assigning remote stream to video element");
-            remoteVideoRef.current.srcObject = remoteStream;
+        if (!remoteStream) return;
 
-            remoteVideoRef.current.play().catch(error => {
-                console.warn("[DEBUG] Remote video autoplay failed:", error);
-                setAutoplayError(true);
-            });
-        }
+        let retryCount = 0;
+        const maxRetries = 20; // thử tối đa 2 giây (20 * 100ms)
+
+        const assignRemoteStream = () => {
+            if (remoteVideoRef.current) {
+                console.log("[DEBUG] ✅ Assigning remote stream to video element, attempt:", retryCount + 1);
+                remoteVideoRef.current.srcObject = remoteStream;
+                remoteVideoRef.current.play().catch(error => {
+                    console.warn("[DEBUG] Remote video autoplay failed:", error);
+                    setAutoplayError(true);
+                });
+            } else {
+                retryCount++;
+                if (retryCount < maxRetries) {
+                    console.warn("[DEBUG] remoteVideoRef not ready, retrying... attempt:", retryCount);
+                    setTimeout(assignRemoteStream, 100);
+                } else {
+                    console.error("[DEBUG] ❌ remoteVideoRef never became ready after", maxRetries, "attempts");
+                }
+            }
+        };
+
+        assignRemoteStream();
     }, [remoteStream]);
 
-    // Toggle camera - sử dụng toggleLocalVideo từ context với video refresh
+    // Toggle camera
     const toggleCamera = async () => {
         if (!mediaPermissions.video || !localStream) {
             console.warn("[DEBUG] Camera permission not available or no local stream");
@@ -103,7 +102,7 @@ const CallVideo = ({onCallEnd}) => {
         setIsCameraOn(newCameraState);
     };
 
-    // Toggle microphone - sử dụng toggleMute từ context
+    // Toggle microphone
     const toggleMicrophone = async () => {
         if (!mediaPermissions.audio || !localStream) {
             console.warn("[DEBUG] Microphone permission not available or no local stream");
@@ -118,12 +117,7 @@ const CallVideo = ({onCallEnd}) => {
 
         const newMicState = !isMicOn;
         console.log("[DEBUG] Microphone toggled:", newMicState);
-
-        // Sử dụng toggleMute từ context với logic (!muted)
-        // newMicState = true (muốn bật) → toggleMute(false) vì !muted
-        // newMicState = false (muốn tắt) → toggleMute(true) vì !muted
         toggleMute(!newMicState);
-
         setIsMicOn(newMicState);
     };
 
@@ -183,6 +177,7 @@ const CallVideo = ({onCallEnd}) => {
                         </div>
                     </div>
 
+                    {/* ✅ Remote video (người kia) - full screen */}
                     <div className="absolute inset-0 z-1">
                         {remoteStream ? (
                             <video
@@ -201,6 +196,7 @@ const CallVideo = ({onCallEnd}) => {
                         )}
                     </div>
 
+                    {/* ✅ Local video (mình) - góc nhỏ */}
                     <div
                         className="absolute bottom-10 right-10 w-64 h-48 bg-gray-800 rounded-lg overflow-hidden border-2 border-white z-10">
                         {localStream && isCameraOn ? (
@@ -223,6 +219,7 @@ const CallVideo = ({onCallEnd}) => {
                         )}
                     </div>
 
+                    {/* Controls */}
                     <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-4 z-20">
                         <button
                             onClick={toggleCamera}
@@ -234,9 +231,9 @@ const CallVideo = ({onCallEnd}) => {
                             } ${(!mediaPermissions.video || !localStream) ? "opacity-50 cursor-not-allowed" : ""} text-white px-4 py-3 rounded-full shadow-lg transition-colors flex items-center justify-center w-12 h-12`}
                             title={isCameraOn ? "Tắt camera" : "Bật camera"}
                         >
-              <span className="text-lg">
-                {isCameraOn ? "📹" : "📷"}
-              </span>
+                            <span className="text-lg">
+                                {isCameraOn ? "📹" : "📷"}
+                            </span>
                         </button>
 
                         <button
@@ -249,9 +246,9 @@ const CallVideo = ({onCallEnd}) => {
                             } ${(!mediaPermissions.audio || !localStream) ? "opacity-50 cursor-not-allowed" : ""} text-white px-4 py-3 rounded-full shadow-lg transition-colors flex items-center justify-center w-12 h-12`}
                             title={isMicOn ? "Tắt mic" : "Bật mic"}
                         >
-              <span className="text-lg">
-                {isMicOn ? "🎤" : "🔇"}
-              </span>
+                            <span className="text-lg">
+                                {isMicOn ? "🎤" : "🔇"}
+                            </span>
                         </button>
 
                         <button
@@ -263,6 +260,7 @@ const CallVideo = ({onCallEnd}) => {
                         </button>
                     </div>
 
+                    {/* Status indicators */}
                     <div className="absolute top-4 right-4 flex flex-col space-y-2 z-20">
                         {!isCameraOn && (
                             <div
@@ -297,13 +295,13 @@ const CallVideo = ({onCallEnd}) => {
                                 className="bg-yellow-600 bg-opacity-80 px-3 py-1 rounded-full text-white text-sm flex items-center space-x-2">
                                 <span>⚠️</span>
                                 <span>
-                  Video không phát tự động
-                  <button onClick={() => {
-                      if (localVideoRef.current) localVideoRef.current.play();
-                      if (remoteVideoRef.current) remoteVideoRef.current.play();
-                      setAutoplayError(false);
-                  }} className="ml-2 underline">Bật</button>
-                </span>
+                                    Video không phát tự động
+                                    <button onClick={() => {
+                                        if (localVideoRef.current) localVideoRef.current.play();
+                                        if (remoteVideoRef.current) remoteVideoRef.current.play();
+                                        setAutoplayError(false);
+                                    }} className="ml-2 underline">Bật</button>
+                                </span>
                             </div>
                         )}
                     </div>
