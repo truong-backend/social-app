@@ -36,6 +36,10 @@ class StompClientSingleton {
         console.log("✅ STOMP connected", frame);
         this.reconnectAttempts = 0;
         this.isConnecting = false;
+        // ── Expose cho CallContext (WebRTC signaling) ──
+        if (typeof window !== "undefined") {
+          window.__stompClient = this.client;
+        }
         this.resubscribeAll();
       },
 
@@ -102,6 +106,10 @@ class StompClientSingleton {
     if (this.client?.active) {
       console.log("🔌 Disconnecting STOMP client...");
       await this.client.deactivate();
+    }
+
+    if (typeof window !== "undefined") {
+      window.__stompClient = null;
     }
 
     this.subscribers.clear();
@@ -325,6 +333,9 @@ class StompClientSingleton {
     this.disconnect();
     this.client = null;
     this.subscribers.clear();
+    if (typeof window !== "undefined") {
+      window.__stompClient = null;
+    }
   }
 }
 
@@ -340,30 +351,6 @@ export const connect = () => stompClientSingleton.connect();
 export const disconnect = () => stompClientSingleton.disconnect();
 export const isConnected = () => stompClientSingleton.isConnected();
 export const cleanup = () => stompClientSingleton.cleanup();
-
-// Legacy function for backward compatibility
-// export function createStompClient(onConnect, options = {}) {
-//   console.warn("⚠️ createStompClient is deprecated. Use getStompClient() instead.");
-//
-//   if (Object.keys(options).length > 0) {
-//     stompClientSingleton.updateConfig(options);
-//   }
-//
-//   return stompClientSingleton.getInstance().then(client => {
-//     if (onConnect) {
-//       if (client.connected) {
-//         onConnect();
-//       } else {
-//         const originalOnConnect = client.onConnect;
-//         client.onConnect = (frame) => {
-//           originalOnConnect(frame);
-//           onConnect(frame);
-//         };
-//       }
-//     }
-//     return client;
-//   });
-// }
 
 // Export singleton instance for advanced usage
 export { stompClientSingleton };

@@ -18,6 +18,10 @@ import {
 import api from "@/utils/axios";
 import toast from "react-hot-toast";
 
+// Lấy STOMP client từ socket.js (đã có sẵn trong project)
+// Giả sử socket.js export một hàm getStompClient() hoặc stompClient instance
+// Nếu không, sẽ tạo kết nối riêng bên dưới
+
 function decodeJWT(token) {
     try {
         return jwtDecode(token);
@@ -28,25 +32,35 @@ function decodeJWT(token) {
 
 const CallContext = createContext();
 
-export const CallProvider = ({ children }) => {
-    const [token, setToken] = useState(null);
-    const [isConnected, setIsConnected] = useState(false);
-    const [incomingCaller, setIncomingCaller] = useState(null);
-    const [currentCall, setCurrentCall] = useState(null);
-    const [callStatus, setCallStatus] = useState("Chưa kết nối");
-    const [isCallEnding, setIsCallEnding] = useState(false);
-    const [callerName, setCallerName] = useState("");
-    const [isVideoCall, setIsVideoCall] = useState(false);
-    const [mediaPermissions, setMediaPermissions] = useState({
-        audio: false,
-        video: false,
-    });
+// ICE servers — dùng STUN public của Google
+const ICE_SERVERS = {
+    iceServers: [
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+    ],
+};
 
-    const clientRef        = useRef(null);
-    const currentCallRef   = useRef(null);
+export const CallProvider = ({ children }) => {
+    const [isConnected, setIsConnected]       = useState(false);
+    const [incomingCaller, setIncomingCaller] = useState(null);
+    const [currentCall, setCurrentCall]       = useState(null); // { callId, callee, isVideoCall }
+    const [callStatus, setCallStatus]         = useState("Chưa kết nối");
+    const [isCallEnding, setIsCallEnding]     = useState(false);
+    const [isVideoCall, setIsVideoCall]       = useState(false);
+    const [mediaPermissions, setMediaPermissions] = useState({ audio: false, video: false });
+
+    const myUserIdRef      = useRef(null); // userId (UUID) từ JWT — dùng làm địa chỉ signal
+    const myUsernameRef    = useRef(null);
+    const stompClientRef   = useRef(null);
+    const signalSubRef     = useRef(null);
+    const pcRef            = useRef(null); // RTCPeerConnection
     const localStreamRef   = useRef(null);
     const remoteStreamRef  = useRef(null);
-    const eventsSetupRef   = useRef(false);
+    const pendingCandidatesRef = useRef([]);
+    const remoteDescSetRef = useRef(false);
+    const currentCallIdRef = useRef(null);
+    const calleeIdRef      = useRef(null); // userId của người kia (để gửi signal)
+    const isOfferPendingRef = useRef(false);
 
     const remoteVideoElRef = useRef(null);
     const localVideoElRef  = useRef(null);
@@ -59,33 +73,15 @@ export const CallProvider = ({ children }) => {
         }
     }, []);
 
-    useEffect(() => {
-        if (typeof window !== "undefined" && !window.StringeeClient) {
-            const script = document.createElement("script");
-            script.src = "/libs/latest.sdk.bundle.min.js";
-            script.async = true;
-            script.onload = () => console.log("[Stringee] SDK loaded ✅");
-            document.body.appendChild(script);
-        }
-    }, []);
-
+    // ── Assign stream to video element ──────────────────────────────
     const assignStreamToVideo = useCallback((videoRef, stream) => {
-        if (!videoRef.current) {
-            console.warn("[Stringee] video element ref is null, cannot assign stream");
-            return;
-        }
-        if (!stream) {
-            console.warn("[Stringee] stream is null");
-            return;
-        }
-        console.log("[Stringee] ✅ Assigning stream to video, tracks:", stream.getTracks().length);
+        if (!videoRef.current || !stream) return;
         videoRef.current.srcObject = null;
         videoRef.current.srcObject = stream;
-        videoRef.current.play().catch((e) => {
-            console.warn("[Stringee] autoplay failed:", e.message);
-        });
+        videoRef.current.play().catch(() => {});
     }, []);
 
+    // ── Get user media ───────────────────────────────────────────────
     const createMediaStream = useCallback(async (isVid = false) => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
@@ -100,15 +96,36 @@ export const CallProvider = ({ children }) => {
             });
             return stream;
         } catch (err) {
-            console.error("[Stringee] getUserMedia error:", err);
+            console.error("[WebRTC] getUserMedia error:", err);
             setMediaPermissions({ audio: false, video: false });
             return null;
         }
     }, []);
 
+    // ── Send signal via STOMP ────────────────────────────────────────
+    const sendSignal = useCallback((toUserId, type, payload) => {
+        const stomp = stompClientRef.current;
+        if (!stomp || !stomp.connected) {
+            console.warn("[WebRTC] STOMP not connected, cannot send signal");
+            return;
+        }
+        stomp.publish({
+            destination: "/app/signal",
+            body: JSON.stringify({ to: toUserId, type, payload }),
+        });
+    }, []);
+
+    // ── Cleanup call ─────────────────────────────────────────────────
     const cleanupCall = useCallback((reason) => {
-        console.log("[Stringee] cleanupCall:", reason);
+        console.log("[WebRTC] cleanupCall:", reason);
         stopSound();
+
+        if (pcRef.current) {
+            pcRef.current.ontrack = null;
+            pcRef.current.onicecandidate = null;
+            pcRef.current.close();
+            pcRef.current = null;
+        }
 
         [localStreamRef.current, remoteStreamRef.current].forEach((s) => {
             if (s) s.getTracks().forEach((t) => { t.stop(); t.enabled = false; });
@@ -119,8 +136,11 @@ export const CallProvider = ({ children }) => {
         if (localVideoElRef.current)  localVideoElRef.current.srcObject  = null;
         if (remoteVideoElRef.current) remoteVideoElRef.current.srcObject = null;
 
-        eventsSetupRef.current  = false;
-        currentCallRef.current  = null;
+        pendingCandidatesRef.current = [];
+        remoteDescSetRef.current     = false;
+        currentCallIdRef.current     = null;
+        calleeIdRef.current          = null;
+        isOfferPendingRef.current    = false;
 
         setCurrentCall(null);
         setIncomingCaller(null);
@@ -130,232 +150,257 @@ export const CallProvider = ({ children }) => {
         setMediaPermissions({ audio: false, video: false });
     }, []);
 
-    const setupCallEvents = useCallback(
-        (call) => {
-            if (eventsSetupRef.current) {
-                console.log("[Stringee] events already set up, skip");
-                return;
+    // ── Create RTCPeerConnection ─────────────────────────────────────
+    const createPeerConnection = useCallback((remoteUserId, isVid) => {
+        const pc = new RTCPeerConnection(ICE_SERVERS);
+        pcRef.current = pc;
+
+        pc.onicecandidate = (event) => {
+            if (event.candidate) {
+                sendSignal(remoteUserId, "candidate", JSON.stringify(event.candidate));
             }
-            eventsSetupRef.current = true;
-            console.log("[Stringee] setupCallEvents");
+        };
 
-            call.on("addremotestream", (stream) => {
-                console.log("[Stringee] ✅ addremotestream, tracks:", stream?.getTracks?.()?.length ?? "?");
-                remoteStreamRef.current = stream;
-                assignStreamToVideo(remoteVideoElRef, stream);
-                setCallStatus("Connected - Remote stream received");
-            });
+        pc.ontrack = (event) => {
+            console.log("[WebRTC] ✅ ontrack", event.streams[0]?.getTracks()?.length);
+            remoteStreamRef.current = event.streams[0];
+            assignStreamToVideo(remoteVideoElRef, event.streams[0]);
+            setCallStatus("Connected");
+        };
 
-            call.on("addlocalstream", (stream) => {
-                console.log("[Stringee] ✅ addlocalstream, tracks:", stream?.getTracks?.()?.length ?? "?");
-                localStreamRef.current = stream;
-                assignStreamToVideo(localVideoElRef, stream);
-            });
-
-            call.on("signalingstate", (state) => {
-                console.log("[Stringee] signalingstate:", state.reason, state.code);
-                if (state.reason === "answered") {
-                    setCallStatus("Đang kết nối...");
-                    stopSound();
-                } else if (["Ended", "Busy here", "Rejected", "Disconnected"].includes(state.reason)) {
-                    setIsCallEnding(true);
-                    setTimeout(() => cleanupCall(state.reason), 1500);
-                }
-            });
-
-            call.on("mediastate", (state) => {
-                console.log("[Stringee] mediastate:", state);
-                if (state.code === 1) {
-                    setCallStatus("Connected");
-                } else if (state.code === 0) {
-                    setIsCallEnding(true);
-                    setTimeout(() => cleanupCall("media disconnected"), 1500);
-                }
-            });
-
-            call.on("disconnect", () => {
-                console.log("[Stringee] disconnect");
+        pc.onconnectionstatechange = () => {
+            console.log("[WebRTC] connectionState:", pc.connectionState);
+            if (["disconnected", "failed", "closed"].includes(pc.connectionState)) {
                 setIsCallEnding(true);
-                setTimeout(() => cleanupCall("disconnect event"), 1500);
-            });
-        },
-        [cleanupCall, assignStreamToVideo]
-    );
+                setTimeout(() => cleanupCall("connection state: " + pc.connectionState), 1500);
+            }
+        };
 
-    function connectStringeeClient(accessToken, onIncomingCall, onConnChange) {
-        const client = new window.StringeeClient();
-        client.connect(accessToken);
+        return pc;
+    }, [sendSignal, assignStreamToVideo, cleanupCall]);
 
-        client.on("connect", () => {
-            console.log("[Stringee] client connected ✅");
-            onConnChange(true);
-        });
+    // ── Handle incoming WebRTC signals ───────────────────────────────
+    const handleSignal = useCallback(async (signal) => {
+        const { from, type, payload } = signal;
+        console.log("[WebRTC] handleSignal:", type, "from:", from);
 
-        client.on("disconnect", () => {
-            console.warn("[Stringee] client disconnected");
-            onConnChange(false);
-        });
+        if (type === "offer") {
+            // Incoming call — lưu calleeId là người offer
+            calleeIdRef.current = from;
+            const offerData = JSON.parse(payload);
+            const isVid = offerData.isVideoCall ?? false;
+            setIsVideoCall(isVid);
+            isOfferPendingRef.current = true;
 
-        client.on("incomingcall", (call) => {
-            console.log("[Stringee] incomingcall 📞 isVideoCall:", call.isVideoCall);
+            // Show incoming call popup
             playRingtone("/ringtone.mp3", { loop: true, duration: 30000, volume: 0.8 });
-            eventsSetupRef.current = false;
-            currentCallRef.current = call;
-            setIsVideoCall(!!call.isVideoCall);
-            onIncomingCall(call);
-        });
+            setIncomingCaller({
+                name: offerData.callerName || from,
+                profilePictureUrl: offerData.callerAvatar || null,
+                isVideoCall: isVid,
+                sdp: offerData.sdp,
+                fromUserId: from,
+            });
+            return;
+        }
 
-        client.on("requestnewtoken", () => {
-            console.warn("[Stringee] token expired");
-            onConnChange(false);
-        });
+        if (type === "answer") {
+            const pc = pcRef.current;
+            if (!pc) return;
+            const answerData = JSON.parse(payload);
+            await pc.setRemoteDescription(new RTCSessionDescription(answerData.sdp));
+            remoteDescSetRef.current = true;
+            // Flush pending ICE candidates
+            for (const c of pendingCandidatesRef.current) {
+                await pc.addIceCandidate(new RTCIceCandidate(c));
+            }
+            pendingCandidatesRef.current = [];
+            setCallStatus("Connected");
+            stopSound();
+            return;
+        }
 
-        return client;
-    }
+        if (type === "candidate") {
+            const candidate = JSON.parse(payload);
+            const pc = pcRef.current;
+            if (pc && remoteDescSetRef.current) {
+                await pc.addIceCandidate(new RTCIceCandidate(candidate));
+            } else {
+                pendingCandidatesRef.current.push(candidate);
+            }
+            return;
+        }
 
+        if (type === "reject" || type === "end") {
+            setIsCallEnding(true);
+            setTimeout(() => cleanupCall(type), 1500);
+            return;
+        }
+    }, [cleanupCall]);
+
+    // ── Subscribe to signal channel ──────────────────────────────────
+    const subscribeToSignals = useCallback((stomp, userId) => {
+        if (signalSubRef.current) {
+            signalSubRef.current.unsubscribe();
+        }
+        signalSubRef.current = stomp.subscribe(
+            `/signal/${userId}`,
+            (msg) => {
+                try {
+                    handleSignal(JSON.parse(msg.body));
+                } catch (e) {
+                    console.error("[WebRTC] signal parse error", e);
+                }
+            }
+        );
+        console.log("[WebRTC] Subscribed to /signal/" + userId);
+    }, [handleSignal]);
+
+    // ── Initialize (gọi từ layout khi có token) ──────────────────────
     const initializeCall = useCallback(async (beToken) => {
         const payload = decodeJWT(beToken);
-        if (payload?.username) setCallerName(payload.username);
-        try {
-            const res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/v1/stringee/create-token`,
-                { method: "POST", headers: { Authorization: `Bearer ${beToken}` } }
-            );
-            const data = await res.json();
-            if (data.body?.token) setToken(data.body.token);
-        } catch {
-            setCallStatus("Token fetch failed");
-        }
-    }, []);
+        if (!payload) return;
 
-    useEffect(() => {
-        if (token && window.StringeeClient) {
-            clientRef.current = connectStringeeClient(
-                token,
-                (incomingCall) => {
-                    setIncomingCaller({
-                        name: incomingCall.fromAlias || incomingCall.fromNumber,
-                        profilePictureUrl: incomingCall.customDataFromYourServer,
-                        isVideoCall: !!incomingCall.isVideoCall,
-                    });
-                },
-                (connected) => {
-                    setIsConnected(connected);
-                    setCallStatus(connected ? "Connected" : "Disconnected");
-                }
-            );
-        }
-    }, [token]);
+        const userId = payload.sub || payload.userId || payload.id;
+        const username = payload.username || payload.sub;
+        myUserIdRef.current   = userId;
+        myUsernameRef.current = username;
 
-    const makeCall = useCallback(
-        async (callee, isVid = false) => {
-            eventsSetupRef.current = false;
-            console.log("[Stringee] makeCall →", callee, "video:", isVid);
-            setIsVideoCall(isVid);
-
-            const stream = await createMediaStream(isVid);
-            if (!stream) return;
-
-            try {
-                const res = await api.get(`/v1/call/init/${callee.trim()}`);
-                if (res.data.code === 7012 || res.data.code === 7011) {
-                    toast.error("Máy bận");
-                    stream.getTracks().forEach((t) => t.stop());
-                    return;
-                }
-
-                const call = new window.StringeeCall(
-                    clientRef.current,
-                    callerName,
-                    callee.trim(),
-                    isVid
-                );
-
-                call.localStream = stream;
-                localStreamRef.current = stream;
-                assignStreamToVideo(localVideoElRef, stream);
-
-                setupCallEvents(call);
-
-                currentCallRef.current = call;
-                setCurrentCall(call);
-                setCallStatus("Đang kết nối...");
-
-                call.makeCall((res) => {
-                    if (res.r === 0) {
-                        setCallStatus("Đang đổ chuông...");
-                    } else {
-                        console.error("[Stringee] makeCall failed:", res.r, res.message);
-                        stream.getTracks().forEach((t) => t.stop());
-                        cleanupCall("makeCall failed");
-                    }
-                });
-            } catch (err) {
-                if (err?.response?.data?.code === 7012 || err?.response?.data?.code === 7011)
-                    toast.error("Máy bận");
-                stream.getTracks().forEach((t) => t.stop());
-                cleanupCall("init failed");
+        // Dùng lại STOMP client từ socket.js nếu có, hoặc chờ nó connect
+        // Thử lấy từ window nếu socket.js expose ra global
+        const checkStomp = setInterval(() => {
+            const stomp = window.__stompClient;
+            if (stomp && stomp.connected) {
+                clearInterval(checkStomp);
+                stompClientRef.current = stomp;
+                setIsConnected(true);
+                setCallStatus("Connected");
+                subscribeToSignals(stomp, userId);
             }
-        },
-        [callerName, createMediaStream, setupCallEvents, cleanupCall, assignStreamToVideo]
-    );
+        }, 500);
 
-    const acceptCall = useCallback(async () => {
-        const call = currentCallRef.current;
-        if (!call) return;
-        const isVid = !!call.isVideoCall;
-        console.log("[Stringee] acceptCall, isVideoCall:", isVid);
-        stopSound();
+        // Timeout sau 30s
+        setTimeout(() => clearInterval(checkStomp), 30000);
+    }, [subscribeToSignals]);
+
+    // ── Make call ────────────────────────────────────────────────────
+    const makeCall = useCallback(async (calleeUsername, isVid = false, calleeUserId = null) => {
+        console.log("[WebRTC] makeCall →", calleeUsername, "video:", isVid);
         setIsVideoCall(isVid);
+
+        // Init check (busy check)
+        try {
+            const res = await api.get(`/v1/call/init/${calleeUsername.trim()}`);
+            if (res.data.code === 7012 || res.data.code === 7011) {
+                toast.error("Máy bận");
+                return;
+            }
+        } catch (err) {
+            if (err?.response?.data?.code === 7012 || err?.response?.data?.code === 7011) {
+                toast.error("Máy bận");
+            }
+            return;
+        }
 
         const stream = await createMediaStream(isVid);
         if (!stream) return;
-
-        call.localStream = stream;
         localStreamRef.current = stream;
         assignStreamToVideo(localVideoElRef, stream);
 
-        setupCallEvents(call);
+        // calleeId là userId của callee — cần truyền từ nơi gọi makeCall
+        const remoteId = calleeUserId || calleeUsername; // fallback về username
+        calleeIdRef.current = remoteId;
+
+        const pc = createPeerConnection(remoteId, isVid);
+        stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+
+        const callId = crypto.randomUUID();
+        currentCallIdRef.current = callId;
+
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+
+        setCurrentCall({ callId, callee: calleeUsername, isVideoCall: isVid });
+        setCallStatus("Đang đổ chuông...");
+
+        sendSignal(remoteId, "offer", JSON.stringify({
+            sdp: offer,
+            isVideoCall: isVid,
+            callerName: myUsernameRef.current,
+            callerAvatar: null,
+            callId,
+        }));
+    }, [createMediaStream, createPeerConnection, sendSignal, assignStreamToVideo]);
+
+    // ── Accept incoming call ─────────────────────────────────────────
+    const acceptCall = useCallback(async () => {
+        if (!incomingCaller) return;
+        const { sdp, fromUserId, isVideoCall: isVid } = incomingCaller;
+        stopSound();
+        setIsVideoCall(!!isVid);
+
+        const stream = await createMediaStream(!!isVid);
+        if (!stream) return;
+        localStreamRef.current = stream;
+        assignStreamToVideo(localVideoElRef, stream);
+
+        const remoteId = fromUserId;
+        calleeIdRef.current = remoteId;
+
+        const pc = createPeerConnection(remoteId, !!isVid);
+        stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+
+        await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+        remoteDescSetRef.current = true;
+
+        // Flush pending ICE candidates
+        for (const c of pendingCandidatesRef.current) {
+            await pc.addIceCandidate(new RTCIceCandidate(c));
+        }
+        pendingCandidatesRef.current = [];
+
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+
+        sendSignal(remoteId, "answer", JSON.stringify({ sdp: answer }));
 
         setIncomingCaller(null);
-        setCurrentCall(call);
+        setCurrentCall({ callId: null, callee: fromUserId, isVideoCall: !!isVid });
+        setCallStatus("Đang kết nối...");
+        isOfferPendingRef.current = false;
+    }, [incomingCaller, createMediaStream, createPeerConnection, sendSignal, assignStreamToVideo]);
 
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                console.log("[Stringee] calling answer()");
-                call.answer();
-            });
-        });
-    }, [createMediaStream, setupCallEvents, assignStreamToVideo]);
-
+    // ── Reject incoming call ─────────────────────────────────────────
     const rejectCall = useCallback(() => {
         stopSound();
-        const call = currentCallRef.current;
-        if (!call) return;
-        call.reject(() => cleanupCall("rejected"));
-    }, [cleanupCall]);
+        if (incomingCaller?.fromUserId) {
+            sendSignal(incomingCaller.fromUserId, "reject", "{}");
+        }
+        cleanupCall("rejected");
+    }, [incomingCaller, sendSignal, cleanupCall]);
 
+    // ── End ongoing call ─────────────────────────────────────────────
     const endCall = useCallback(() => {
-        const call = currentCall || currentCallRef.current;
-        if (!call) return;
+        const remoteId = calleeIdRef.current;
+        if (remoteId) {
+            sendSignal(remoteId, "end", "{}");
+        }
         setIsCallEnding(true);
-        call.hangup(() => setTimeout(() => cleanupCall("hangup"), 1500));
-    }, [currentCall, cleanupCall]);
+        setTimeout(() => cleanupCall("hangup"), 1500);
+    }, [sendSignal, cleanupCall]);
 
+    // ── Toggle mute ──────────────────────────────────────────────────
     const toggleMute = useCallback((muted) => {
         const stream = localStreamRef.current;
         if (!stream) return;
         stream.getAudioTracks().forEach((t) => (t.enabled = !muted));
-        const call = currentCallRef.current;
-        if (call?.mute) call.mute(muted);
     }, []);
 
+    // ── Toggle camera ────────────────────────────────────────────────
     const toggleLocalVideo = useCallback((enabled) => {
         const stream = localStreamRef.current;
         if (!stream) return;
         stream.getVideoTracks().forEach((t) => (t.enabled = !enabled));
-        const call = currentCallRef.current;
-        if (call?.enableLocalVideo) call.enableLocalVideo(!enabled);
     }, []);
 
     return (
@@ -366,7 +411,6 @@ export const CallProvider = ({ children }) => {
                 callStatus,
                 incomingCaller,
                 isCallEnding,
-                callerName,
                 isVideoCall,
                 mediaPermissions,
                 remoteVideoElRef,

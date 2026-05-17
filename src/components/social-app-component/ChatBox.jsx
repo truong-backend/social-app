@@ -39,7 +39,7 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
   const bottomElementRef = useRef(null);
   const isLoadingMoreRef = useRef(false);
 
-  // Store & hooks - separate selectors to avoid infinite loop
+  // Store & hooks
   const fetchChatList = useAppStore(state => state.fetchChatList);
   const selectChat = useAppStore(state => state.selectChat);
   const getBlockStatusByChatId = useAppStore(state => state.getBlockStatusByChatId);
@@ -107,15 +107,12 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
     return () => observer.disconnect();
   }, [hasMore, loadingMore, loadMoreMessages, messages]);
 
-  // Auto scroll effects
+  // Auto scroll
   const autoScrollToBottom = useCallback(() => {
     const container = messagesContainerRef.current;
     if (!container) return;
-
     const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-    if (isNearBottom) {
-      container.scrollTo({ top: 0, behavior: "smooth" });
-    }
+    if (isNearBottom) container.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
   useEffect(() => {
@@ -137,9 +134,7 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
   // Click outside handler
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (!event.target.closest(".message-container")) {
-        setSelectedMessage(null);
-      }
+      if (!event.target.closest(".message-container")) setSelectedMessage(null);
     };
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
@@ -224,9 +219,7 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
       }
       setInput("");
     } catch (err) {
-      if (err.name !== 'AbortError') {
-        toast.error("Lỗi khi gửi tin nhắn");
-      }
+      if (err.name !== 'AbortError') toast.error("Lỗi khi gửi tin nhắn");
     } finally {
       setIsSendingMessage(false);
     }
@@ -328,11 +321,7 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
     } finally {
       setUploading(false);
     }
-
-    console.log("Selected GIF:", url);
-  }
-
-
+  };
 
   const handleCancelFile = () => {
     if (filePreview?.startsWith("blob:")) URL.revokeObjectURL(filePreview);
@@ -501,14 +490,18 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
           ? `Nhắn tin cho ${targetUser?.displayName || targetUser?.username}...`
           : "Nhập tin nhắn...";
 
+  // ── Lấy userId của callee để làm địa chỉ WebRTC signal ──────────
+  // targetUser có thể có: id, userId, hoặc fallback về username
+  const calleeUserId = targetUser?.id || targetUser?.userId || targetUser?.username;
+
   return (
     <div className="flex flex-col h-full w-full bg-[var(--card)] text-[var(--foreground)] rounded-2xl overflow-hidden shadow-sm">
       <ChatHeader
         targetUser={targetUser}
         isConnected={isNewChat ? true : isConnected}
         onBack={onBack}
-        onCall={() => makeCall(targetUser?.username, false)}
-        onVideoCall={() => makeCall(targetUser?.username, true)}
+        onCall={() => makeCall(targetUser?.username, false, calleeUserId)}
+        onVideoCall={() => makeCall(targetUser?.username, true, calleeUserId)}
       />
 
       <div
