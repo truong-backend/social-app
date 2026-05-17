@@ -13,32 +13,27 @@ const CallVideo = ({ onCallEnd }) => {
         isCallEnding,
         cleanupCall,
         mediaPermissions,
-        // ✅ KEY: nhận refs từ Context thay vì tạo local refs
-        // Refs này được Context dùng để gán stream trực tiếp vào DOM
+        isVideoCall,
         remoteVideoElRef,
         localVideoElRef,
         localStreamRef,
+        remoteStreamRef,
     } = useCall();
 
     const [isCameraOn, setIsCameraOn]   = useState(true);
     const [isMicOn, setIsMicOn]         = useState(true);
+    const [hasRemoteStream, setHasRemoteStream] = useState(false);
 
-    // ✅ KEY FIX: Đăng ký video DOM elements vào Context refs
-    // khi component mount — Context sẽ gán stream vào đây
     const localVideoDomRef  = useRef(null);
     const remoteVideoDomRef = useRef(null);
 
     useEffect(() => {
-        // Đăng ký DOM refs vào Context ngay khi component mount
         localVideoElRef.current  = localVideoDomRef.current;
         remoteVideoElRef.current = remoteVideoDomRef.current;
 
         console.log("[CallVideo] Registered video refs to Context");
-        console.log("[CallVideo] localVideoEl:", !!localVideoDomRef.current);
-        console.log("[CallVideo] remoteVideoEl:", !!remoteVideoDomRef.current);
 
-        // Nếu đã có stream pending (race condition), gán lại ngay
-        // Trường hợp: addremotestream fire trước component mount
+        // Re-assign pending streams nếu đã có trước khi mount
         const ls = localStreamRef.current;
         if (ls && localVideoDomRef.current) {
             console.log("[CallVideo] Re-assigning pending local stream");
@@ -47,14 +42,21 @@ const CallVideo = ({ onCallEnd }) => {
             localVideoDomRef.current.play().catch(() => {});
         }
 
+        const rs = remoteStreamRef.current;
+        if (rs && remoteVideoDomRef.current) {
+            console.log("[CallVideo] Re-assigning pending remote stream");
+            remoteVideoDomRef.current.srcObject = null;
+            remoteVideoDomRef.current.srcObject = rs;
+            remoteVideoDomRef.current.play().catch(() => {});
+            setHasRemoteStream(true);
+        }
+
         return () => {
-            // Khi unmount, clear refs trong Context
             localVideoElRef.current  = null;
             remoteVideoElRef.current = null;
         };
-    }, []); // chỉ chạy 1 lần khi mount
+    }, []);
 
-    // Sync camera/mic button state với track state
     useEffect(() => {
         const stream = localStreamRef.current;
         if (stream) {
@@ -63,7 +65,7 @@ const CallVideo = ({ onCallEnd }) => {
             setIsCameraOn(vt.length > 0 && vt[0].enabled);
             setIsMicOn(at.length > 0 && at[0].enabled);
         }
-    }, [currentCall]); // sync khi call bắt đầu
+    }, [currentCall]);
 
     const toggleCamera = () => {
         if (!mediaPermissions.video) return;
@@ -86,6 +88,63 @@ const CallVideo = ({ onCallEnd }) => {
 
     if (!currentCall && !isCallEnding) return null;
 
+    // ── Voice call UI (không có video) ───────────────────────────────
+    if (!isVideoCall) {
+        return (
+            <div className="fixed inset-0 bg-gradient-to-b from-gray-900 to-gray-800 z-[999] flex flex-col items-center justify-center">
+                {isCallEnding ? (
+                    <div className="text-center text-white space-y-4">
+                        <div className="text-6xl mb-4">📞</div>
+                        <p className="text-2xl font-semibold">Cuộc gọi đã kết thúc</p>
+                        <button
+                            onClick={handleClose}
+                            className="bg-blue-600 px-6 py-3 rounded-lg hover:bg-blue-700 font-medium"
+                        >
+                            Đóng
+                        </button>
+                    </div>
+                ) : (
+                    <>
+                        {/* Avatar placeholder */}
+                        <div className="flex flex-col items-center space-y-4 mb-16">
+                            <div className="w-28 h-28 rounded-full bg-gray-600 flex items-center justify-center text-6xl shadow-2xl">
+                                👤
+                            </div>
+                            <p className="text-white text-xl font-semibold">Cuộc gọi thoại</p>
+                            <div className="bg-black/40 px-4 py-2 rounded-full text-white text-sm">
+                                {callStatus}
+                            </div>
+                        </div>
+
+                        {/* Hidden video elements (cần cho audio stream) */}
+                        <video ref={remoteVideoDomRef} autoPlay playsInline className="hidden"
+                            onLoadedMetadata={() => setHasRemoteStream(true)} />
+                        <video ref={localVideoDomRef} autoPlay playsInline muted className="hidden" />
+
+                        {/* Controls */}
+                        <div className="flex items-center space-x-6">
+                            <button
+                                onClick={toggleMicrophone}
+                                className={`w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg transition-colors
+                                    ${isMicOn ? "bg-gray-600 hover:bg-gray-700" : "bg-red-600 hover:bg-red-700"}`}
+                            >
+                                <span className="text-xl">{isMicOn ? "🎤" : "🔇"}</span>
+                            </button>
+
+                            <button
+                                onClick={endCall}
+                                className="w-16 h-16 rounded-full bg-red-600 hover:bg-red-700 flex items-center justify-center text-white shadow-lg transition-colors"
+                            >
+                                <span className="text-2xl">📵</span>
+                            </button>
+                        </div>
+                    </>
+                )}
+            </div>
+        );
+    }
+
+    // ── Video call UI ─────────────────────────────────────────────────
     return (
         <div className="fixed inset-0 bg-black z-[999] flex items-center justify-center">
             {isCallEnding ? (
@@ -108,16 +167,12 @@ const CallVideo = ({ onCallEnd }) => {
                         </div>
                     </div>
 
-                    {/* ── Remote video — toàn màn hình ──
-                        ✅ LUÔN render video tag (không conditional)
-                        để remoteVideoDomRef.current không bao giờ null
-                        Dùng CSS hidden thay vì unmount/mount             */}
+                    {/* Remote video */}
                     <div className="absolute inset-0 z-[1] bg-gray-800">
-                        {/* Placeholder khi chưa có stream */}
                         <div
                             id="remote-placeholder"
                             className="absolute inset-0 flex items-center justify-center"
-                            style={{ display: "flex" }}
+                            style={{ display: hasRemoteStream ? "none" : "flex" }}
                         >
                             <div className="text-white text-center">
                                 <div className="text-6xl mb-4">👤</div>
@@ -125,21 +180,16 @@ const CallVideo = ({ onCallEnd }) => {
                             </div>
                         </div>
 
-                        {/* Remote video — luôn mount, ẩn bằng CSS khi chưa có stream */}
                         <video
                             ref={remoteVideoDomRef}
                             autoPlay
                             playsInline
                             className="absolute inset-0 w-full h-full object-cover"
-                            onLoadedMetadata={() => {
-                                // Ẩn placeholder khi video bắt đầu play
-                                const ph = document.getElementById("remote-placeholder");
-                                if (ph) ph.style.display = "none";
-                            }}
+                            onLoadedMetadata={() => setHasRemoteStream(true)}
                         />
                     </div>
 
-                    {/* ── Local video — góc phải dưới ── */}
+                    {/* Local video */}
                     <div className="absolute bottom-28 right-4 w-32 h-48 md:w-44 md:h-60 bg-gray-900 rounded-xl overflow-hidden border-2 border-white z-10 shadow-xl">
                         <video
                             ref={localVideoDomRef}
@@ -155,7 +205,7 @@ const CallVideo = ({ onCallEnd }) => {
                         )}
                     </div>
 
-                    {/* ── Controls ── */}
+                    {/* Controls */}
                     <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center space-x-4 z-20">
                         <button
                             onClick={toggleCamera}

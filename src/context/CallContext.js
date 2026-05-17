@@ -36,25 +36,21 @@ export const CallProvider = ({ children }) => {
     const [callStatus, setCallStatus] = useState("Chưa kết nối");
     const [isCallEnding, setIsCallEnding] = useState(false);
     const [callerName, setCallerName] = useState("");
+    const [isVideoCall, setIsVideoCall] = useState(false);
     const [mediaPermissions, setMediaPermissions] = useState({
         audio: false,
         video: false,
     });
 
-    // ── Refs ──────────────────────────────────────────────────────────
     const clientRef        = useRef(null);
     const currentCallRef   = useRef(null);
     const localStreamRef   = useRef(null);
     const remoteStreamRef  = useRef(null);
     const eventsSetupRef   = useRef(false);
 
-    // ✅ KEY FIX: video element refs được giữ ở Context
-    // CallVideo đăng ký refs này vào Context để khi stream arrive
-    // có thể gán thẳng vào DOM — KHÔNG qua React state (tránh race condition)
     const remoteVideoElRef = useRef(null);
     const localVideoElRef  = useRef(null);
 
-    // ── Audio init ────────────────────────────────────────────────────
     useEffect(() => {
         initAudioSystem();
         preloadAudio("/ringtone.mp3");
@@ -63,7 +59,6 @@ export const CallProvider = ({ children }) => {
         }
     }, []);
 
-    // ── Load Stringee SDK ─────────────────────────────────────────────
     useEffect(() => {
         if (typeof window !== "undefined" && !window.StringeeClient) {
             const script = document.createElement("script");
@@ -74,9 +69,6 @@ export const CallProvider = ({ children }) => {
         }
     }, []);
 
-    // ── Helpers ───────────────────────────────────────────────────────
-
-    /** Gán stream vào <video> element ngay lập tức, không qua React state */
     const assignStreamToVideo = useCallback((videoRef, stream) => {
         if (!videoRef.current) {
             console.warn("[Stringee] video element ref is null, cannot assign stream");
@@ -87,7 +79,6 @@ export const CallProvider = ({ children }) => {
             return;
         }
         console.log("[Stringee] ✅ Assigning stream to video, tracks:", stream.getTracks().length);
-        // Reset srcObject trước (workaround Chrome/Edge bug theo Stringee docs)
         videoRef.current.srcObject = null;
         videoRef.current.srcObject = stream;
         videoRef.current.play().catch((e) => {
@@ -95,11 +86,11 @@ export const CallProvider = ({ children }) => {
         });
     }, []);
 
-    const createMediaStream = useCallback(async (isVideo = false) => {
+    const createMediaStream = useCallback(async (isVid = false) => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
                 audio: true,
-                video: isVideo
+                video: isVid
                     ? { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }
                     : false,
             });
@@ -119,14 +110,12 @@ export const CallProvider = ({ children }) => {
         console.log("[Stringee] cleanupCall:", reason);
         stopSound();
 
-        // Stop tất cả tracks
         [localStreamRef.current, remoteStreamRef.current].forEach((s) => {
             if (s) s.getTracks().forEach((t) => { t.stop(); t.enabled = false; });
         });
         localStreamRef.current  = null;
         remoteStreamRef.current = null;
 
-        // Clear video elements
         if (localVideoElRef.current)  localVideoElRef.current.srcObject  = null;
         if (remoteVideoElRef.current) remoteVideoElRef.current.srcObject = null;
 
@@ -137,10 +126,10 @@ export const CallProvider = ({ children }) => {
         setIncomingCaller(null);
         setIsCallEnding(false);
         setCallStatus("Cleaned");
+        setIsVideoCall(false);
         setMediaPermissions({ audio: false, video: false });
     }, []);
 
-    // ── setupCallEvents ───────────────────────────────────────────────
     const setupCallEvents = useCallback(
         (call) => {
             if (eventsSetupRef.current) {
@@ -150,8 +139,6 @@ export const CallProvider = ({ children }) => {
             eventsSetupRef.current = true;
             console.log("[Stringee] setupCallEvents");
 
-            // ✅ Gán thẳng vào DOM ref — KHÔNG setState
-            // Đây là pattern chính xác theo Stringee docs
             call.on("addremotestream", (stream) => {
                 console.log("[Stringee] ✅ addremotestream, tracks:", stream?.getTracks?.()?.length ?? "?");
                 remoteStreamRef.current = stream;
@@ -195,7 +182,6 @@ export const CallProvider = ({ children }) => {
         [cleanupCall, assignStreamToVideo]
     );
 
-    // ── Stringee client ───────────────────────────────────────────────
     function connectStringeeClient(accessToken, onIncomingCall, onConnChange) {
         const client = new window.StringeeClient();
         client.connect(accessToken);
@@ -211,10 +197,11 @@ export const CallProvider = ({ children }) => {
         });
 
         client.on("incomingcall", (call) => {
-            console.log("[Stringee] incomingcall 📞");
+            console.log("[Stringee] incomingcall 📞 isVideoCall:", call.isVideoCall);
             playRingtone("/ringtone.mp3", { loop: true, duration: 30000, volume: 0.8 });
             eventsSetupRef.current = false;
             currentCallRef.current = call;
+            setIsVideoCall(!!call.isVideoCall);
             onIncomingCall(call);
         });
 
@@ -226,7 +213,6 @@ export const CallProvider = ({ children }) => {
         return client;
     }
 
-    // ── initializeCall ────────────────────────────────────────────────
     const initializeCall = useCallback(async (beToken) => {
         const payload = decodeJWT(beToken);
         if (payload?.username) setCallerName(payload.username);
@@ -250,6 +236,7 @@ export const CallProvider = ({ children }) => {
                     setIncomingCaller({
                         name: incomingCall.fromAlias || incomingCall.fromNumber,
                         profilePictureUrl: incomingCall.customDataFromYourServer,
+                        isVideoCall: !!incomingCall.isVideoCall,
                     });
                 },
                 (connected) => {
@@ -260,13 +247,13 @@ export const CallProvider = ({ children }) => {
         }
     }, [token]);
 
-    // ── makeCall ──────────────────────────────────────────────────────
     const makeCall = useCallback(
-        async (callee, isVideo = false) => {
+        async (callee, isVid = false) => {
             eventsSetupRef.current = false;
-            console.log("[Stringee] makeCall →", callee, "video:", isVideo);
+            console.log("[Stringee] makeCall →", callee, "video:", isVid);
+            setIsVideoCall(isVid);
 
-            const stream = await createMediaStream(isVideo);
+            const stream = await createMediaStream(isVid);
             if (!stream) return;
 
             try {
@@ -281,10 +268,9 @@ export const CallProvider = ({ children }) => {
                     clientRef.current,
                     callerName,
                     callee.trim(),
-                    isVideo
+                    isVid
                 );
 
-                // Gán localStream vào call object và video element
                 call.localStream = stream;
                 localStreamRef.current = stream;
                 assignStreamToVideo(localVideoElRef, stream);
@@ -314,32 +300,26 @@ export const CallProvider = ({ children }) => {
         [callerName, createMediaStream, setupCallEvents, cleanupCall, assignStreamToVideo]
     );
 
-    // ── acceptCall ────────────────────────────────────────────────────
     const acceptCall = useCallback(async () => {
         const call = currentCallRef.current;
         if (!call) return;
-        console.log("[Stringee] acceptCall, isVideo:", call.isVideoCall);
+        const isVid = !!call.isVideoCall;
+        console.log("[Stringee] acceptCall, isVideoCall:", isVid);
         stopSound();
+        setIsVideoCall(isVid);
 
-        const stream = await createMediaStream(call.isVideoCall);
+        const stream = await createMediaStream(isVid);
         if (!stream) return;
 
-        // Gán stream vào call object và video element ngay lập tức
         call.localStream = stream;
         localStreamRef.current = stream;
         assignStreamToVideo(localVideoElRef, stream);
 
-        // Setup events TRƯỚC answer để không bỏ lỡ addremotestream
         setupCallEvents(call);
 
-        // Set state để render CallVideo
         setIncomingCaller(null);
         setCurrentCall(call);
 
-        // Gọi answer() — addremotestream có thể fire ngay trong lệnh này
-        // Vì remoteVideoElRef đã được đăng ký từ CallVideo component
-        // (CallVideo mount ngay khi setCurrentCall xong vì layout.js render sync)
-        // Dùng requestAnimationFrame để chắc chắn DOM đã paint
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 console.log("[Stringee] calling answer()");
@@ -348,7 +328,6 @@ export const CallProvider = ({ children }) => {
         });
     }, [createMediaStream, setupCallEvents, assignStreamToVideo]);
 
-    // ── rejectCall ────────────────────────────────────────────────────
     const rejectCall = useCallback(() => {
         stopSound();
         const call = currentCallRef.current;
@@ -356,7 +335,6 @@ export const CallProvider = ({ children }) => {
         call.reject(() => cleanupCall("rejected"));
     }, [cleanupCall]);
 
-    // ── endCall ───────────────────────────────────────────────────────
     const endCall = useCallback(() => {
         const call = currentCall || currentCallRef.current;
         if (!call) return;
@@ -364,7 +342,6 @@ export const CallProvider = ({ children }) => {
         call.hangup(() => setTimeout(() => cleanupCall("hangup"), 1500));
     }, [currentCall, cleanupCall]);
 
-    // ── toggleMute ────────────────────────────────────────────────────
     const toggleMute = useCallback((muted) => {
         const stream = localStreamRef.current;
         if (!stream) return;
@@ -373,7 +350,6 @@ export const CallProvider = ({ children }) => {
         if (call?.mute) call.mute(muted);
     }, []);
 
-    // ── toggleLocalVideo ──────────────────────────────────────────────
     const toggleLocalVideo = useCallback((enabled) => {
         const stream = localStreamRef.current;
         if (!stream) return;
@@ -385,21 +361,18 @@ export const CallProvider = ({ children }) => {
     return (
         <CallContext.Provider
             value={{
-                // state
                 isConnected,
                 currentCall,
                 callStatus,
                 incomingCaller,
                 isCallEnding,
                 callerName,
+                isVideoCall,
                 mediaPermissions,
-                // refs expose ra để CallVideo đăng ký
                 remoteVideoElRef,
                 localVideoElRef,
-                // streams (để check track state cho UI buttons)
                 localStreamRef,
                 remoteStreamRef,
-                // actions
                 initializeCall,
                 makeCall,
                 acceptCall,
