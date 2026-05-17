@@ -45,7 +45,7 @@ export default function ChatHeader({
         </div>
 
       {/* Action buttons */}
-      <div className="flex items-center gap-2">
+      {/* <div className="flex items-center gap-2">
         <button
           onClick={() => {
             console.log("[DEBUG] Voice call button clicked → username:", targetUser?.username)
@@ -78,7 +78,7 @@ export default function ChatHeader({
         >
           <MoreVertical className="w-5 h-5" />
         </button>
-      </div>
+      </div> */}
     </div>
   )
 }
