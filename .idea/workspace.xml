@@ -4,8 +4,25 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="069b736b-0e6d-4b3d-af43-6e4a296b7724" name="Changes" comment="chore: add docker files and env from tracking">
+    <list default="true" id="069b736b-0e6d-4b3d-af43-6e4a296b7724" name="Changes" comment="feat: enhance CallPopup and CallVideo components for improved call handling and UI updates">
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/controller/WebRTCSignalingController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/request/WebRTCSignalRequest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/response/WebRTCSignalResponse.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/config/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/config/SecurityConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/config/WebSocketAuthInterceptor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/config/WebSocketAuthInterceptor.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/config/WebSocketChannelPrefix.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/config/WebSocketChannelPrefix.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/config/WebSocketConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/config/WebSocketConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/controller/StringeeController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/request/StringeeCallEvent.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/response/StringeeResponse.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/response/StringeeUser.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/impl/CallServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/impl/CallServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/impl/StringeeServiceImpl.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/itf/StringeeService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/util/StringeeTokenUtil.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/application.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/application.yml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -74,14 +91,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1776389664504</updated>
-    </task>
-    <task id="LOCAL-00001" summary="Update deploy hetzner">
-      <option name="closed" value="true" />
-      <created>1776396033048</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1776396033049</updated>
     </task>
     <task id="LOCAL-00002" summary="Update deploy hetzner">
       <option name="closed" value="true" />
@@ -467,7 +476,15 @@
       <option name="project" value="LOCAL" />
       <updated>1778999628263</updated>
     </task>
-    <option name="localTasksCounter" value="50" />
+    <task id="LOCAL-00050" summary="feat: enhance CallPopup and CallVideo components for improved call handling and UI updates">
+      <option name="closed" value="true" />
+      <created>1779009354134</created>
+      <option name="number" value="00050" />
+      <option name="presentableId" value="LOCAL-00050" />
+      <option name="project" value="LOCAL" />
+      <updated>1779009354137</updated>
+    </task>
+    <option name="localTasksCounter" value="51" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -488,7 +505,8 @@
     <MESSAGE value="update" />
     <MESSAGE value="delete folder docker" />
     <MESSAGE value="chore: add docker files and env from tracking" />
-    <option name="LAST_COMMIT_MESSAGE" value="chore: add docker files and env from tracking" />
+    <MESSAGE value="feat: enhance CallPopup and CallVideo components for improved call handling and UI updates" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: enhance CallPopup and CallVideo components for improved call handling and UI updates" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/social_app$SocialNetworkApiApplication.ic" NAME="SocialNetworkApiApplication Coverage Results" MODIFIED="1776389746974" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">

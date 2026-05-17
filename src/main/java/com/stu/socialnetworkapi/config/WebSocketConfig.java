@@ -20,18 +20,19 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private String frontendOrigin;
     private final WebSocketAuthInterceptor webSocketAuthInterceptor;
 
-            @Override
-            public void configureMessageBroker(MessageBrokerRegistry config) {
-                config.enableSimpleBroker(
-                        NOTIFICATION_CHANNEL_PREFIX,
-                        CHAT_CHANNEL_PREFIX,
-                        MESSAGE_CHANNEL_PREFIX,
-                        USER_WEBSOCKET_ERROR_CHANNEL_PREFIX,
-                        ONLINE_CHANNEL_PREFIX,
-                        TYPING_CHANNEL_PREFIX);
-                config.setApplicationDestinationPrefixes("/app");
-                config.setUserDestinationPrefix("/user");
-            }
+    @Override
+    public void configureMessageBroker(MessageBrokerRegistry config) {
+        config.enableSimpleBroker(
+                NOTIFICATION_CHANNEL_PREFIX,
+                CHAT_CHANNEL_PREFIX,
+                MESSAGE_CHANNEL_PREFIX,
+                USER_WEBSOCKET_ERROR_CHANNEL_PREFIX,
+                ONLINE_CHANNEL_PREFIX,
+                TYPING_CHANNEL_PREFIX,
+                SIGNAL_CHANNEL_PREFIX);
+        config.setApplicationDestinationPrefixes("/app");
+        config.setUserDestinationPrefix("/user");
+    }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
@@ -43,7 +44,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                         "http://localhost:3000")
                 .setAllowedOrigins(frontendOrigin);
     }
-
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {

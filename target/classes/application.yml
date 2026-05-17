@@ -103,11 +103,6 @@ app:
   oauth2:
     frontend-redirect-url: ${OAUTH2_FRONTEND_REDIRECT}
 
-# ===================== STRINGEE =====================
-stringee:
-  api:
-    sid: ${STRINGEE_API_SID}
-    secret-key: ${STRINGEE_API_SECRET_KEY}
 
 # ===================== LOGGING =====================
 logging:

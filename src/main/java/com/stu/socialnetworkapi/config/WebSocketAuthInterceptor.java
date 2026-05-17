@@ -76,7 +76,6 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
     }
 
     private void handleConnect(String token, Map<String, Object> attributes, StompHeaderAccessor accessor) {
-        // Xác thực token và lưu thông tin user vào session
         Map<String, Object> claims = jwtUtil.validateToken(token);
         Object userId = claims.get(USER_ID_JWT_KEY);
         Object role = claims.get(ROLE_JWT_KEY);
@@ -112,6 +111,7 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
         String userId = Optional.ofNullable(attributes.get(USER_ID_KEY))
                 .map(Object::toString)
                 .orElseThrow(() -> new WebSocketException(ErrorCode.UNAUTHORIZED));
+
         if (destination.startsWith(WebSocketChannelPrefix.NOTIFICATION_CHANNEL_PREFIX)) {
             String userIdDestination = destination.substring(WebSocketChannelPrefix.NOTIFICATION_CHANNEL_PREFIX.length() + 1);
             return userIdDestination.equals(userId);
@@ -136,8 +136,14 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
         }
 
         if (destination.startsWith(WebSocketChannelPrefix.USER_WEBSOCKET_ERROR_CHANNEL_PREFIX)) {
-            // Always success for receive error
             return true;
+        }
+
+        // ── WebRTC Signal channel: /signal/{userId} ──────────────────
+        // Chỉ cho subscribe đúng channel của chính mình
+        if (destination.startsWith(WebSocketChannelPrefix.SIGNAL_CHANNEL_PREFIX)) {
+            String userIdDestination = destination.substring(WebSocketChannelPrefix.SIGNAL_CHANNEL_PREFIX.length() + 1);
+            return userIdDestination.equals(userId);
         }
 
         return false;
@@ -177,5 +183,4 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
         eventPublisher.publishEvent(new CommandEvent(command, chatUUID));
         return isMember;
     }
-
 }
