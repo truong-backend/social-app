@@ -170,15 +170,24 @@ export default function useReels() {
           headers: { "Content-Type": "multipart/form-data" },
         });
 
-        if (res.data.code === 200 || res.data.code === 201) {
-          const newStory = res.data.body;
-          // Thêm vào myStories ngay, không cần reload
-          setMyStories((prev) => [...prev, newStory]);
+        // Lấy story mới từ response — hỗ trợ cả {code, body} lẫn trả thẳng object
+        const responseData = res.data;
+        const newStory = responseData?.body ?? responseData;
+
+        if (newStory && (newStory.id || newStory.storyId)) {
+          // Chuẩn hoá id nếu BE trả storyId thay vì id
+          const normalizedStory = {
+            ...newStory,
+            id: newStory.id || newStory.storyId,
+          };
+          setMyStories((prev) => [...prev, normalizedStory]);
           toast.success("Đã đăng story!");
           // Reset form để tạo tiếp, KHÔNG đóng modal
           if (typeof onSuccessReset === "function") onSuccessReset();
         } else {
-          toast.error(res.data.message || "Có lỗi xảy ra");
+          const errMsg =
+            responseData?.message || "Có lỗi xảy ra khi đăng story";
+          toast.error(errMsg);
         }
       } catch (err) {
         toast.error(

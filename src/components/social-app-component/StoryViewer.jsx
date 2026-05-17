@@ -11,7 +11,7 @@ import {
   Heart,
 } from "lucide-react";
 
-const STORY_DURATION = 5000;
+const IMAGE_STORY_DURATION = 5000;
 const REACTIONS = ["❤️", "😍", "😂", "😮", "😢", "👏", "🔥"];
 
 export default function StoryViewer({
@@ -35,9 +35,12 @@ export default function StoryViewer({
   const [showMenu, setShowMenu] = useState(false);
   const [sentReaction, setSentReaction] = useState(null);
   const [showReplySent, setShowReplySent] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
+
   const progressInterval = useRef(null);
   const touchStartX = useRef(null);
   const inputRef = useRef(null);
+  const videoRef = useRef(null);
 
   const currentGroup = viewingMyStory ? null : friendGroups[activeGroupIndex];
   const currentStory = viewingMyStory
@@ -45,14 +48,19 @@ export default function StoryViewer({
     : currentGroup?.stories?.[activeStoryIndex];
 
   const stories = viewingMyStory ? myStories : currentGroup?.stories || [];
+  const isVideo = currentStory?.mediaType === "video" && currentStory?.mediaUrl;
 
   // ── Progress bar ──────────────────────────────────────────────────────────
 
-  const startProgress = useCallback(() => {
-    setProgress(0);
+  const clearProgress = useCallback(() => {
     clearInterval(progressInterval.current);
+  }, []);
+
+  const startImageProgress = useCallback(() => {
+    setProgress(0);
+    clearProgress();
     if (paused) return;
-    const step = 100 / (STORY_DURATION / 100);
+    const step = 100 / (IMAGE_STORY_DURATION / 100);
     progressInterval.current = setInterval(() => {
       setProgress((p) => {
         if (p >= 100) {
@@ -63,20 +71,76 @@ export default function StoryViewer({
         return p + step;
       });
     }, 100);
-  }, [paused, onNext]);
+  }, [paused, onNext, clearProgress]);
 
+  const startVideoProgress = useCallback(() => {
+    setProgress(0);
+    clearProgress();
+    const video = videoRef.current;
+    if (!video || paused) return;
+
+    progressInterval.current = setInterval(() => {
+      if (!video || video.paused || video.ended) return;
+      const duration = video.duration;
+      if (!duration || isNaN(duration)) return;
+      const pct = (video.currentTime / duration) * 100;
+      setProgress(pct);
+      if (pct >= 100) {
+        clearInterval(progressInterval.current);
+        onNext();
+      }
+    }, 100);
+  }, [paused, onNext, clearProgress]);
+
+  // Reset khi đổi story
   useEffect(() => {
-    startProgress();
-    return () => clearInterval(progressInterval.current);
+    setProgress(0);
+    setVideoReady(false);
+    clearProgress();
+
+    if (!isVideo) {
+      // Ảnh / text: bắt đầu progress ngay
+      startImageProgress();
+    }
+    // Video: chờ loadeddata mới bắt đầu (xem handler bên dưới)
+
+    return clearProgress;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeStoryIndex, activeGroupIndex, viewingMyStory]);
 
+  // Pause / resume
   useEffect(() => {
     if (paused) {
-      clearInterval(progressInterval.current);
+      clearProgress();
+      if (isVideo && videoRef.current) videoRef.current.pause();
     } else {
-      startProgress();
+      if (isVideo) {
+        if (videoReady && videoRef.current) {
+          videoRef.current.play().catch(() => {});
+          startVideoProgress();
+        }
+      } else {
+        startImageProgress();
+      }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paused]);
+
+  // ── Video event handlers ───────────────────────────────────────────────────
+
+  const handleVideoReady = useCallback(() => {
+    setVideoReady(true);
+    if (!paused) {
+      videoRef.current?.play().catch(() => {});
+      startVideoProgress();
+    }
+  }, [paused, startVideoProgress]);
+
+  const handleVideoEnded = useCallback(() => {
+    clearProgress();
+    setProgress(100);
+    onNext();
+  }, [clearProgress, onNext]);
 
   // ── Keyboard ──────────────────────────────────────────────────────────────
 
@@ -158,14 +222,22 @@ export default function StoryViewer({
         {currentStory.mediaUrl ? (
           currentStory.mediaType === "video" ? (
             <video
+              ref={videoRef}
               key={currentStory.mediaUrl}
               src={currentStory.mediaUrl}
               className="absolute inset-0 w-full h-full object-cover"
               autoPlay
               muted
-              loop
               playsInline
               draggable={false}
+              preload="auto"
+              onLoadedData={handleVideoReady}
+              onEnded={handleVideoEnded}
+              onError={() => {
+                // Nếu video lỗi, fallback sang progress ảnh
+                setVideoReady(true);
+                startImageProgress();
+              }}
             />
           ) : (
             <img
@@ -189,6 +261,13 @@ export default function StoryViewer({
         {/* Gradient overlays */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/60 pointer-events-none" />
 
+        {/* Loading indicator for video */}
+        {isVideo && !videoReady && (
+          <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+            <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+          </div>
+        )}
+
         {/* ─ Progress bars ─ */}
         <div className="absolute top-3 left-3 right-3 flex gap-1 z-10">
           {stories.map((s, i) => (
@@ -197,7 +276,7 @@ export default function StoryViewer({
               className="flex-1 h-0.5 bg-white/30 rounded-full overflow-hidden"
             >
               <div
-                className="h-full bg-white rounded-full transition-none"
+                className="h-full bg-white rounded-full"
                 style={{
                   width:
                     i < activeStoryIndex
@@ -205,7 +284,7 @@ export default function StoryViewer({
                       : i === activeStoryIndex
                       ? `${progress}%`
                       : "0%",
-                  transition: i === activeStoryIndex ? "none" : undefined,
+                  transition: "none",
                 }}
               />
             </div>
@@ -286,7 +365,6 @@ export default function StoryViewer({
         {/* ─ Reply / Reaction bar ─ */}
         {!viewingMyStory && (
           <div className="absolute bottom-4 left-3 right-3 z-10 flex items-center gap-2">
-            {/* Reply input */}
             <div className="flex-1 flex items-center bg-white/10 backdrop-blur-sm border border-white/30 rounded-full px-4 py-2 gap-2">
               <input
                 ref={inputRef}
@@ -306,7 +384,6 @@ export default function StoryViewer({
               )}
             </div>
 
-            {/* Reaction button */}
             <div className="relative">
               <button
                 className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm border border-white/30 flex items-center justify-center text-white hover:bg-white/20 transition-colors"
@@ -331,14 +408,12 @@ export default function StoryViewer({
           </div>
         )}
 
-        {/* Reaction sent toast */}
         {sentReaction && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
             <span className="text-7xl animate-bounce">{sentReaction}</span>
           </div>
         )}
 
-        {/* Reply sent toast */}
         {showReplySent && (
           <div className="absolute bottom-20 left-1/2 -translate-x-1/2 bg-white/20 backdrop-blur-sm text-white text-sm px-4 py-2 rounded-full z-20">
             Đã gửi trả lời ✓
@@ -367,12 +442,4 @@ export default function StoryViewer({
       )}
       {!viewingMyStory && activeGroupIndex < friendGroups.length - 1 && (
         <button
-          className="hidden sm:flex absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm items-center justify-center text-white hover:bg-white/30 transition-colors"
-          onClick={onNext}
-        >
-          <ChevronRight size={20} />
-        </button>
-      )}
-    </div>
-  );
-}
+          className="hidden sm:flex absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm items-center j
