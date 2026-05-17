@@ -4,8 +4,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { useCall } from "@/context/CallContext";
 
 const CallVideo = ({ onCallEnd }) => {
-    const localVideoRef = useRef(null);
-    const remoteVideoRef = useRef(null);
     const {
         endCall,
         toggleMute,
@@ -14,69 +12,75 @@ const CallVideo = ({ onCallEnd }) => {
         currentCall,
         isCallEnding,
         cleanupCall,
-        localStream,
-        remoteStream,
         mediaPermissions,
+        // ✅ KEY: nhận refs từ Context thay vì tạo local refs
+        // Refs này được Context dùng để gán stream trực tiếp vào DOM
+        remoteVideoElRef,
+        localVideoElRef,
+        localStreamRef,
     } = useCall();
 
-    const [isCameraOn, setIsCameraOn] = useState(true);
-    const [isMicOn, setIsMicOn] = useState(true);
-    const [autoplayError, setAutoplayError] = useState(false);
+    const [isCameraOn, setIsCameraOn]   = useState(true);
+    const [isMicOn, setIsMicOn]         = useState(true);
 
-    // Sync button state với actual stream tracks
-    useEffect(() => {
-        if (localStream) {
-            const videoTracks = localStream.getVideoTracks();
-            const audioTracks = localStream.getAudioTracks();
-            setIsCameraOn(videoTracks.length > 0 && videoTracks[0].enabled);
-            setIsMicOn(audioTracks.length > 0 && audioTracks[0].enabled);
-        }
-    }, [localStream]);
+    // ✅ KEY FIX: Đăng ký video DOM elements vào Context refs
+    // khi component mount — Context sẽ gán stream vào đây
+    const localVideoDomRef  = useRef(null);
+    const remoteVideoDomRef = useRef(null);
 
-    // Setup local video
     useEffect(() => {
-        if (localStream && localVideoRef.current) {
-            localVideoRef.current.srcObject = localStream;
-            localVideoRef.current.play().catch(() => {});
-        }
-    }, [localStream]);
+        // Đăng ký DOM refs vào Context ngay khi component mount
+        localVideoElRef.current  = localVideoDomRef.current;
+        remoteVideoElRef.current = remoteVideoDomRef.current;
 
-    // ✅ FIX CHÍNH: remoteVideoRef luôn được mount (không conditional render)
-    // nên ref luôn sẵn sàng khi remoteStream arrive — không cần retry
-    useEffect(() => {
-        if (!remoteStream) return;
-        if (!remoteVideoRef.current) {
-            console.error("[DEBUG] ❌ remoteVideoRef is null — không thể gán stream");
-            return;
+        console.log("[CallVideo] Registered video refs to Context");
+        console.log("[CallVideo] localVideoEl:", !!localVideoDomRef.current);
+        console.log("[CallVideo] remoteVideoEl:", !!remoteVideoDomRef.current);
+
+        // Nếu đã có stream pending (race condition), gán lại ngay
+        // Trường hợp: addremotestream fire trước component mount
+        const ls = localStreamRef.current;
+        if (ls && localVideoDomRef.current) {
+            console.log("[CallVideo] Re-assigning pending local stream");
+            localVideoDomRef.current.srcObject = null;
+            localVideoDomRef.current.srcObject = ls;
+            localVideoDomRef.current.play().catch(() => {});
         }
-        console.log("[DEBUG] ✅ Gán remote stream vào video element");
-        remoteVideoRef.current.srcObject = remoteStream;
-        remoteVideoRef.current.play().catch((err) => {
-            console.warn("[DEBUG] Remote autoplay failed:", err);
-            setAutoplayError(true);
-        });
-    }, [remoteStream]);
+
+        return () => {
+            // Khi unmount, clear refs trong Context
+            localVideoElRef.current  = null;
+            remoteVideoElRef.current = null;
+        };
+    }, []); // chỉ chạy 1 lần khi mount
+
+    // Sync camera/mic button state với track state
+    useEffect(() => {
+        const stream = localStreamRef.current;
+        if (stream) {
+            const vt = stream.getVideoTracks();
+            const at = stream.getAudioTracks();
+            setIsCameraOn(vt.length > 0 && vt[0].enabled);
+            setIsMicOn(at.length > 0 && at[0].enabled);
+        }
+    }, [currentCall]); // sync khi call bắt đầu
 
     const toggleCamera = () => {
-        if (!mediaPermissions.video || !localStream) return;
-        if (localStream.getVideoTracks().length === 0) return;
+        if (!mediaPermissions.video) return;
         const newState = !isCameraOn;
         toggleLocalVideo(!newState);
         setIsCameraOn(newState);
     };
 
     const toggleMicrophone = () => {
-        if (!mediaPermissions.audio || !localStream) return;
-        if (localStream.getAudioTracks().length === 0) return;
+        if (!mediaPermissions.audio) return;
         const newState = !isMicOn;
         toggleMute(!newState);
         setIsMicOn(newState);
     };
 
-    const handleEndCall = () => endCall();
-
     const handleClose = () => {
-        cleanupCall(11);
+        cleanupCall("close button");
         if (onCallEnd) onCallEnd();
     };
 
@@ -85,16 +89,14 @@ const CallVideo = ({ onCallEnd }) => {
     return (
         <div className="fixed inset-0 bg-black z-[999] flex items-center justify-center">
             {isCallEnding ? (
-                /* ── Màn hình kết thúc ── */
                 <div className="text-center text-white space-y-4">
                     <div className="text-6xl mb-4">📞</div>
                     <p className="text-2xl font-semibold">Cuộc gọi đã kết thúc</p>
-                    <p className="text-lg text-gray-300">Đang đóng...</p>
                     <button
                         onClick={handleClose}
-                        className="bg-blue-600 px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                        className="bg-blue-600 px-6 py-3 rounded-lg hover:bg-blue-700 font-medium"
                     >
-                        Đóng ngay
+                        Đóng
                     </button>
                 </div>
             ) : (
@@ -106,46 +108,49 @@ const CallVideo = ({ onCallEnd }) => {
                         </div>
                     </div>
 
-                    {/* ── Remote video — toàn màn hình ── */}
-                    {/* ✅ FIX: video tag LUÔN render (không dùng conditional)
-                        để remoteVideoRef.current không bao giờ null khi stream arrive.
-                        Dùng CSS để ẩn/hiện thay vì unmount/mount */}
-                    <div className="absolute inset-0 z-[1]">
-                        {/* Placeholder khi chưa có remote stream */}
-                        {!remoteStream && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
-                                <div className="text-white text-center">
-                                    <div className="text-6xl mb-4">👤</div>
-                                    <p className="text-xl">Đang chờ video từ đối phương...</p>
-                                </div>
+                    {/* ── Remote video — toàn màn hình ──
+                        ✅ LUÔN render video tag (không conditional)
+                        để remoteVideoDomRef.current không bao giờ null
+                        Dùng CSS hidden thay vì unmount/mount             */}
+                    <div className="absolute inset-0 z-[1] bg-gray-800">
+                        {/* Placeholder khi chưa có stream */}
+                        <div
+                            id="remote-placeholder"
+                            className="absolute inset-0 flex items-center justify-center"
+                            style={{ display: "flex" }}
+                        >
+                            <div className="text-white text-center">
+                                <div className="text-6xl mb-4">👤</div>
+                                <p className="text-xl">Đang chờ video từ đối phương...</p>
                             </div>
-                        )}
-                        {/* Video element LUÔN mount, ẩn bằng visibility khi chưa có stream */}
+                        </div>
+
+                        {/* Remote video — luôn mount, ẩn bằng CSS khi chưa có stream */}
                         <video
-                            ref={remoteVideoRef}
+                            ref={remoteVideoDomRef}
                             autoPlay
                             playsInline
-                            className="w-full h-full object-cover"
-                            style={{ visibility: remoteStream ? "visible" : "hidden" }}
+                            className="absolute inset-0 w-full h-full object-cover"
+                            onLoadedMetadata={() => {
+                                // Ẩn placeholder khi video bắt đầu play
+                                const ph = document.getElementById("remote-placeholder");
+                                if (ph) ph.style.display = "none";
+                            }}
                         />
                     </div>
 
                     {/* ── Local video — góc phải dưới ── */}
-                    <div className="absolute bottom-28 right-4 w-32 h-48 md:w-48 md:h-64 bg-gray-800 rounded-xl overflow-hidden border-2 border-white z-10 shadow-xl">
-                        {localStream && isCameraOn ? (
-                            <video
-                                ref={localVideoRef}
-                                autoPlay
-                                playsInline
-                                muted
-                                className="w-full h-full object-cover"
-                            />
-                        ) : (
-                            <div className="w-full h-full bg-gray-900 flex items-center justify-center">
-                                <div className="text-white text-center text-xs px-2">
-                                    <div className="text-3xl mb-1">📷</div>
-                                    <p>{!localStream ? "Đang khởi tạo..." : "Camera tắt"}</p>
-                                </div>
+                    <div className="absolute bottom-28 right-4 w-32 h-48 md:w-44 md:h-60 bg-gray-900 rounded-xl overflow-hidden border-2 border-white z-10 shadow-xl">
+                        <video
+                            ref={localVideoDomRef}
+                            autoPlay
+                            playsInline
+                            muted
+                            className="w-full h-full object-cover"
+                        />
+                        {!isCameraOn && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+                                <span className="text-3xl">📷</span>
                             </div>
                         )}
                     </div>
@@ -154,26 +159,26 @@ const CallVideo = ({ onCallEnd }) => {
                     <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center space-x-4 z-20">
                         <button
                             onClick={toggleCamera}
-                            disabled={!mediaPermissions.video || !localStream}
+                            disabled={!mediaPermissions.video}
                             className={`w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg transition-colors
                                 ${isCameraOn ? "bg-gray-600 hover:bg-gray-700" : "bg-red-600 hover:bg-red-700"}
-                                ${(!mediaPermissions.video || !localStream) ? "opacity-40 cursor-not-allowed" : ""}`}
+                                ${!mediaPermissions.video ? "opacity-40 cursor-not-allowed" : ""}`}
                         >
                             <span className="text-lg">{isCameraOn ? "📹" : "📷"}</span>
                         </button>
 
                         <button
                             onClick={toggleMicrophone}
-                            disabled={!mediaPermissions.audio || !localStream}
+                            disabled={!mediaPermissions.audio}
                             className={`w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg transition-colors
                                 ${isMicOn ? "bg-gray-600 hover:bg-gray-700" : "bg-red-600 hover:bg-red-700"}
-                                ${(!mediaPermissions.audio || !localStream) ? "opacity-40 cursor-not-allowed" : ""}`}
+                                ${!mediaPermissions.audio ? "opacity-40 cursor-not-allowed" : ""}`}
                         >
                             <span className="text-lg">{isMicOn ? "🎤" : "🔇"}</span>
                         </button>
 
                         <button
-                            onClick={handleEndCall}
+                            onClick={endCall}
                             className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-full shadow-lg transition-colors font-medium"
                         >
                             <span>📞</span>
@@ -181,7 +186,7 @@ const CallVideo = ({ onCallEnd }) => {
                         </button>
                     </div>
 
-                    {/* ── Indicators ── */}
+                    {/* Indicators */}
                     <div className="absolute top-4 right-4 flex flex-col space-y-2 z-20">
                         {!isCameraOn && (
                             <div className="bg-red-600/80 px-3 py-1 rounded-full text-white text-xs flex items-center space-x-1">
@@ -191,21 +196,6 @@ const CallVideo = ({ onCallEnd }) => {
                         {!isMicOn && (
                             <div className="bg-red-600/80 px-3 py-1 rounded-full text-white text-xs flex items-center space-x-1">
                                 <span>🔇</span><span>Mic tắt</span>
-                            </div>
-                        )}
-                        {autoplayError && (
-                            <div className="bg-yellow-600/80 px-3 py-1 rounded-full text-white text-xs flex items-center space-x-1">
-                                <span>⚠️</span>
-                                <button
-                                    onClick={() => {
-                                        localVideoRef.current?.play();
-                                        remoteVideoRef.current?.play();
-                                        setAutoplayError(false);
-                                    }}
-                                    className="underline"
-                                >
-                                    Bấm để phát video
-                                </button>
                             </div>
                         )}
                     </div>
