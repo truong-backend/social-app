@@ -169,16 +169,16 @@ export default function ChatLayoutInner() {
             title="Tạo tin nhắn mới"
             className="text-[var(--foreground)] hover:text-[var(--muted-foreground)] transition-colors"
           >
-            <Edit size={22} strokeWidth={1.5} />
+            {/* <Edit size={22} strokeWidth={1.5} /> */}
           </button>
         </div>
 
         {/* Messages / Requests label */}
         <div className="flex items-center justify-between px-6 py-3">
           <span className="text-base font-semibold text-[var(--foreground)]">Tin nhắn</span>
-          <button className="text-sm font-semibold text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors">
+          {/* <button className="text-sm font-semibold text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors">
             Yêu cầu
-          </button>
+          </button> */}
         </div>
 
         {/* Chat list */}
