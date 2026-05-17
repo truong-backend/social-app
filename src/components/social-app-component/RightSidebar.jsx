@@ -255,7 +255,7 @@ export default function RightSidebar({ token }) {
       </div>
 
       {/* Footer */}
-      <div className="px-2 pb-4">
+      {/* <div className="px-2 pb-4">
         <div className="flex flex-wrap gap-x-2 gap-y-1 text-[10px] text-[var(--muted-foreground)]">
           {[
             "Giới thiệu",
@@ -273,7 +273,7 @@ export default function RightSidebar({ token }) {
         <p className="text-[10px] text-[var(--muted-foreground)] mt-2">
           © 2026 POCPOC
         </p>
-      </div>
+      </div> */}
     </div>
   );
 }
