@@ -48,13 +48,16 @@ public class InCallRepository {
 
     public void endCall(String callId) {
         try {
-            String[] userArray = getMembers(callId).toArray(new String[0]);
-            String[] userIdArray = redisTemplate.opsForSet().members(CALL_UUID_KEY + callId).toArray(new String[0]);
+            Set<String> members = getMembers(callId);
+            Set<String> memberIds = redisTemplate.opsForSet().members(CALL_UUID_KEY + callId);
 
-            if (userArray.length < 2 || userIdArray.length < 2) {
-                log.warn("Not enough members to end call");
+            if (members == null || members.size() < 2 || memberIds == null || memberIds.size() < 2) {
+                log.warn("Not enough members to end call, callId={}", callId);
                 return;
             }
+
+            String[] userArray = members.toArray(new String[0]);
+            String[] userIdArray = memberIds.toArray(new String[0]);
 
             String user1 = userArray[0];
             String user2 = userArray[1];
@@ -67,26 +70,33 @@ public class InCallRepository {
             redisTemplate.delete(PREPARED_FOR_CALL_KEY + user2 + ":" + user1);
             redisTemplate.delete(CALL_KEY + callId);
             redisTemplate.delete(CALL_UUID_KEY + callId);
+
             MessageCommand command = MessageCommand.builder()
                     .id(callId)
                     .command(MessageCommand.Command.END_CALL)
                     .build();
 
-            messagingTemplate.convertAndSend(WebSocketChannelPrefix.MESSAGE_CHANNEL_PREFIX + "/" + userId1, command);
-            messagingTemplate.convertAndSend(WebSocketChannelPrefix.MESSAGE_CHANNEL_PREFIX + "/" + userId2, command);
+            // FIX: bỏ dấu "/" thừa trong topic — phải khớp với WebSocketChannelPrefix
+            messagingTemplate.convertAndSend(WebSocketChannelPrefix.MESSAGE_CHANNEL_PREFIX + userId1, command);
+            messagingTemplate.convertAndSend(WebSocketChannelPrefix.MESSAGE_CHANNEL_PREFIX + userId2, command);
         } catch (Exception e) {
-            log.error("Error in endCall", e);
+            log.error("Error in endCall, callId={}", callId, e);
         }
     }
 
     public void endCallByMemberUsername(String username) {
         String callId = getCallId(username);
+        if (callId == null) {
+            log.warn("No active call found for user: {}", username);
+            return;
+        }
         endCall(callId);
     }
 
     public boolean isInCall(String username) {
         return redisTemplate != null && redisTemplate.hasKey(INCALL_KEY + username);
     }
+
     public void cleanupPrepared(String caller, String callee) {
         try {
             redisTemplate.delete(PREPARED_FOR_CALL_KEY + caller + ":" + callee);
