@@ -36,16 +36,12 @@ export const CallProvider = ({children}) => {
     const clientRef = useRef(null);
     const currentCallRef = useRef(null);
     const beTokenRef = useRef("");
+    const localStreamRef = useRef(null);
+    const remoteStreamRef = useRef(null);
 
-    // Khởi tạo hệ thống âm thanh và preload ringtone
     useEffect(() => {
-        // Khởi tạo audio system
         initAudioSystem();
-
-        // Preload ringtone
         preloadAudio("/ringtone.mp3");
-
-        // Yêu cầu notification permission
         if ('Notification' in window && Notification.permission === 'default') {
             Notification.requestPermission().then(permission => {
                 console.log("[DEBUG] Notification permission:", permission);
@@ -94,22 +90,25 @@ export const CallProvider = ({children}) => {
     const cleanupCall = useCallback(
         (stt) => {
             console.log("[Thang] Cleaning up call...", stt);
-
-            // Dừng âm thanh
             stopSound();
 
-            if (localStream) {
-                localStream.getTracks().forEach((track) => {
+            const ls = localStreamRef.current;
+            const rs = remoteStreamRef.current;
+
+            if (ls) {
+                ls.getTracks().forEach((track) => {
                     track.stop();
                     track.enabled = false;
                 });
             }
-            if (remoteStream) {
-                remoteStream.getTracks().forEach((track) => {
+            if (rs) {
+                rs.getTracks().forEach((track) => {
                     track.stop();
                     track.enabled = false;
                 });
             }
+            localStreamRef.current = null;
+            remoteStreamRef.current = null;
             setRemoteStream(null);
             setLocalStream(null);
             setCurrentCall(null);
@@ -119,7 +118,7 @@ export const CallProvider = ({children}) => {
             setIsCallEnding(false);
             currentCallRef.current = null;
         },
-        [localStream, remoteStream]
+        []
     );
 
     const setupCallEvents = useCallback(
@@ -135,6 +134,7 @@ export const CallProvider = ({children}) => {
                         "[DEBUG] ✅ Remote stream tracks:",
                         realStream.getTracks().length
                     );
+                    remoteStreamRef.current = realStream;
                     setRemoteStream(realStream);
                     setCallStatus("Connected - Remote stream received");
                 } else {
@@ -147,10 +147,7 @@ export const CallProvider = ({children}) => {
                 const realStream = stream?.stream || stream;
                 if (realStream) {
                     console.log("[DEBUG] ✅ Setting localStream - ID:", realStream.id);
-                    console.log(
-                        "[DEBUG] ✅ Local stream tracks:",
-                        realStream.getTracks().length
-                    );
+                    localStreamRef.current = realStream;
                     setLocalStream(realStream);
                 } else {
                     console.error("[DEBUG] ❌ Local stream is null/undefined");
@@ -162,7 +159,6 @@ export const CallProvider = ({children}) => {
                 if (state.reason === "answered") {
                     console.log("[DEBUG] 📞 Call was answered!");
                     setCallStatus("Call answered");
-                    // Dừng ringtone khi cuộc gọi được trả lời
                     stopSound();
                 } else if (
                     ["Ended", "Busy here", "Rejected", "Disconnected"].includes(
@@ -218,15 +214,16 @@ export const CallProvider = ({children}) => {
         client.on("incomingcall", (call) => {
             console.log("[DEBUG] Incoming call event fired 📞");
 
-            // Phát ringtone với hệ thống nâng cao
             playRingtone("/ringtone.mp3", {
                 loop: true,
-                duration: 30000, // 30 giây
+                duration: 30000,
                 volume: 0.8,
             });
 
+            // Store call ref first, then set up events
+            currentCallRef.current = call;
             onIncomingCall(call);
-            setupCallEvents(call);
+            // NOTE: Do NOT call setupCallEvents here — it will be called in acceptCall
         });
 
         client.on("requestnewtoken", async () => {
@@ -261,7 +258,6 @@ export const CallProvider = ({children}) => {
             const client = connectStringeeClient(
                 token,
                 (incomingCall) => {
-                    currentCallRef.current = incomingCall;
                     setIncomingCaller({
                         name: incomingCall.fromAlias || incomingCall.fromNumber,
                         profilePictureUrl: incomingCall.customDataFromYourServer,
@@ -281,7 +277,6 @@ export const CallProvider = ({children}) => {
             console.log("[DEBUG] Making call to:", callee, "isVideo:", isVideo);
 
             const stream = await createMediaStream(isVideo);
-            console.log(stream.getTracks());
             if (!stream) {
                 console.error("[DEBUG] Failed to create media stream");
                 setCallStatus("Media permission denied");
@@ -292,6 +287,7 @@ export const CallProvider = ({children}) => {
                 const res = await api.get(`/v1/call/init/${callee.trim()}`);
                 if (res.data.code === 7012 || res.data.code === 7011) {
                     toast.error("Máy bận");
+                    stream.getTracks().forEach((track) => track.stop());
                     return;
                 }
 
@@ -306,19 +302,22 @@ export const CallProvider = ({children}) => {
                     }
                 );
 
-                setupCallEvents(call);
-
+                // ✅ FIX: Assign stream BEFORE setupCallEvents and makeCall
                 call.localStream = stream;
+                localStreamRef.current = stream;
+                setLocalStream(stream);
+
+                setupCallEvents(call);
 
                 currentCallRef.current = call;
                 setCurrentCall(call);
-                setLocalStream(stream);
                 setCallStatus("Initiating call...");
+
                 call.makeCall((res) => {
                     console.log("[DEBUG] makeCall response:", res);
                     if (res.r === 0) {
-                        console.log("[DEBUG] Call connected successfully");
-                        setCallStatus("Connected");
+                        console.log("[DEBUG] Call initiated successfully");
+                        setCallStatus("Ringing...");
                     } else {
                         console.error(
                             "[DEBUG] Call failed with code:",
@@ -327,17 +326,17 @@ export const CallProvider = ({children}) => {
                             res.message
                         );
                         setCallStatus(`Call failed: ${res.message || "Unknown error"}`);
-                        console.log(res);
                         stream.getTracks().forEach((track) => track.stop());
                         cleanupCall(4);
                     }
                 });
             } catch (error) {
-                if (error.response.data.code === 7012 || error.response.data.code === 7011)
-                    toast("máy bận");
+                if (error?.response?.data?.code === 7012 || error?.response?.data?.code === 7011)
+                    toast.error("Máy bận");
                 console.error("[DEBUG] Init call failed:", error);
                 stream.getTracks().forEach((track) => track.stop());
                 setCallStatus("Init call failed");
+                cleanupCall(4);
             }
         },
         [callerName, createMediaStream, setupCallEvents, cleanupCall]
@@ -348,20 +347,18 @@ export const CallProvider = ({children}) => {
         if (!call) return;
 
         console.log("[DEBUG] Accepting call, isVideo:", call.isVideoCall);
-
-        // Dừng ringtone
         stopSound();
+
+        const stream = await createMediaStream(call.isVideoCall);
+        if (!stream) return;
+
+        // ✅ FIX: Assign stream BEFORE setupCallEvents and answer
+        call.localStream = stream;
+        localStreamRef.current = stream;
+        setLocalStream(stream);
 
         setupCallEvents(call);
 
-        const stream = await createMediaStream(call.isVideoCall);
-        console.log(stream);
-
-        if (!stream) return;
-
-        call.localStream = stream;
-
-        setLocalStream(stream);
         setIncomingCaller(null);
         setCurrentCall(call);
 
@@ -370,10 +367,7 @@ export const CallProvider = ({children}) => {
 
     const rejectCall = useCallback(() => {
         const call = currentCallRef.current;
-
-        // Dừng ringtone
         stopSound();
-
         if (!call) return;
         call.reject(() => cleanupCall(5));
     }, [cleanupCall]);
@@ -388,15 +382,15 @@ export const CallProvider = ({children}) => {
         });
     }, [currentCall, cleanupCall]);
 
-    // Simplified toggle functions - only for device level control
     const toggleMute = useCallback(
         (muted) => {
-            if (!localStream) {
+            const stream = localStreamRef.current;
+            if (!stream) {
                 console.warn("[DEBUG] Cannot toggle mute - no local stream");
                 return;
             }
 
-            const audioTracks = localStream.getAudioTracks();
+            const audioTracks = stream.getAudioTracks();
             if (audioTracks.length === 0) {
                 console.warn("[DEBUG] No audio tracks available");
                 return;
@@ -407,23 +401,23 @@ export const CallProvider = ({children}) => {
                 track.enabled = !muted;
             });
 
-            // Also call Stringee API if available
             const call = currentCallRef.current;
             if (call && typeof call.mute === "function") {
                 call.mute(muted);
             }
         },
-        [localStream]
+        []
     );
 
     const toggleLocalVideo = useCallback(
         (enabled) => {
-            if (!localStream) {
+            const stream = localStreamRef.current;
+            if (!stream) {
                 console.warn("[DEBUG] Cannot toggle video - no local stream");
                 return;
             }
 
-            const videoTracks = localStream.getVideoTracks();
+            const videoTracks = stream.getVideoTracks();
             if (videoTracks.length === 0) {
                 console.warn("[DEBUG] No video tracks available");
                 return;
@@ -434,14 +428,14 @@ export const CallProvider = ({children}) => {
                 track.enabled = !enabled;
             });
 
-            // Also call Stringee API if available
             const call = currentCallRef.current;
             if (call && typeof call.enableLocalVideo === "function") {
                 call.enableLocalVideo(!enabled);
             }
         },
-        [localStream]
+        []
     );
+
     return (
         <CallContext.Provider
             value={{
