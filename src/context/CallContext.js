@@ -36,9 +36,10 @@ export const CallProvider = ({children}) => {
     const clientRef = useRef(null);
     const currentCallRef = useRef(null);
     const beTokenRef = useRef("");
-    // ✅ FIX: dùng ref để track streams, tránh stale closure trong cleanupCall
     const localStreamRef = useRef(null);
     const remoteStreamRef = useRef(null);
+    // ✅ FIX: flag đảm bảo setupCallEvents chỉ chạy 1 lần mỗi cuộc gọi
+    const eventsSetupRef = useRef(false);
 
     useEffect(() => {
         initAudioSystem();
@@ -88,7 +89,6 @@ export const CallProvider = ({children}) => {
         }
     }, []);
 
-    // ✅ FIX: cleanupCall dùng ref thay vì state để không bị stale closure
     const cleanupCall = useCallback((stt) => {
         console.log("[Thang] Cleaning up call...", stt);
 
@@ -112,6 +112,7 @@ export const CallProvider = ({children}) => {
 
         localStreamRef.current = null;
         remoteStreamRef.current = null;
+        eventsSetupRef.current = false; // ✅ reset flag khi cleanup
 
         setRemoteStream(null);
         setLocalStream(null);
@@ -125,18 +126,19 @@ export const CallProvider = ({children}) => {
 
     const setupCallEvents = useCallback(
         (call) => {
-            console.log("[DEBUG] Setting up call events");
+            // ✅ FIX: Guard — chỉ setup 1 lần duy nhất
+            if (eventsSetupRef.current) {
+                console.log("[DEBUG] Events already set up, skipping");
+                return;
+            }
+            eventsSetupRef.current = true;
+            console.log("[DEBUG] Setting up call events (first time)");
 
             call.on("addremotestream", (stream) => {
-                console.log("[DEBUG] ✅ addRemoteStream event triggered!", call);
+                console.log("[DEBUG] ✅ addRemoteStream event triggered!");
                 const realStream = stream?.stream || stream;
                 if (realStream) {
-                    console.log("[DEBUG] ✅ Setting remoteStream - ID:", realStream.id);
-                    console.log(
-                        "[DEBUG] ✅ Remote stream tracks:",
-                        realStream.getTracks().length
-                    );
-                    // ✅ FIX: lưu vào cả ref lẫn state
+                    console.log("[DEBUG] ✅ Remote stream tracks:", realStream.getTracks().length);
                     remoteStreamRef.current = realStream;
                     setRemoteStream(realStream);
                     setCallStatus("Connected - Remote stream received");
@@ -146,15 +148,10 @@ export const CallProvider = ({children}) => {
             });
 
             call.on("addlocalstream", (stream) => {
-                console.log("[DEBUG] ✅ addLocalStream event triggered!", call);
+                console.log("[DEBUG] ✅ addLocalStream event triggered!");
                 const realStream = stream?.stream || stream;
                 if (realStream) {
-                    console.log("[DEBUG] ✅ Setting localStream - ID:", realStream.id);
-                    console.log(
-                        "[DEBUG] ✅ Local stream tracks:",
-                        realStream.getTracks().length
-                    );
-                    // ✅ FIX: lưu vào cả ref lẫn state
+                    console.log("[DEBUG] ✅ Local stream tracks:", realStream.getTracks().length);
                     localStreamRef.current = realStream;
                     setLocalStream(realStream);
                 } else {
@@ -169,9 +166,7 @@ export const CallProvider = ({children}) => {
                     setCallStatus("Call answered");
                     stopSound();
                 } else if (
-                    ["Ended", "Busy here", "Rejected", "Disconnected"].includes(
-                        state.reason
-                    )
+                    ["Ended", "Busy here", "Rejected", "Disconnected"].includes(state.reason)
                 ) {
                     console.log("[DEBUG] 📞 Call ending with reason:", state.reason);
                     setIsCallEnding(true);
@@ -228,10 +223,10 @@ export const CallProvider = ({children}) => {
                 volume: 0.8,
             });
 
-            // ✅ FIX: Lưu ref và bind events NGAY KHI nhận call
-            // để không bỏ lỡ addremotestream khi callee accept
+            // ✅ FIX: CHỈ lưu ref, KHÔNG gọi setupCallEvents ở đây
+            // setupCallEvents sẽ được gọi DUY NHẤT trong acceptCall
+            eventsSetupRef.current = false; // reset cho call mới
             currentCallRef.current = call;
-            setupCallEvents(call);
             onIncomingCall(call);
         });
 
@@ -285,6 +280,9 @@ export const CallProvider = ({children}) => {
         async (callee, isVideo = false) => {
             console.log("[DEBUG] Making call to:", callee, "isVideo:", isVideo);
 
+            // ✅ reset flag cho call mới
+            eventsSetupRef.current = false;
+
             const stream = await createMediaStream(isVideo);
             if (!stream) {
                 console.error("[DEBUG] Failed to create media stream");
@@ -311,7 +309,7 @@ export const CallProvider = ({children}) => {
                     }
                 );
 
-                // ✅ FIX: Gán stream vào call TRƯỚC setupCallEvents và makeCall
+                // ✅ Gán stream vào call TRƯỚC setupCallEvents
                 call.localStream = stream;
                 localStreamRef.current = stream;
                 setLocalStream(stream);
@@ -328,12 +326,7 @@ export const CallProvider = ({children}) => {
                         console.log("[DEBUG] Call initiated successfully");
                         setCallStatus("Ringing...");
                     } else {
-                        console.error(
-                            "[DEBUG] Call failed with code:",
-                            res.r,
-                            "message:",
-                            res.message
-                        );
+                        console.error("[DEBUG] Call failed:", res.r, res.message);
                         setCallStatus(`Call failed: ${res.message || "Unknown error"}`);
                         stream.getTracks().forEach((track) => track.stop());
                         cleanupCall(4);
@@ -358,25 +351,28 @@ export const CallProvider = ({children}) => {
         console.log("[DEBUG] Accepting call, isVideo:", call.isVideoCall);
         stopSound();
 
-        // ✅ FIX: Lấy stream trước khi answer
+        // ✅ Lấy stream trước
         const stream = await createMediaStream(call.isVideoCall);
         if (!stream) return;
 
-        // ✅ FIX: Gán stream vào call TRƯỚC khi answer
+        // ✅ Gán stream vào call TRƯỚC setupCallEvents
         call.localStream = stream;
         localStreamRef.current = stream;
         setLocalStream(stream);
 
-        // ✅ FIX: setCurrentCall trước answer để React render <video> element
+        // ✅ setupCallEvents chỉ chạy 1 lần (nhờ eventsSetupRef guard)
+        setupCallEvents(call);
+
+        // ✅ setCurrentCall để React render <video> element trước
         setIncomingCaller(null);
         setCurrentCall(call);
 
-        // ✅ FIX: Dùng setTimeout(0) để nhường React commit DOM trước,
-        // sau đó mới answer — tránh addremotestream fire trước khi video ref mount
+        // ✅ Dùng setTimeout(0) để nhường React commit DOM trước khi answer
+        // tránh addremotestream fire trước khi remoteVideoRef được mount
         setTimeout(() => {
             call.answer();
         }, 0);
-    }, [createMediaStream]);
+    }, [createMediaStream, setupCallEvents]);
 
     const rejectCall = useCallback(() => {
         const call = currentCallRef.current;
@@ -395,7 +391,6 @@ export const CallProvider = ({children}) => {
         });
     }, [currentCall, cleanupCall]);
 
-    // ✅ FIX: dùng localStreamRef thay vì localStream state để tránh stale closure
     const toggleMute = useCallback(
         (muted) => {
             const stream = localStreamRef.current;
@@ -403,12 +398,8 @@ export const CallProvider = ({children}) => {
                 console.warn("[DEBUG] Cannot toggle mute - no local stream");
                 return;
             }
-
             const audioTracks = stream.getAudioTracks();
-            if (audioTracks.length === 0) {
-                console.warn("[DEBUG] No audio tracks available");
-                return;
-            }
+            if (audioTracks.length === 0) return;
 
             console.log("[DEBUG] Toggling mute:", muted);
             audioTracks.forEach((track) => {
@@ -423,7 +414,6 @@ export const CallProvider = ({children}) => {
         []
     );
 
-    // ✅ FIX: dùng localStreamRef thay vì localStream state để tránh stale closure
     const toggleLocalVideo = useCallback(
         (enabled) => {
             const stream = localStreamRef.current;
@@ -431,15 +421,10 @@ export const CallProvider = ({children}) => {
                 console.warn("[DEBUG] Cannot toggle video - no local stream");
                 return;
             }
-
             const videoTracks = stream.getVideoTracks();
-            if (videoTracks.length === 0) {
-                console.warn("[DEBUG] No video tracks available");
-                return;
-            }
+            if (videoTracks.length === 0) return;
 
             videoTracks.forEach((track) => {
-                console.log("[DEBUG] Toggling local video enabled:", !enabled);
                 track.enabled = !enabled;
             });
 
