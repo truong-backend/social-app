@@ -1,15 +1,30 @@
 "use client";
 import { useState, useRef } from "react";
 import {
-  X, Upload, Image, Type, Loader2, Play,
-  CheckCircle, Plus, ChevronLeft,
+  X,
+  Upload,
+  Image,
+  Type,
+  Loader2,
+  Play,
+  CheckCircle,
+  Plus,
+  ChevronLeft,
 } from "lucide-react";
 
 const BG_COLORS = [
-  "#1a1a2e", "#16213e", "#0f3460",
-  "#e94560", "#533483", "#2b2d42",
-  "#ef233c", "#8d99ae", "#06d6a0",
-  "#118ab2", "#ffd166", "#ef476f",
+  "#1a1a2e",
+  "#16213e",
+  "#0f3460",
+  "#e94560",
+  "#533483",
+  "#2b2d42",
+  "#ef233c",
+  "#8d99ae",
+  "#06d6a0",
+  "#118ab2",
+  "#ffd166",
+  "#ef476f",
 ];
 
 const EMPTY_DRAFT = {
@@ -21,7 +36,12 @@ const EMPTY_DRAFT = {
   bgColor: BG_COLORS[0],
 };
 
-export default function CreateStoryModal({ open, onClose, onSubmit, isCreating }) {
+export default function CreateStoryModal({
+  open,
+  onClose,
+  onSubmit,
+  isCreating,
+}) {
   const [queue, setQueue] = useState([]);
   const [draft, setDraft] = useState(EMPTY_DRAFT);
   const [previewIdx, setPreviewIdx] = useState(null);
@@ -41,7 +61,12 @@ export default function CreateStoryModal({ open, onClose, onSubmit, isCreating }
     const type = file.type.startsWith("video/") ? "video" : "image";
     const reader = new FileReader();
     reader.onload = (ev) =>
-      updateDraft({ mediaFile: file, preview: ev.target.result, previewType: type, tab: "photo" });
+      updateDraft({
+        mediaFile: file,
+        preview: ev.target.result,
+        previewType: type,
+        tab: "photo",
+      });
     reader.readAsDataURL(file);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -61,7 +86,8 @@ export default function CreateStoryModal({ open, onClose, onSubmit, isCreating }
   const removeFromQueue = (idx) => {
     setQueue((q) => q.filter((_, i) => i !== idx));
     if (previewIdx === idx) setPreviewIdx(null);
-    else if (previewIdx !== null && previewIdx > idx) setPreviewIdx((p) => p - 1);
+    else if (previewIdx !== null && previewIdx > idx)
+      setPreviewIdx((p) => p - 1);
   };
 
   const handleSubmitAll = async () => {
@@ -81,7 +107,7 @@ export default function CreateStoryModal({ open, onClose, onSubmit, isCreating }
             caption: item.caption,
             bgColor: item.tab === "text" ? item.bgColor : null,
           },
-          () => resolve()
+          () => resolve(),
         );
         setTimeout(resolve, 8000);
       });
@@ -92,10 +118,11 @@ export default function CreateStoryModal({ open, onClose, onSubmit, isCreating }
     setAllDone(true);
     setQueue([]);
     setDraft(EMPTY_DRAFT);
+    setPreviewIdx(null);
+    // Không đóng modal — chỉ tắt flash sau 2s để user tạo tiếp
     setTimeout(() => {
       setAllDone(false);
-      onClose();
-    }, 1500);
+    }, 2000);
   };
 
   const handleClose = () => {
@@ -115,13 +142,17 @@ export default function CreateStoryModal({ open, onClose, onSubmit, isCreating }
   return (
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm"
-      onClick={(e) => e.target === e.currentTarget && !isPosting && handleClose()}
+      onClick={(e) =>
+        e.target === e.currentTarget && !isPosting && handleClose()
+      }
     >
       <div className="bg-[var(--background)] rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden border border-[var(--border)]">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
           <div className="flex items-center gap-2">
-            <h2 className="font-bold text-lg text-[var(--foreground)]">Tạo story</h2>
+            <h2 className="font-bold text-lg text-[var(--foreground)]">
+              Tạo story
+            </h2>
             {allDone && (
               <span className="flex items-center gap-1 text-green-500 text-sm font-semibold">
                 <CheckCircle size={15} /> Đã đăng {postedCount} story!
@@ -129,7 +160,8 @@ export default function CreateStoryModal({ open, onClose, onSubmit, isCreating }
             )}
             {isPosting && (
               <span className="text-blue-500 text-sm font-semibold">
-                Đang đăng {postingIdx + 1}/{queue.length + (canAddDraft ? 1 : 0)}...
+                Đang đăng {postingIdx + 1}/
+                {queue.length + (canAddDraft ? 1 : 0)}...
               </span>
             )}
           </div>
@@ -146,10 +178,17 @@ export default function CreateStoryModal({ open, onClose, onSubmit, isCreating }
         {(queue.length > 0 || canAddDraft) && (
           <div className="px-5 pt-3 pb-0">
             <div className="flex items-center gap-1 mb-2">
-              <span className="text-xs font-semibold text-[var(--foreground)] opacity-60">Hàng chờ</span>
-              <span className="ml-1 text-xs font-bold text-blue-500">{totalToPost} story</span>
+              <span className="text-xs font-semibold text-[var(--foreground)] opacity-60">
+                Hàng chờ
+              </span>
+              <span className="ml-1 text-xs font-bold text-blue-500">
+                {totalToPost} story
+              </span>
             </div>
-            <div className="flex gap-2 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
+            <div
+              className="flex gap-2 overflow-x-auto pb-2"
+              style={{ scrollbarWidth: "none" }}
+            >
               {queue.map((item, idx) => (
                 <QueueThumb
                   key={idx}
@@ -158,7 +197,9 @@ export default function CreateStoryModal({ open, onClose, onSubmit, isCreating }
                   isActive={previewIdx === idx}
                   isPosting={postingIdx === idx}
                   isDone={postingIdx !== null && idx < postingIdx}
-                  onSelect={() => setPreviewIdx(previewIdx === idx ? null : idx)}
+                  onSelect={() =>
+                    setPreviewIdx(previewIdx === idx ? null : idx)
+                  }
                   onRemove={() => removeFromQueue(idx)}
                   disabled={isPosting}
                 />
@@ -184,8 +225,18 @@ export default function CreateStoryModal({ open, onClose, onSubmit, isCreating }
         {previewIdx === null && (
           <>
             <div className="flex border-b border-[var(--border)] mt-2">
-              <TabBtn active={draft.tab === "photo"} onClick={() => updateDraft({ tab: "photo" })} icon={<Image size={16} />} label="Ảnh / Video" />
-              <TabBtn active={draft.tab === "text"} onClick={() => updateDraft({ tab: "text" })} icon={<Type size={16} />} label="Văn bản" />
+              <TabBtn
+                active={draft.tab === "photo"}
+                onClick={() => updateDraft({ tab: "photo" })}
+                icon={<Image size={16} />}
+                label="Ảnh / Video"
+              />
+              <TabBtn
+                active={draft.tab === "text"}
+                onClick={() => updateDraft({ tab: "text" })}
+                icon={<Type size={16} />}
+                label="Văn bản"
+              />
             </div>
 
             <div className="p-5">
@@ -194,12 +245,28 @@ export default function CreateStoryModal({ open, onClose, onSubmit, isCreating }
                   {draft.preview ? (
                     <div className="relative rounded-xl overflow-hidden bg-black aspect-[9/16] max-h-72 flex items-center justify-center">
                       {draft.previewType === "video" ? (
-                        <video src={draft.preview} className="w-full h-full object-cover" controls muted playsInline />
+                        <video
+                          src={draft.preview}
+                          className="w-full h-full object-cover"
+                          controls
+                          muted
+                          playsInline
+                        />
                       ) : (
-                        <img src={draft.preview} alt="preview" className="w-full h-full object-cover" />
+                        <img
+                          src={draft.preview}
+                          alt="preview"
+                          className="w-full h-full object-cover"
+                        />
                       )}
                       <button
-                        onClick={() => updateDraft({ preview: null, mediaFile: null, previewType: null })}
+                        onClick={() =>
+                          updateDraft({
+                            preview: null,
+                            mediaFile: null,
+                            previewType: null,
+                          })
+                        }
                         className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 flex items-center justify-center text-white z-10"
                       >
                         <X size={14} />
@@ -217,12 +284,22 @@ export default function CreateStoryModal({ open, onClose, onSubmit, isCreating }
                     >
                       <Upload size={32} className="opacity-50" />
                       <div className="text-center">
-                        <p className="font-semibold text-sm">Chọn ảnh hoặc video</p>
-                        <p className="text-xs opacity-50 mt-0.5">PNG, JPG, MP4, MOV — tối đa 200MB</p>
+                        <p className="font-semibold text-sm">
+                          Chọn ảnh hoặc video
+                        </p>
+                        <p className="text-xs opacity-50 mt-0.5">
+                          PNG, JPG, MP4, MOV — tối đa 200MB
+                        </p>
                       </div>
                     </button>
                   )}
-                  <input ref={fileInputRef} type="file" accept="image/*,video/*" className="hidden" onChange={handleFileChange} />
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*,video/*"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
                   <div>
                     <label className="block text-xs font-semibold text-[var(--foreground)] opacity-60 mb-1.5">
                       Chú thích (tuỳ chọn)
@@ -258,7 +335,9 @@ export default function CreateStoryModal({ open, onClose, onSubmit, isCreating }
                     className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] px-3 py-2 text-sm resize-none outline-none focus:border-blue-500 transition-colors"
                   />
                   <div>
-                    <p className="text-xs font-semibold text-[var(--foreground)] opacity-60 mb-2">Màu nền</p>
+                    <p className="text-xs font-semibold text-[var(--foreground)] opacity-60 mb-2">
+                      Màu nền
+                    </p>
                     <div className="flex flex-wrap gap-2">
                       {BG_COLORS.map((c) => (
                         <button
@@ -267,9 +346,12 @@ export default function CreateStoryModal({ open, onClose, onSubmit, isCreating }
                           className="w-8 h-8 rounded-full border-2 transition-all"
                           style={{
                             backgroundColor: c,
-                            borderColor: draft.bgColor === c ? "#fff" : "transparent",
-                            boxShadow: draft.bgColor === c ? "0 0 0 2px " + c : "none",
-                            transform: draft.bgColor === c ? "scale(1.2)" : "scale(1)",
+                            borderColor:
+                              draft.bgColor === c ? "#fff" : "transparent",
+                            boxShadow:
+                              draft.bgColor === c ? "0 0 0 2px " + c : "none",
+                            transform:
+                              draft.bgColor === c ? "scale(1.2)" : "scale(1)",
                           }}
                         />
                       ))}
@@ -293,21 +375,35 @@ export default function CreateStoryModal({ open, onClose, onSubmit, isCreating }
             <div className="relative rounded-xl overflow-hidden bg-black aspect-[9/16] max-h-72 flex items-center justify-center">
               {viewing.tab === "photo" && viewing.preview ? (
                 viewing.previewType === "video" ? (
-                  <video src={viewing.preview} className="w-full h-full object-cover" controls muted playsInline />
+                  <video
+                    src={viewing.preview}
+                    className="w-full h-full object-cover"
+                    controls
+                    muted
+                    playsInline
+                  />
                 ) : (
-                  <img src={viewing.preview} alt="preview" className="w-full h-full object-cover" />
+                  <img
+                    src={viewing.preview}
+                    alt="preview"
+                    className="w-full h-full object-cover"
+                  />
                 )
               ) : (
                 <div
                   className="absolute inset-0 flex items-center justify-center p-6"
                   style={{ backgroundColor: viewing.bgColor }}
                 >
-                  <p className="text-white text-xl font-bold text-center leading-snug">{viewing.caption}</p>
+                  <p className="text-white text-xl font-bold text-center leading-snug">
+                    {viewing.caption}
+                  </p>
                 </div>
               )}
             </div>
             {viewing.caption && viewing.tab === "photo" && (
-              <p className="mt-2 text-sm text-[var(--foreground)] opacity-60 text-center">{viewing.caption}</p>
+              <p className="mt-2 text-sm text-[var(--foreground)] opacity-60 text-center">
+                {viewing.caption}
+              </p>
             )}
           </div>
         )}
@@ -360,23 +456,50 @@ export default function CreateStoryModal({ open, onClose, onSubmit, isCreating }
   );
 }
 
-function QueueThumb({ item, index, isActive, isPosting, isDone, onSelect, onRemove, isCurrent, disabled }) {
+function QueueThumb({
+  item,
+  index,
+  isActive,
+  isPosting,
+  isDone,
+  onSelect,
+  onRemove,
+  isCurrent,
+  disabled,
+}) {
   return (
     <div
       className={`relative flex-shrink-0 w-14 h-20 rounded-xl overflow-hidden cursor-pointer border-2 transition-all ${
-        isActive ? "border-blue-500 scale-105" : "border-transparent opacity-80 hover:opacity-100"
+        isActive
+          ? "border-blue-500 scale-105"
+          : "border-transparent opacity-80 hover:opacity-100"
       }`}
       onClick={!disabled ? onSelect : undefined}
     >
       {item.tab === "photo" && item.preview ? (
         item.previewType === "video" ? (
-          <video src={item.preview} className="w-full h-full object-cover" muted playsInline preload="metadata" />
+          <video
+            src={item.preview}
+            className="w-full h-full object-cover"
+            muted
+            playsInline
+            preload="metadata"
+          />
         ) : (
-          <img src={item.preview} alt="" className="w-full h-full object-cover" />
+          <img
+            src={item.preview}
+            alt=""
+            className="w-full h-full object-cover"
+          />
         )
       ) : (
-        <div className="w-full h-full flex items-center justify-center p-1" style={{ backgroundColor: item.bgColor || "#1a1a2e" }}>
-          <p className="text-white text-[8px] font-semibold text-center line-clamp-3 leading-tight">{item.caption}</p>
+        <div
+          className="w-full h-full flex items-center justify-center p-1"
+          style={{ backgroundColor: item.bgColor || "#1a1a2e" }}
+        >
+          <p className="text-white text-[8px] font-semibold text-center line-clamp-3 leading-tight">
+            {item.caption}
+          </p>
         </div>
       )}
 
@@ -401,7 +524,10 @@ function QueueThumb({ item, index, isActive, isPosting, isDone, onSelect, onRemo
       )}
       {onRemove && !disabled && (
         <button
-          onClick={(e) => { e.stopPropagation(); onRemove(); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove();
+          }}
           className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/70 flex items-center justify-center text-white hover:bg-red-500 transition-colors"
         >
           <X size={9} />
