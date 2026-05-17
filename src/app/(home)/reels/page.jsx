@@ -37,8 +37,12 @@ export default function ReelsPage() {
     loadStories,
   } = useReels();
 
-  const totalStories = friendGroups.reduce((sum, g) => sum + g.stories.length, 0) + myStories.length;
-  const newStories = friendGroups.filter((g) => g.stories.some((s) => !s.isViewed)).length;
+  const totalStories =
+    friendGroups.reduce((sum, g) => sum + g.stories.length, 0) +
+    myStories.length;
+  const newStories = friendGroups.filter((g) =>
+    g.stories.some((s) => !s.isViewed),
+  ).length;
 
   return (
     <div className="w-full min-h-screen bg-[var(--background)] text-[var(--foreground)]">
@@ -55,13 +59,19 @@ export default function ReelsPage() {
             className="w-9 h-9 rounded-full hover:bg-[var(--card)] flex items-center justify-center transition-colors"
             title="Làm mới"
           >
-            <RefreshCw size={18} className={isLoading ? "animate-spin opacity-50" : ""} />
+            <RefreshCw
+              size={18}
+              className={isLoading ? "animate-spin opacity-50" : ""}
+            />
           </button>
         </div>
 
         {!isLoading && (
           <div className="flex gap-4 mt-2">
-            <StatChip icon={<Film size={13} />} label={`${totalStories} story`} />
+            <StatChip
+              icon={<Film size={13} />}
+              label={`${totalStories} story`}
+            />
             {newStories > 0 && (
               <StatChip
                 icon={<Clock size={13} />}
@@ -69,7 +79,10 @@ export default function ReelsPage() {
                 highlight
               />
             )}
-            <StatChip icon={<Users size={13} />} label={`${friendGroups.length} bạn bè`} />
+            <StatChip
+              icon={<Users size={13} />}
+              label={`${friendGroups.length} bạn bè`}
+            />
           </div>
         )}
       </div>
@@ -128,16 +141,23 @@ export default function ReelsPage() {
               <section>
                 <SectionTitle>Tất cả story</SectionTitle>
                 <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {friendGroups.map((group, groupIdx) =>
-                    group.stories.map((story, storyIdx) => (
+                  {friendGroups.map((group, groupIdx) => {
+                    // Ưu tiên story chưa xem, không thì lấy story đầu tiên
+                    const firstUnviewed = group.stories.findIndex(
+                      (s) => !s.isViewed,
+                    );
+                    const storyIdx = firstUnviewed >= 0 ? firstUnviewed : 0;
+                    const story = group.stories[storyIdx];
+                    if (!story) return null;
+                    return (
                       <StoryGridCard
-                        key={story.id}
+                        key={group.userId ?? group.displayName}
                         story={story}
                         group={group}
                         onClick={() => openViewer(groupIdx, storyIdx, false)}
                       />
-                    ))
-                  )}
+                    );
+                  })}
                 </div>
               </section>
             )}
@@ -294,9 +314,13 @@ function StoryGridCard({ story, group, isMyStory = false, onClick }) {
 
       {/* Footer */}
       <div className="absolute bottom-2 left-2 right-2">
-        <p className="text-white text-xs font-semibold truncate">{group.displayName}</p>
+        <p className="text-white text-xs font-semibold truncate">
+          {group.displayName}
+        </p>
         {story.caption && story.mediaUrl && (
-          <p className="text-white/70 text-[10px] truncate mt-0.5">{story.caption}</p>
+          <p className="text-white/70 text-[10px] truncate mt-0.5">
+            {story.caption}
+          </p>
         )}
         {Object.keys(story.reactions || {}).length > 0 && (
           <div className="flex gap-1 mt-1">
@@ -320,7 +344,9 @@ function EmptyState({ onCreateStory }) {
       <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-blue-400 to-purple-500 flex items-center justify-center mx-auto mb-4 opacity-70">
         <Film size={36} className="text-white" />
       </div>
-      <h3 className="font-bold text-lg text-[var(--foreground)] mb-2">Chưa có story nào</h3>
+      <h3 className="font-bold text-lg text-[var(--foreground)] mb-2">
+        Chưa có story nào
+      </h3>
       <p className="text-[var(--foreground)] opacity-50 text-sm mb-6 max-w-xs mx-auto">
         Bạn bè chưa đăng story. Hãy là người đầu tiên chia sẻ khoảnh khắc!
       </p>
