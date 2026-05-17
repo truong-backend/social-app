@@ -125,12 +125,12 @@ export default function RightSidebar({ token }) {
               </p>
             </div>
           </Link>
-          <Link
+          {/* <Link
             href="/settings/personalinfo"
             className="text-xs font-semibold text-blue-500 hover:text-blue-400 transition-colors flex-shrink-0"
           >
             Cài đặt
-          </Link>
+          </Link> */}
         </div>
       )}
 
@@ -205,7 +205,7 @@ export default function RightSidebar({ token }) {
                       </p>
                     </div>
                   </Link>
-                  <button
+                  {/* <button
                     onClick={() => handleFollow(uid)}
                     disabled={
                       followState === "loading" || followState === "sent"
@@ -224,7 +224,7 @@ export default function RightSidebar({ token }) {
                       : followState === "loading"
                         ? "..."
                         : "Theo dõi"}
-                  </button>
+                  </button> */}
                 </div>
               );
             })}
