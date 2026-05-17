@@ -132,16 +132,15 @@ export default function SidebarNavigation() {
       setIsLoggingOut(false);
     }
   };
-
-  const handleMoreClick = () => {
+const handleMoreClick = () => {
     if (!showSettingsDropdown && moreButtonRef.current) {
       const rect = moreButtonRef.current.getBoundingClientRect();
       const isDesktop = window.innerWidth >= 768;
       if (isDesktop) {
         // Hiện ra bên PHẢI của sidebar, canh theo button
         setDropdownPosition({
-          top: rect.top - 220,
-          left: rect.left + rect.width + 12,
+          top: rect.top + 560,
+          left: rect.left + rect.width + 85,
         });
       } else {
         // Mobile: hiện lên trên bottom nav, full width
