@@ -442,4 +442,12 @@ export default function StoryViewer({
       )}
       {!viewingMyStory && activeGroupIndex < friendGroups.length - 1 && (
         <button
-          className="hidden sm:flex absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm items-center j
+          className="hidden sm:flex absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm items-center justify-center text-white hover:bg-white/30 transition-colors"
+          onClick={onNext}
+        >
+          <ChevronRight size={20} />
+        </button>
+      )}
+    </div>
+  );
+}
