@@ -1,23 +1,25 @@
 "use client"
 
-import api, { clearSession } from "@/utils/axios"
+import { useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
 import { LogOut } from "lucide-react"
-import adminApi, {clearAdminSession} from "@/utils/adminInterception";
+import adminApi, { clearAdminSession } from "@/utils/adminInterception"
+import ConfirmDialog from "@/components/social-app-component/ConfirmDialog"
 
 export default function AdminLayout({ children }) {
   const router = useRouter()
   const pathname = usePathname()
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
-  const handleLogout = async () => {
+  const doLogout = async () => {
     try {
       await adminApi.delete("/v1/auth/logout")
     } catch (err) {
       console.error("Logout failed:", err.response?.data || err.message)
     } finally {
-      clearAdminSession();
-      localStorage.removeItem("admin_role");
+      clearAdminSession()
+      localStorage.removeItem("admin_role")
       router.push("/admin/login")
     }
   }
@@ -47,6 +49,16 @@ export default function AdminLayout({ children }) {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}>
+      <ConfirmDialog
+        isOpen={showLogoutConfirm}
+        title="Đăng xuất?"
+        message="Bạn có chắc muốn đăng xuất khỏi trang quản trị không?"
+        confirmText="Đăng xuất"
+        cancelText="Hủy"
+        confirmStyle="danger"
+        onConfirm={() => { setShowLogoutConfirm(false); doLogout(); }}
+        onCancel={() => setShowLogoutConfirm(false)}
+      />
       {/* Header */}
       <div className="shadow-sm" style={{ backgroundColor: "var(--card)", borderBottom: "1px solid var(--border)" }}>
         <div className="max-w-7xl mx-auto px-6 py-4">
@@ -74,7 +86,7 @@ export default function AdminLayout({ children }) {
                 </Link>
               )}
               <button
-                onClick={handleLogout}
+                onClick={() => setShowLogoutConfirm(true)}
                 className="flex items-center px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:shadow-md"
                 style={{
                   backgroundColor: "var(--primary)",

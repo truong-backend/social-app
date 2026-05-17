@@ -2,9 +2,6 @@
 import { useRef } from "react";
 import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
 
-/**
- * StoryBar — dải story ngang ở đầu trang Reels
- */
 export default function StoryBar({
   myStories = [],
   friendGroups = [],
@@ -23,7 +20,6 @@ export default function StoryBar({
 
   return (
     <div className="relative w-full">
-      {/* Scroll left */}
       <button
         onClick={() => scroll(-1)}
         className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-[var(--background)] border border-[var(--border)] shadow flex items-center justify-center text-[var(--foreground)] hover:bg-[var(--card)] transition-colors"
@@ -37,7 +33,6 @@ export default function StoryBar({
         className="flex gap-3 overflow-x-auto scroll-smooth pb-1 px-1"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
-        {/* My Story card */}
         <MyStoryCard
           myStories={myStories}
           hasMyStory={hasMyStory}
@@ -45,7 +40,6 @@ export default function StoryBar({
           onOpenMyStory={onOpenMyStory}
         />
 
-        {/* Friend story cards */}
         {friendGroups.map((group, index) => (
           <FriendStoryCard
             key={group.userId}
@@ -55,7 +49,6 @@ export default function StoryBar({
         ))}
       </div>
 
-      {/* Scroll right */}
       <button
         onClick={() => scroll(1)}
         className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-[var(--background)] border border-[var(--border)] shadow flex items-center justify-center text-[var(--foreground)] hover:bg-[var(--card)] transition-colors"
@@ -68,16 +61,37 @@ export default function StoryBar({
 }
 
 function MyStoryCard({ myStories, hasMyStory, onOpenCreate, onOpenMyStory }) {
+  const firstStory = myStories[0];
+
   return (
     <div className="flex-shrink-0 w-[110px] cursor-pointer group" onClick={hasMyStory ? onOpenMyStory : onOpenCreate}>
       <div className="relative w-[110px] h-[190px] rounded-2xl overflow-hidden bg-[var(--card)] border border-[var(--border)]">
-        {/* Background image nếu đã có story */}
-        {hasMyStory && myStories[0].mediaUrl ? (
-          <img
-            src={myStories[0].mediaUrl}
-            alt="My story"
-            className="absolute inset-0 w-full h-full object-cover"
-          />
+        {/* Background media nếu đã có story */}
+        {hasMyStory && firstStory?.mediaUrl ? (
+          firstStory.mediaType === "video" ? (
+            <video
+              src={firstStory.mediaUrl}
+              className="absolute inset-0 w-full h-full object-cover"
+              muted
+              playsInline
+              preload="metadata"
+            />
+          ) : (
+            <img
+              src={firstStory.mediaUrl}
+              alt="My story"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          )
+        ) : hasMyStory && firstStory?.bgColor ? (
+          <div
+            className="absolute inset-0 flex items-center justify-center p-2"
+            style={{ backgroundColor: firstStory.bgColor }}
+          >
+            <p className="text-white text-[10px] font-semibold text-center line-clamp-3">
+              {firstStory.caption}
+            </p>
+          </div>
         ) : (
           <div className="absolute inset-0 bg-gradient-to-b from-blue-400 to-purple-500 opacity-20" />
         )}
@@ -116,14 +130,33 @@ function FriendStoryCard({ group, onClick }) {
   return (
     <div className="flex-shrink-0 w-[110px] cursor-pointer group" onClick={onClick}>
       <div className="relative w-[110px] h-[190px] rounded-2xl overflow-hidden bg-[var(--card)] border border-[var(--border)]">
-        {/* Background image */}
-        {firstStory?.mediaUrl && (
-          <img
-            src={firstStory.mediaUrl}
-            alt={group.displayName}
-            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-        )}
+        {/* Background media */}
+        {firstStory?.mediaUrl ? (
+          firstStory.mediaType === "video" ? (
+            <video
+              src={firstStory.mediaUrl}
+              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              muted
+              playsInline
+              preload="metadata"
+            />
+          ) : (
+            <img
+              src={firstStory.mediaUrl}
+              alt={group.displayName}
+              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+          )
+        ) : firstStory?.bgColor ? (
+          <div
+            className="absolute inset-0 flex items-center justify-center p-2"
+            style={{ backgroundColor: firstStory.bgColor }}
+          >
+            <p className="text-white text-[10px] font-semibold text-center line-clamp-3">
+              {firstStory.caption}
+            </p>
+          </div>
+        ) : null}
 
         {/* Overlay gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />

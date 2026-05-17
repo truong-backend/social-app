@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import UserHeader from "@/components/social-app-component/UserHeader";
+import ConfirmDialog from "@/components/social-app-component/ConfirmDialog";
 import api from "@/utils/axios";
 import toast from "react-hot-toast";
 
@@ -9,6 +10,7 @@ export default function BlockedUsersPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState({});
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, userId: null, userName: "" });
 
   useEffect(() => {
     const fetchBlockedUsers = async () => {
@@ -26,7 +28,17 @@ export default function BlockedUsersPage() {
     fetchBlockedUsers();
   }, []);
 
-  const handleAction = async (userId) => {
+  const openConfirm = (user) => {
+    setConfirmDialog({
+      isOpen: true,
+      userId: user.username,
+      userName: user.givenName ? `${user.givenName} ${user.familyName || ""}`.trim() : user.username,
+    });
+  };
+
+  const handleConfirm = async () => {
+    const userId = confirmDialog.userId;
+    setConfirmDialog({ isOpen: false, userId: null, userName: "" });
     const previousUsers = [...users];
     setUsers((prev) => prev.filter((user) => user.username !== userId));
     setActionLoading((prev) => ({ ...prev, [userId]: true }));
@@ -41,8 +53,22 @@ export default function BlockedUsersPage() {
     }
   };
 
+  const handleCancel = () => {
+    setConfirmDialog({ isOpen: false, userId: null, userName: "" });
+  };
+
   return (
     <div className="container mx-auto px-4 py-6 max-w-4xl">
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title="Bỏ chặn người dùng?"
+        message={`Bạn có chắc muốn bỏ chặn ${confirmDialog.userName} không?`}
+        confirmText="Bỏ chặn"
+        cancelText="Hủy"
+        confirmStyle="danger"
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+      />
       <h1 className="text-2xl font-bold mb-6 text-[var(--foreground)]">Đã chặn</h1>
       <div className="bg-[var(--card)] rounded-lg shadow">
         {loading ? (
@@ -61,7 +87,7 @@ export default function BlockedUsersPage() {
                 <div className="flex items-center justify-between gap-4">
                   <UserHeader user={user} className="flex-grow min-w-0" />
                   <button
-                    onClick={() => handleAction(user.username)}
+                    onClick={() => openConfirm(user)}
                     disabled={actionLoading[user.username]}
                     className="px-3 py-1 text-sm rounded-md bg-gray-50 text-gray-600 hover:bg-gray-100 min-w-[100px]"
                   >

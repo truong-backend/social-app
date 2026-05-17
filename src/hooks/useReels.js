@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import api from "@/utils/axios";
+import toast from "react-hot-toast";
 
 export default function useReels() {
   const [friendGroups, setFriendGroups] = useState([]);
@@ -32,10 +33,8 @@ export default function useReels() {
         api.get("/v1/stories/friends"),
         api.get("/v1/stories/mine"),
       ]);
-
       const friendData = friendRes.data?.body || friendRes.data || [];
       const myData = myRes.data?.body || myRes.data || [];
-
       setFriendGroups(Array.isArray(friendData) ? friendData : []);
       setMyStories(Array.isArray(myData) ? myData : []);
     } catch {
@@ -78,7 +77,6 @@ export default function useReels() {
     const group = friendGroups[activeGroupIndex];
     if (!group) return;
 
-    // Đánh dấu đã xem story hiện tại
     if (currentStory && !currentStory.isViewed) {
       try {
         await api.post(`/v1/stories/${currentStory.id}/view`);
@@ -134,15 +132,13 @@ export default function useReels() {
     }
   }, [viewingMyStory, activeGroupIndex, activeStoryIndex, friendGroups]);
 
-  // ── React (dùng reply API vì BE chưa có react riêng) ──────────────────────
+  // ── React ──────────────────────────────────────────────────────────────────
 
   const handleReact = useCallback(
     async (emoji) => {
       if (!currentStory) return;
       try {
-        // Reply bằng emoji như một tin nhắn phản ứng
-        // Nếu BE có endpoint react riêng sau này: api.post(`/v1/stories/${currentStory.id}/react`, { emoji })
-        await api.post(`/v1/stories/${currentStory.id}/view`); // đảm bảo mark viewed
+        await api.post(`/v1/stories/${currentStory.id}/view`);
       } catch {
         // silent
       }
@@ -150,42 +146,50 @@ export default function useReels() {
     [currentStory]
   );
 
-  // ── Reply ─────────────────────────────────────────────────────────────────
+  // ── Reply ──────────────────────────────────────────────────────────────────
 
   const handleReply = useCallback(
     async (message) => {
       if (!currentStory || !message.trim()) return;
-      // Reply story = gửi tin nhắn đến author (nếu BE hỗ trợ)
-      // Hiện tại: silent success (UI đã show "Đã gửi ✓")
     },
     [currentStory]
   );
 
   // ── Create story ───────────────────────────────────────────────────────────
 
-  const handleCreateStory = useCallback(async ({ mediaFile, caption, bgColor }) => {
-    setIsCreating(true);
-    try {
-      const formData = new FormData();
-      if (mediaFile) formData.append("media", mediaFile);
-      if (caption) formData.append("caption", caption);
-      if (bgColor) formData.append("bgColor", bgColor);
+  const handleCreateStory = useCallback(
+    async ({ mediaFile, caption, bgColor }, onSuccessReset) => {
+      setIsCreating(true);
+      try {
+        const form = new FormData();
+        if (mediaFile) form.append("media", mediaFile);
+        if (caption) form.append("caption", caption);
+        if (bgColor) form.append("bgColor", bgColor);
 
-      const res = await api.post("/v1/stories", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+        const res = await api.post("/v1/stories", form, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
 
-      const newStory = res.data?.body || res.data;
-      if (newStory) {
-        setMyStories((prev) => [newStory, ...prev]);
+        if (res.data.code === 200 || res.data.code === 201) {
+          const newStory = res.data.body;
+          // Thêm vào myStories ngay, không cần reload
+          setMyStories((prev) => [...prev, newStory]);
+          toast.success("Đã đăng story!");
+          // Reset form để tạo tiếp, KHÔNG đóng modal
+          if (typeof onSuccessReset === "function") onSuccessReset();
+        } else {
+          toast.error(res.data.message || "Có lỗi xảy ra");
+        }
+      } catch (err) {
+        toast.error(
+          "Lỗi khi tạo story: " + (err.response?.data?.message || err.message)
+        );
+      } finally {
+        setIsCreating(false);
       }
-      setCreateOpen(false);
-    } catch {
-      // handle error — toast ở component nếu muốn
-    } finally {
-      setIsCreating(false);
-    }
-  }, []);
+    },
+    []
+  );
 
   // ── Delete story ───────────────────────────────────────────────────────────
 

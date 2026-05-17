@@ -1,6 +1,6 @@
 "use client";
-import { useState, useRef } from "react";
-import { X, Upload, Image, Type, Loader2 } from "lucide-react";
+import { useState, useRef, useCallback } from "react";
+import { X, Upload, Image, Type, Loader2, Play, CheckCircle } from "lucide-react";
 
 const BG_COLORS = [
   "#1a1a2e", "#16213e", "#0f3460",
@@ -9,46 +9,74 @@ const BG_COLORS = [
   "#118ab2", "#ffd166", "#ef476f",
 ];
 
-/**
- * CreateStoryModal — modal tạo story mới
- */
+const DEFAULT_STATE = {
+  tab: "photo",
+  preview: null,
+  previewType: null,
+  mediaFile: null,
+  caption: "",
+  bgColor: BG_COLORS[0],
+};
+
 export default function CreateStoryModal({ open, onClose, onSubmit, isCreating }) {
-  const [tab, setTab] = useState("photo"); // "photo" | "text"
+  const [tab, setTab] = useState("photo");
   const [preview, setPreview] = useState(null);
+  const [previewType, setPreviewType] = useState(null);
   const [mediaFile, setMediaFile] = useState(null);
   const [caption, setCaption] = useState("");
   const [bgColor, setBgColor] = useState(BG_COLORS[0]);
+  const [justPosted, setJustPosted] = useState(false);
   const fileInputRef = useRef(null);
 
   if (!open) return null;
+
+  const resetForm = useCallback(() => {
+    setPreview(null);
+    setPreviewType(null);
+    setMediaFile(null);
+    setCaption("");
+    setBgColor(BG_COLORS[0]);
+    setTab("photo");
+    setJustPosted(false);
+    // reset file input
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }, []);
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setMediaFile(file);
+    const type = file.type.startsWith("video/") ? "video" : "image";
+    setPreviewType(type);
     const reader = new FileReader();
     reader.onload = (ev) => setPreview(ev.target.result);
     reader.readAsDataURL(file);
     setTab("photo");
+    setJustPosted(false);
   };
 
   const handleSubmit = () => {
     if (tab === "photo" && !mediaFile && !preview) return;
     if (tab === "text" && !caption.trim()) return;
-    onSubmit({
-      mediaFile: tab === "photo" ? mediaFile : null,
-      mediaUrl: null,
-      caption,
-      bgColor: tab === "text" ? bgColor : null,
-    });
+
+    // Truyền thêm callback resetForm để hook gọi sau khi đăng thành công
+    onSubmit(
+      {
+        mediaFile: tab === "photo" ? mediaFile : null,
+        caption,
+        bgColor: tab === "text" ? bgColor : null,
+      },
+      () => {
+        // onSuccessReset — reset form, hiện flash "Đã đăng"
+        setJustPosted(true);
+        resetForm();
+        setTimeout(() => setJustPosted(false), 2000);
+      }
+    );
   };
 
   const handleClose = () => {
-    setPreview(null);
-    setMediaFile(null);
-    setCaption("");
-    setBgColor(BG_COLORS[0]);
-    setTab("photo");
+    resetForm();
     onClose();
   };
 
@@ -65,7 +93,14 @@ export default function CreateStoryModal({ open, onClose, onSubmit, isCreating }
       <div className="bg-[var(--background)] rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden border border-[var(--border)]">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
-          <h2 className="font-bold text-lg text-[var(--foreground)]">Tạo story mới</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="font-bold text-lg text-[var(--foreground)]">Tạo story mới</h2>
+            {justPosted && (
+              <span className="flex items-center gap-1 text-green-500 text-sm font-semibold animate-fade-in">
+                <CheckCircle size={15} /> Đã đăng!
+              </span>
+            )}
+          </div>
           <button
             onClick={handleClose}
             className="w-8 h-8 rounded-full hover:bg-[var(--card)] flex items-center justify-center text-[var(--foreground)] transition-colors"
@@ -84,16 +119,35 @@ export default function CreateStoryModal({ open, onClose, onSubmit, isCreating }
         <div className="p-5">
           {tab === "photo" && (
             <div className="space-y-4">
-              {/* Preview */}
               {preview ? (
                 <div className="relative rounded-xl overflow-hidden bg-black aspect-[9/16] max-h-72 flex items-center justify-center">
-                  <img src={preview} alt="preview" className="w-full h-full object-contain" />
+                  {previewType === "video" ? (
+                    <video
+                      src={preview}
+                      className="w-full h-full object-cover"
+                      controls
+                      muted
+                      playsInline
+                    />
+                  ) : (
+                    <img src={preview} alt="preview" className="w-full h-full object-cover" />
+                  )}
                   <button
-                    onClick={() => { setPreview(null); setMediaFile(null); }}
-                    className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 flex items-center justify-center text-white"
+                    onClick={() => {
+                      setPreview(null);
+                      setMediaFile(null);
+                      setPreviewType(null);
+                      if (fileInputRef.current) fileInputRef.current.value = "";
+                    }}
+                    className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 flex items-center justify-center text-white z-10"
                   >
                     <X size={14} />
                   </button>
+                  {previewType === "video" && (
+                    <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
+                      <Play size={10} /> Video
+                    </div>
+                  )}
                 </div>
               ) : (
                 <button
@@ -103,7 +157,7 @@ export default function CreateStoryModal({ open, onClose, onSubmit, isCreating }
                   <Upload size={32} className="opacity-50" />
                   <div className="text-center">
                     <p className="font-semibold text-sm">Chọn ảnh hoặc video</p>
-                    <p className="text-xs opacity-50 mt-0.5">PNG, JPG, MP4 — tối đa 50MB</p>
+                    <p className="text-xs opacity-50 mt-0.5">PNG, JPG, MP4, MOV — tối đa 200MB</p>
                   </div>
                 </button>
               )}
@@ -114,8 +168,6 @@ export default function CreateStoryModal({ open, onClose, onSubmit, isCreating }
                 className="hidden"
                 onChange={handleFileChange}
               />
-
-              {/* Caption */}
               <div>
                 <label className="block text-xs font-semibold text-[var(--foreground)] opacity-60 mb-1.5">
                   Chú thích (tuỳ chọn)
@@ -134,7 +186,6 @@ export default function CreateStoryModal({ open, onClose, onSubmit, isCreating }
 
           {tab === "text" && (
             <div className="space-y-4">
-              {/* Live preview */}
               <div
                 className="w-full rounded-xl aspect-[9/16] max-h-64 flex items-center justify-center p-6"
                 style={{ backgroundColor: bgColor }}
@@ -143,8 +194,6 @@ export default function CreateStoryModal({ open, onClose, onSubmit, isCreating }
                   {caption || "Nhập văn bản..."}
                 </p>
               </div>
-
-              {/* Text input */}
               <textarea
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
@@ -153,8 +202,6 @@ export default function CreateStoryModal({ open, onClose, onSubmit, isCreating }
                 rows={3}
                 className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] px-3 py-2 text-sm resize-none outline-none focus:border-blue-500 transition-colors"
               />
-
-              {/* Color picker */}
               <div>
                 <p className="text-xs font-semibold text-[var(--foreground)] opacity-60 mb-2">Màu nền</p>
                 <div className="flex flex-wrap gap-2">
@@ -177,20 +224,18 @@ export default function CreateStoryModal({ open, onClose, onSubmit, isCreating }
           )}
         </div>
 
-        {/* Note về 24h */}
         <div className="px-5 pb-2">
           <p className="text-xs text-[var(--foreground)] opacity-40 text-center">
-            Story tự động ẩn sau 24 giờ
+            Story tự động ẩn sau 24 giờ · Bạn có thể đăng nhiều story liên tiếp
           </p>
         </div>
 
-        {/* Actions */}
         <div className="flex gap-2 px-5 pb-5">
           <button
             onClick={handleClose}
             className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-sm font-semibold text-[var(--foreground)] hover:bg-[var(--card)] transition-colors"
           >
-            Huỷ
+            Đóng
           </button>
           <button
             onClick={handleSubmit}

@@ -9,15 +9,11 @@ import {
   Eye,
   Trash2,
   Heart,
-  Smile,
 } from "lucide-react";
 
-const STORY_DURATION = 5000; // 5 giây mỗi story
+const STORY_DURATION = 5000;
 const REACTIONS = ["❤️", "😍", "😂", "😮", "😢", "👏", "🔥"];
 
-/**
- * StoryViewer — full-screen story viewer kiểu Instagram
- */
 export default function StoryViewer({
   friendGroups = [],
   myStories = [],
@@ -48,9 +44,7 @@ export default function StoryViewer({
     ? myStories[activeStoryIndex]
     : currentGroup?.stories?.[activeStoryIndex];
 
-  const stories = viewingMyStory
-    ? myStories
-    : currentGroup?.stories || [];
+  const stories = viewingMyStory ? myStories : currentGroup?.stories || [];
 
   // ── Progress bar ──────────────────────────────────────────────────────────
 
@@ -137,7 +131,6 @@ export default function StoryViewer({
   const authorName = viewingMyStory ? "Story của bạn" : currentGroup?.displayName;
   const authorAvatar = viewingMyStory ? null : currentGroup?.avatar;
 
-  // Thời gian còn lại
   const timeLeft = () => {
     const created = new Date(currentStory.createdAt);
     const expires = new Date(created.getTime() + 24 * 60 * 60 * 1000);
@@ -163,12 +156,25 @@ export default function StoryViewer({
       >
         {/* Media */}
         {currentStory.mediaUrl ? (
-          <img
-            src={currentStory.mediaUrl}
-            alt="story"
-            className="absolute inset-0 w-full h-full object-cover"
-            draggable={false}
-          />
+          currentStory.mediaType === "video" ? (
+            <video
+              key={currentStory.mediaUrl}
+              src={currentStory.mediaUrl}
+              className="absolute inset-0 w-full h-full object-cover"
+              autoPlay
+              muted
+              loop
+              playsInline
+              draggable={false}
+            />
+          ) : (
+            <img
+              src={currentStory.mediaUrl}
+              alt="story"
+              className="absolute inset-0 w-full h-full object-cover"
+              draggable={false}
+            />
+          )
         ) : (
           <div
             className="absolute inset-0 flex items-center justify-center"

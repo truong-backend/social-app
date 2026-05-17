@@ -5,6 +5,7 @@ import UserHeader from "@/components/social-app-component/UserHeader";
 import api from "@/utils/axios";
 import toast from "react-hot-toast";
 import Link from "next/link";
+import ConfirmDialog from "@/components/social-app-component/ConfirmDialog";
 import {
   UserMinus,
   UserCheck,
@@ -18,6 +19,7 @@ import {
 import {pageMetadata, updatePageMetadata, usePageMetadata} from "@/utils/clientMetadata"; // Import metadata utility
 
 export default function FriendPage() {
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, userId: null, actionType: null, label: "" });
   const [activeTab, setActiveTab] = useState("friends");
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -169,11 +171,38 @@ export default function FriendPage() {
     };
   }, [openDropdown]);
 
-  const handleAction = async (userId, actionType) => {
+const confirmLabels = {
+    unfriend: "Hủy kết bạn",
+    reject: "Từ chối yêu cầu",
+    cancel: "Hủy yêu cầu kết bạn",
+    unblock: "Bỏ chặn",
+  };
+
+  const needsConfirm = (actionType) => ["unfriend", "reject", "cancel", "unblock"].includes(actionType);
+
+  const openConfirm = (userId, actionType) => {
+    setConfirmDialog({ isOpen: true, userId, actionType, label: confirmLabels[actionType] || "Xác nhận" });
+    setOpenDropdown(null);
+  };
+
+  const handleConfirmAction = () => {
+    const { userId, actionType } = confirmDialog;
+    setConfirmDialog({ isOpen: false, userId: null, actionType: null, label: "" });
+    doAction(userId, actionType);
+  };
+
+  const handleAction = (userId, actionType) => {
+    if (needsConfirm(actionType)) {
+      openConfirm(userId, actionType);
+    } else {
+      doAction(userId, actionType);
+    }
+  };
+
+  const doAction = async (userId, actionType) => {
     console.log("username", userId);
     const previousUsers = [...users];
     setActionLoading(prev => ({ ...prev, [userId]: true }));
-    setOpenDropdown(null); // Đóng dropdown khi thực hiện action
 
     try {
       let endpoint, method = "post", data = {};
@@ -207,16 +236,13 @@ export default function FriendPage() {
 
       const response = await api[method](endpoint, data);
 
-      // Chỉ ẩn user khi response trả về code 200
       if (response.data.code === 200) {
         setUsers(prev => prev.filter(user => user.username !== userId));
         toast.success(tabConfig[activeTab].successMessages[actionType]);
       } else {
-        // Nếu không phải code 200, hiển thị thông báo lỗi từ server
         toast.error(response.data.message || "Có lỗi xảy ra");
       }
     } catch (error) {
-      // Không cần rollback users vì chúng ta chưa thay đổi optimistically
       toast.error(`Lỗi: ${error.response?.data?.message || error.message}`);
     } finally {
       setActionLoading(prev => ({ ...prev, [userId]: false }));
@@ -312,6 +338,16 @@ export default function FriendPage() {
 
   return (
       <div className=" container mx-auto px-4 py-6 max-w-4xl">
+        <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={`${confirmDialog.label}?`}
+        message={`Bạn có chắc muốn thực hiện hành động này không?`}
+        confirmText={confirmDialog.label}
+        cancelText="Hủy"
+        confirmStyle="danger"
+        onConfirm={handleConfirmAction}
+        onCancel={() => setConfirmDialog({ isOpen: false, userId: null, actionType: null, label: "" })}
+      />
         <h1 className="text-2xl font-bold mb-6 text-[var(--foreground)]">{tabConfig[activeTab].title}</h1>
 
         <div

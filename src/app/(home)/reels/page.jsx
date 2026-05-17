@@ -13,7 +13,6 @@ export default function ReelsPage() {
     myStories,
     isLoading,
     error,
-    // viewer
     viewerOpen,
     activeGroupIndex,
     activeStoryIndex,
@@ -27,21 +26,17 @@ export default function ReelsPage() {
     handleReact,
     handleReply,
     handleDeleteStory,
-    // create
     createOpen,
     setCreateOpen,
     isCreating,
     handleCreateStory,
-    // viewers modal
     viewersOpen,
     setViewersOpen,
     viewers,
     openViewers,
-    // reload
     loadStories,
   } = useReels();
 
-  // Thống kê
   const totalStories = friendGroups.reduce((sum, g) => sum + g.stories.length, 0) + myStories.length;
   const newStories = friendGroups.filter((g) => g.stories.some((s) => !s.isViewed)).length;
 
@@ -64,7 +59,6 @@ export default function ReelsPage() {
           </button>
         </div>
 
-        {/* Stats row */}
         {!isLoading && (
           <div className="flex gap-4 mt-2">
             <StatChip icon={<Film size={13} />} label={`${totalStories} story`} />
@@ -113,7 +107,6 @@ export default function ReelsPage() {
         {/* Stories section */}
         {!isLoading && !error && (
           <>
-            {/* Story bar */}
             <section>
               <SectionTitle>Story của bạn bè</SectionTitle>
               <div className="mt-3">
@@ -127,12 +120,10 @@ export default function ReelsPage() {
               </div>
             </section>
 
-            {/* Empty state */}
             {friendGroups.length === 0 && myStories.length === 0 && (
               <EmptyState onCreateStory={() => setCreateOpen(true)} />
             )}
 
-            {/* Friend stories grid */}
             {friendGroups.length > 0 && (
               <section>
                 <SectionTitle>Tất cả story</SectionTitle>
@@ -151,7 +142,6 @@ export default function ReelsPage() {
               </section>
             )}
 
-            {/* My stories section */}
             {myStories.length > 0 && (
               <section>
                 <SectionTitle>Story của tôi</SectionTitle>
@@ -247,11 +237,21 @@ function StoryGridCard({ story, group, isMyStory = false, onClick }) {
     >
       {/* Media */}
       {story.mediaUrl ? (
-        <img
-          src={story.mediaUrl}
-          alt="story"
-          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-        />
+        story.mediaType === "video" ? (
+          <video
+            src={story.mediaUrl}
+            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            muted
+            playsInline
+            preload="metadata"
+          />
+        ) : (
+          <img
+            src={story.mediaUrl}
+            alt="story"
+            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        )
       ) : (
         <div
           className="absolute inset-0 flex items-center justify-center p-3"
@@ -298,7 +298,6 @@ function StoryGridCard({ story, group, isMyStory = false, onClick }) {
         {story.caption && story.mediaUrl && (
           <p className="text-white/70 text-[10px] truncate mt-0.5">{story.caption}</p>
         )}
-        {/* Reaction counts */}
         {Object.keys(story.reactions || {}).length > 0 && (
           <div className="flex gap-1 mt-1">
             {Object.entries(story.reactions)

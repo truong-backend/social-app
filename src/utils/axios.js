@@ -150,7 +150,6 @@ async function handleTokenRefresh(originalRequest) {
         if (token) {
           originalRequest.headers.Authorization = `Bearer ${token}`;
           resolve(api(originalRequest));
-          alert("token refreshed");
         } else {
           reject(new Error("Failed to refresh token"));
         }
@@ -199,6 +198,7 @@ async function handleTokenRefresh(originalRequest) {
     isRefreshing = false;
   }
 }
+
 export async function refreshTokenManually() {
   try {
     const { data } = await axios.post(
@@ -219,13 +219,13 @@ export async function refreshTokenManually() {
     setAuthStorage(newToken, userId, userName);
     api.defaults.headers.common.Authorization = `Bearer ${newToken}`;
 
-    // ✅ Tạm thời vô hiệu hóa callback để tránh vòng lặp
+    // Tạm thời vô hiệu hóa callback để tránh vòng lặp
     const savedListeners = [...tokenEventListeners];
-    tokenEventListeners.length = 0; // clear listeners tạm thời
+    tokenEventListeners.length = 0;
 
-    notifyTokenRefresh(newToken); // sẽ không gây loop
+    notifyTokenRefresh(newToken);
 
-    tokenEventListeners.push(...savedListeners); // khôi phục lại
+    tokenEventListeners.push(...savedListeners);
 
     return true;
   } catch (error) {
@@ -287,15 +287,14 @@ export function getUserId() {
 export function getUserName() {
   return cookieUtils.get('userName') || localStorage.getItem("userName");
 }
+
 export function setUserName(username) {
   if (!username || typeof username !== 'string') return;
 
-  // Lưu vào cookie
   cookieUtils.set('userName', username, {
     maxAge: 7 * 24 * 60 * 60
   });
 
-  // Lưu vào localStorage
   localStorage.setItem('userName', username);
 }
 
