@@ -138,13 +138,13 @@ export default function SidebarNavigation() {
       const rect = moreButtonRef.current.getBoundingClientRect();
       const isDesktop = window.innerWidth >= 768;
       if (isDesktop) {
-        // Hiện ra bên PHẢI của sidebar, không che nội dung
+        // Hiện ra bên PHẢI của sidebar, canh theo button
         setDropdownPosition({
-          top: rect.bottom - 220,
-          left: rect.right + 12,
+          top: rect.top - 220,
+          left: rect.left + rect.width + 12,
         });
       } else {
-        // Mobile: hiện lên trên bottom nav
+        // Mobile: hiện lên trên bottom nav, full width
         setDropdownPosition({
           top: "auto",
           bottom: 64,
