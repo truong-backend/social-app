@@ -139,7 +139,7 @@ const handleMoreClick = () => {
       if (isDesktop) {
         // Hiện ra bên PHẢI của sidebar, canh theo button
         setDropdownPosition({
-          top: rect.top + 560,
+          top: rect.top + 500,
           left: rect.left + rect.width + 85,
         });
       } else {
