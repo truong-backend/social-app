@@ -128,9 +128,9 @@ export default function ChatLayoutInner() {
       <div className="flex flex-col h-full bg-[var(--background)]">
         <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
           <span className="text-base font-semibold text-[var(--foreground)]">
-            {currentUsername}
+            Danh sách trò chuyện
           </span>
-          <Edit size={22} strokeWidth={1.5} className="text-[var(--foreground)]" />
+          {/* <Edit size={22} strokeWidth={1.5} className="text-[var(--foreground)]" /> */}
         </div>
         <div className="flex-1 overflow-y-auto">
           <ChatList
