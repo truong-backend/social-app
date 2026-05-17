@@ -505,13 +505,15 @@ export default function SidebarNavigation() {
           {badgeCount > 0 && <Badge asNotification>{badgeCount}</Badge>}
         </button>
         <button
-          onClick={() => {
-            if (mounted) setTheme(resolvedTheme === "dark" ? "light" : "dark");
-          }}
-          className="flex items-center justify-center w-11 h-11 rounded-xl transition-colors  text-[var(--foreground)]"
-          aria-label="Đổi giao diện"
+          ref={moreButtonRef}
+          aria-label="Thêm"
+          onClick={handleMoreClick}
+          className={
+            "flex items-center justify-center w-11 h-11 rounded-xl transition-colors text-[var(--foreground)] " +
+            (showSettingsDropdown ? "font-bold" : "")
+          }
         >
-          {themeIcon}
+          <Menu size={24} strokeWidth={showSettingsDropdown ? 2.5 : 1.5} />
         </button>
       </nav>
 
