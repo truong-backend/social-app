@@ -36,7 +36,6 @@ function GlobalCallInterface() {
     rejectCall,
   } = useCall();
   const router = useRouter();
-  const [showCallVideo, setShowCallVideo] = useState(false);
 
   useEffect(() => {
     const authInfo = getAuthInfo();
@@ -49,20 +48,23 @@ function GlobalCallInterface() {
     }
   }, [router]);
 
-  useEffect(() => {
-    setShowCallVideo(currentCall || isCallEnding);
-  }, [currentCall, isCallEnding]);
+  // ✅ FIX: Bỏ showCallVideo useState + useEffect
+  // Dùng trực tiếp currentCall || isCallEnding để tránh 1-tick delay
+  // Delay đó làm CallVideo mount trễ → remoteVideoRef null khi stream arrive
+  const showCallVideo = !!(currentCall || isCallEnding);
 
   return (
     <>
       {incomingCaller && !currentCall && !isCallEnding && (
         <CallPopup caller={incomingCaller} onAccept={acceptCall} onReject={rejectCall} />
       )}
+      {/* ✅ FIX: Luôn render CallVideo khi showCallVideo=true,
+          không unmount/remount để tránh mất ref */}
       {showCallVideo && (
         <CallVideo
           localStream={localStream}
           remoteStream={remoteStream}
-          onCallEnd={() => setShowCallVideo(false)}
+          onCallEnd={() => {}}
         />
       )}
     </>

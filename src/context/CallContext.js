@@ -1,8 +1,8 @@
 "use client";
 
-import React, {createContext, useCallback, useContext, useEffect, useRef, useState,} from "react";
-import {jwtDecode} from "jwt-decode";
-import {initAudioSystem, playRingtone, preloadAudio, stopSound} from "@/utils/playSound";
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { jwtDecode } from "jwt-decode";
+import { initAudioSystem, playRingtone, preloadAudio, stopSound } from "@/utils/playSound";
 import api from "@/utils/axios";
 import toast from "react-hot-toast";
 
@@ -17,7 +17,7 @@ function decodeJWT(token) {
 
 const CallContext = createContext();
 
-export const CallProvider = ({children}) => {
+export const CallProvider = ({ children }) => {
     const [token, setToken] = useState(null);
     const [isConnected, setIsConnected] = useState(false);
     const [incomingCaller, setIncomingCaller] = useState(null);
@@ -27,27 +27,21 @@ export const CallProvider = ({children}) => {
     const [localStream, setLocalStream] = useState(null);
     const [callerName, setCallerName] = useState("");
     const [isCallEnding, setIsCallEnding] = useState(false);
-
-    const [mediaPermissions, setMediaPermissions] = useState({
-        audio: false,
-        video: false,
-    });
+    const [mediaPermissions, setMediaPermissions] = useState({ audio: false, video: false });
 
     const clientRef = useRef(null);
     const currentCallRef = useRef(null);
     const beTokenRef = useRef("");
     const localStreamRef = useRef(null);
     const remoteStreamRef = useRef(null);
-    // ✅ FIX: flag đảm bảo setupCallEvents chỉ chạy 1 lần mỗi cuộc gọi
+    // ✅ Flag: setupCallEvents chỉ chạy 1 lần mỗi cuộc gọi
     const eventsSetupRef = useRef(false);
 
     useEffect(() => {
         initAudioSystem();
         preloadAudio("/ringtone.mp3");
-        if ('Notification' in window && Notification.permission === 'default') {
-            Notification.requestPermission().then(permission => {
-                console.log("[DEBUG] Notification permission:", permission);
-            });
+        if ("Notification" in window && Notification.permission === "default") {
+            Notification.requestPermission();
         }
     }, []);
 
@@ -56,25 +50,16 @@ export const CallProvider = ({children}) => {
             const script = document.createElement("script");
             script.src = "/libs/latest.sdk.bundle.min.js";
             script.async = true;
-            script.onload = () => {
-                console.log("[DEBUG] Stringee SDK script loaded ✅");
-            };
+            script.onload = () => console.log("[DEBUG] Stringee SDK loaded ✅");
             document.body.appendChild(script);
         }
     }, []);
 
     const createMediaStream = useCallback(async (isVideo = false) => {
         try {
-            console.log("[DEBUG] Creating media stream...", {isVideo});
             const stream = await navigator.mediaDevices.getUserMedia({
                 audio: true,
-                video: isVideo
-                    ? {
-                        width: {ideal: 1280},
-                        height: {ideal: 720},
-                        facingMode: "user",
-                    }
-                    : false,
+                video: isVideo ? { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" } : false,
             });
             setMediaPermissions({
                 audio: stream.getAudioTracks().length > 0,
@@ -84,118 +69,94 @@ export const CallProvider = ({children}) => {
         } catch (error) {
             console.error("[DEBUG] Media error:", error);
             setCallStatus("Permission denied: " + error.message);
-            setMediaPermissions({audio: false, video: false});
+            setMediaPermissions({ audio: false, video: false });
             return null;
         }
     }, []);
 
     const cleanupCall = useCallback((stt) => {
-        console.log("[Thang] Cleaning up call...", stt);
-
+        console.log("[DEBUG] cleanupCall:", stt);
         stopSound();
 
         const ls = localStreamRef.current;
         const rs = remoteStreamRef.current;
-
-        if (ls) {
-            ls.getTracks().forEach((track) => {
-                track.stop();
-                track.enabled = false;
-            });
-        }
-        if (rs) {
-            rs.getTracks().forEach((track) => {
-                track.stop();
-                track.enabled = false;
-            });
-        }
+        if (ls) ls.getTracks().forEach((t) => { t.stop(); t.enabled = false; });
+        if (rs) rs.getTracks().forEach((t) => { t.stop(); t.enabled = false; });
 
         localStreamRef.current = null;
         remoteStreamRef.current = null;
-        eventsSetupRef.current = false; // ✅ reset flag khi cleanup
+        eventsSetupRef.current = false;
+        currentCallRef.current = null;
 
         setRemoteStream(null);
         setLocalStream(null);
         setCurrentCall(null);
         setIncomingCaller(null);
         setCallStatus("Cleaned");
-        setMediaPermissions({audio: false, video: false});
+        setMediaPermissions({ audio: false, video: false });
         setIsCallEnding(false);
-        currentCallRef.current = null;
     }, []);
 
     const setupCallEvents = useCallback(
         (call) => {
-            // ✅ FIX: Guard — chỉ setup 1 lần duy nhất
+            // ✅ Guard: chỉ setup 1 lần
             if (eventsSetupRef.current) {
-                console.log("[DEBUG] Events already set up, skipping");
+                console.log("[DEBUG] Events already set up, skip");
                 return;
             }
             eventsSetupRef.current = true;
-            console.log("[DEBUG] Setting up call events (first time)");
+            console.log("[DEBUG] setupCallEvents — binding events");
 
             call.on("addremotestream", (stream) => {
-                console.log("[DEBUG] ✅ addRemoteStream event triggered!");
                 const realStream = stream?.stream || stream;
                 if (realStream) {
-                    console.log("[DEBUG] ✅ Remote stream tracks:", realStream.getTracks().length);
+                    console.log("[DEBUG] ✅ addremotestream — tracks:", realStream.getTracks().length);
                     remoteStreamRef.current = realStream;
                     setRemoteStream(realStream);
                     setCallStatus("Connected - Remote stream received");
                 } else {
-                    console.error("[DEBUG] ❌ Remote stream is null/undefined");
+                    console.error("[DEBUG] ❌ addremotestream — stream null");
                 }
             });
 
             call.on("addlocalstream", (stream) => {
-                console.log("[DEBUG] ✅ addLocalStream event triggered!");
                 const realStream = stream?.stream || stream;
                 if (realStream) {
-                    console.log("[DEBUG] ✅ Local stream tracks:", realStream.getTracks().length);
+                    console.log("[DEBUG] ✅ addlocalstream — tracks:", realStream.getTracks().length);
                     localStreamRef.current = realStream;
                     setLocalStream(realStream);
                 } else {
-                    console.error("[DEBUG] ❌ Local stream is null/undefined");
+                    console.error("[DEBUG] ❌ addlocalstream — stream null");
                 }
             });
 
             call.on("signalingstate", (state) => {
-                console.log("[DEBUG] 📡 Signaling state changed:", state);
+                console.log("[DEBUG] signalingstate:", state);
                 if (state.reason === "answered") {
-                    console.log("[DEBUG] 📞 Call was answered!");
                     setCallStatus("Call answered");
                     stopSound();
-                } else if (
-                    ["Ended", "Busy here", "Rejected", "Disconnected"].includes(state.reason)
-                ) {
-                    console.log("[DEBUG] 📞 Call ending with reason:", state.reason);
+                } else if (["Ended", "Busy here", "Rejected", "Disconnected"].includes(state.reason)) {
                     setIsCallEnding(true);
                     setTimeout(() => cleanupCall(1), 1500);
                 }
             });
 
             call.on("mediastate", (state) => {
-                console.log("[DEBUG] 🎥 Media state changed:", state);
+                console.log("[DEBUG] mediastate:", state);
                 if (state.code === 0) {
-                    console.log("[DEBUG] 🎥 Media disconnected");
                     setIsCallEnding(true);
                     setTimeout(() => cleanupCall(2), 1500);
                 }
             });
 
             call.on("disconnect", () => {
-                console.log("[DEBUG] 📞 Call disconnected event");
+                console.log("[DEBUG] call disconnect");
                 setIsCallEnding(true);
                 setTimeout(() => cleanupCall(3), 1500);
             });
 
-            call.on("remotevideostatuschange", (enabled) => {
-                console.log("[DEBUG] 🎥 Remote video status change:", enabled);
-            });
-
-            call.on("remoteaudiostatuschange", (enabled) => {
-                console.log("[DEBUG] 🔊 Remote audio status change:", enabled);
-            });
+            call.on("remotevideostatuschange", (e) => console.log("[DEBUG] remotevideostatuschange:", e));
+            call.on("remoteaudiostatuschange", (e) => console.log("[DEBUG] remoteaudiostatuschange:", e));
         },
         [cleanupCall]
     );
@@ -205,7 +166,7 @@ export const CallProvider = ({children}) => {
         client.connect(token);
 
         client.on("connect", () => {
-            console.log("[DEBUG] Stringee connected successfully ✅");
+            console.log("[DEBUG] Stringee connected ✅");
             onConnectionChange(true);
         });
 
@@ -215,23 +176,18 @@ export const CallProvider = ({children}) => {
         });
 
         client.on("incomingcall", (call) => {
-            console.log("[DEBUG] Incoming call event fired 📞");
+            console.log("[DEBUG] incomingcall 📞");
+            playRingtone("/ringtone.mp3", { loop: true, duration: 30000, volume: 0.8 });
 
-            playRingtone("/ringtone.mp3", {
-                loop: true,
-                duration: 30000,
-                volume: 0.8,
-            });
-
-            // ✅ FIX: CHỈ lưu ref, KHÔNG gọi setupCallEvents ở đây
-            // setupCallEvents sẽ được gọi DUY NHẤT trong acceptCall
-            eventsSetupRef.current = false; // reset cho call mới
+            // ✅ CHỈ lưu ref, KHÔNG setupCallEvents ở đây
+            // setupCallEvents gọi DUY NHẤT trong acceptCall
+            eventsSetupRef.current = false;
             currentCallRef.current = call;
             onIncomingCall(call);
         });
 
-        client.on("requestnewtoken", async () => {
-            console.warn("[DEBUG] Token expired — need to request new one 🔄");
+        client.on("requestnewtoken", () => {
+            console.warn("[DEBUG] Token expired");
             onConnectionChange(false);
         });
 
@@ -243,13 +199,10 @@ export const CallProvider = ({children}) => {
         const payload = decodeJWT(beToken);
         if (payload?.username) setCallerName(payload.username);
         try {
-            const res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/v1/stringee/create-token`,
-                {
-                    method: "POST",
-                    headers: {Authorization: `Bearer ${beToken}`},
-                }
-            );
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/stringee/create-token`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${beToken}` },
+            });
             const data = await res.json();
             if (data.body?.token) setToken(data.body.token);
         } catch (err) {
@@ -278,14 +231,11 @@ export const CallProvider = ({children}) => {
 
     const makeCall = useCallback(
         async (callee, isVideo = false) => {
-            console.log("[DEBUG] Making call to:", callee, "isVideo:", isVideo);
-
-            // ✅ reset flag cho call mới
+            console.log("[DEBUG] makeCall →", callee, "video:", isVideo);
             eventsSetupRef.current = false;
 
             const stream = await createMediaStream(isVideo);
             if (!stream) {
-                console.error("[DEBUG] Failed to create media stream");
                 setCallStatus("Media permission denied");
                 return;
             }
@@ -294,7 +244,7 @@ export const CallProvider = ({children}) => {
                 const res = await api.get(`/v1/call/init/${callee.trim()}`);
                 if (res.data.code === 7012 || res.data.code === 7011) {
                     toast.error("Máy bận");
-                    stream.getTracks().forEach((track) => track.stop());
+                    stream.getTracks().forEach((t) => t.stop());
                     return;
                 }
 
@@ -303,13 +253,10 @@ export const CallProvider = ({children}) => {
                     callerName,
                     callee.trim(),
                     isVideo,
-                    {
-                        audio: true,
-                        video: isVideo,
-                    }
+                    { audio: true, video: isVideo }
                 );
 
-                // ✅ Gán stream vào call TRƯỚC setupCallEvents
+                // ✅ Gán stream TRƯỚC setupCallEvents
                 call.localStream = stream;
                 localStreamRef.current = stream;
                 setLocalStream(stream);
@@ -321,22 +268,19 @@ export const CallProvider = ({children}) => {
                 setCallStatus("Initiating call...");
 
                 call.makeCall((res) => {
-                    console.log("[DEBUG] makeCall response:", res);
                     if (res.r === 0) {
-                        console.log("[DEBUG] Call initiated successfully");
                         setCallStatus("Ringing...");
                     } else {
-                        console.error("[DEBUG] Call failed:", res.r, res.message);
+                        console.error("[DEBUG] makeCall failed:", res.r, res.message);
                         setCallStatus(`Call failed: ${res.message || "Unknown error"}`);
-                        stream.getTracks().forEach((track) => track.stop());
+                        stream.getTracks().forEach((t) => t.stop());
                         cleanupCall(4);
                     }
                 });
             } catch (error) {
                 if (error?.response?.data?.code === 7012 || error?.response?.data?.code === 7011)
                     toast.error("Máy bận");
-                console.error("[DEBUG] Init call failed:", error);
-                stream.getTracks().forEach((track) => track.stop());
+                stream.getTracks().forEach((t) => t.stop());
                 setCallStatus("Init call failed");
                 cleanupCall(4);
             }
@@ -348,30 +292,30 @@ export const CallProvider = ({children}) => {
         const call = currentCallRef.current;
         if (!call) return;
 
-        console.log("[DEBUG] Accepting call, isVideo:", call.isVideoCall);
+        console.log("[DEBUG] acceptCall — isVideo:", call.isVideoCall);
         stopSound();
 
-        // ✅ Lấy stream trước
         const stream = await createMediaStream(call.isVideoCall);
         if (!stream) return;
 
-        // ✅ Gán stream vào call TRƯỚC setupCallEvents
+        // ✅ Gán stream TRƯỚC setupCallEvents
         call.localStream = stream;
         localStreamRef.current = stream;
         setLocalStream(stream);
 
-        // ✅ setupCallEvents chỉ chạy 1 lần (nhờ eventsSetupRef guard)
+        // ✅ setupCallEvents chỉ chạy 1 lần nhờ eventsSetupRef
         setupCallEvents(call);
 
-        // ✅ setCurrentCall để React render <video> element trước
+        // ✅ setCurrentCall → React render CallVideo (và <video ref={remoteVideoRef}> mount)
         setIncomingCaller(null);
         setCurrentCall(call);
 
-        // ✅ Dùng setTimeout(0) để nhường React commit DOM trước khi answer
-        // tránh addremotestream fire trước khi remoteVideoRef được mount
+        // ✅ Tăng delay lên 50ms để React chắc chắn đã commit DOM
+        // (0ms đôi khi không đủ trên thiết bị chậm)
         setTimeout(() => {
+            console.log("[DEBUG] call.answer()");
             call.answer();
-        }, 0);
+        }, 50);
     }, [createMediaStream, setupCallEvents]);
 
     const rejectCall = useCallback(() => {
@@ -386,55 +330,28 @@ export const CallProvider = ({children}) => {
         if (!call) return;
         setIsCallEnding(true);
         setCallStatus("Ending call...");
-        call.hangup(() => {
-            setTimeout(() => cleanupCall(6), 1500);
-        });
+        call.hangup(() => setTimeout(() => cleanupCall(6), 1500));
     }, [currentCall, cleanupCall]);
 
-    const toggleMute = useCallback(
-        (muted) => {
-            const stream = localStreamRef.current;
-            if (!stream) {
-                console.warn("[DEBUG] Cannot toggle mute - no local stream");
-                return;
-            }
-            const audioTracks = stream.getAudioTracks();
-            if (audioTracks.length === 0) return;
+    const toggleMute = useCallback((muted) => {
+        const stream = localStreamRef.current;
+        if (!stream) return;
+        const tracks = stream.getAudioTracks();
+        if (tracks.length === 0) return;
+        tracks.forEach((t) => (t.enabled = !muted));
+        const call = currentCallRef.current;
+        if (call && typeof call.mute === "function") call.mute(muted);
+    }, []);
 
-            console.log("[DEBUG] Toggling mute:", muted);
-            audioTracks.forEach((track) => {
-                track.enabled = !muted;
-            });
-
-            const call = currentCallRef.current;
-            if (call && typeof call.mute === "function") {
-                call.mute(muted);
-            }
-        },
-        []
-    );
-
-    const toggleLocalVideo = useCallback(
-        (enabled) => {
-            const stream = localStreamRef.current;
-            if (!stream) {
-                console.warn("[DEBUG] Cannot toggle video - no local stream");
-                return;
-            }
-            const videoTracks = stream.getVideoTracks();
-            if (videoTracks.length === 0) return;
-
-            videoTracks.forEach((track) => {
-                track.enabled = !enabled;
-            });
-
-            const call = currentCallRef.current;
-            if (call && typeof call.enableLocalVideo === "function") {
-                call.enableLocalVideo(!enabled);
-            }
-        },
-        []
-    );
+    const toggleLocalVideo = useCallback((enabled) => {
+        const stream = localStreamRef.current;
+        if (!stream) return;
+        const tracks = stream.getVideoTracks();
+        if (tracks.length === 0) return;
+        tracks.forEach((t) => (t.enabled = !enabled));
+        const call = currentCallRef.current;
+        if (call && typeof call.enableLocalVideo === "function") call.enableLocalVideo(!enabled);
+    }, []);
 
     return (
         <CallContext.Provider
@@ -466,8 +383,6 @@ export const CallProvider = ({children}) => {
 
 export const useCall = () => {
     const context = useContext(CallContext);
-    if (context === undefined) {
-        throw new Error("useCall must be used within a CallProvider ❌");
-    }
+    if (context === undefined) throw new Error("useCall must be used within a CallProvider ❌");
     return context;
 };
