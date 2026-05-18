@@ -4,8 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="069b736b-0e6d-4b3d-af43-6e4a296b7724" name="Changes" comment="feat: enhance CallPopup and CallVideo components for improved call handling and UI updates">
+    <list default="true" id="069b736b-0e6d-4b3d-af43-6e4a296b7724" name="Changes" comment="feat: implement deduplication for friend groups and my stories in useReels hook">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/impl/StoryServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/impl/StoryServiceImpl.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -74,14 +75,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1776389664504</updated>
-    </task>
-    <task id="LOCAL-00003" summary="Update deploy hetzner">
-      <option name="closed" value="true" />
-      <created>1776512962535</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
-      <option name="project" value="LOCAL" />
-      <updated>1776512962535</updated>
     </task>
     <task id="LOCAL-00004" summary="Update deploy hetzner">
       <option name="closed" value="true" />
@@ -467,7 +460,15 @@
       <option name="project" value="LOCAL" />
       <updated>1779035634347</updated>
     </task>
-    <option name="localTasksCounter" value="52" />
+    <task id="LOCAL-00052" summary="feat: implement deduplication for friend groups and my stories in useReels hook">
+      <option name="closed" value="true" />
+      <created>1779077173127</created>
+      <option name="number" value="00052" />
+      <option name="presentableId" value="LOCAL-00052" />
+      <option name="project" value="LOCAL" />
+      <updated>1779077173128</updated>
+    </task>
+    <option name="localTasksCounter" value="53" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -489,7 +490,8 @@
     <MESSAGE value="delete folder docker" />
     <MESSAGE value="chore: add docker files and env from tracking" />
     <MESSAGE value="feat: enhance CallPopup and CallVideo components for improved call handling and UI updates" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: enhance CallPopup and CallVideo components for improved call handling and UI updates" />
+    <MESSAGE value="feat: implement deduplication for friend groups and my stories in useReels hook" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: implement deduplication for friend groups and my stories in useReels hook" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/social_app$SocialNetworkApiApplication.ic" NAME="SocialNetworkApiApplication Coverage Results" MODIFIED="1776389746974" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">

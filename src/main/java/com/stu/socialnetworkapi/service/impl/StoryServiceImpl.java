@@ -37,14 +37,14 @@ public class StoryServiceImpl implements StoryService {
     @Override
     public List<StoryGroupResponse> getFriendStories() {
         UUID currentUserId = userService.getCurrentUserIdRequiredAuthentication();
-        ZonedDateTime since = ZonedDateTime.now().minusHours(STORY_TTL_HOURS);
+//        ZonedDateTime since = ZonedDateTime.now().minusHours(STORY_TTL_HOURS);
 
         List<Map<String, Object>> rows = neo4jClient.query("""
                 MATCH (me:User {id: $currentUserId})
                 MATCH (author:User)-[:FRIEND]-(me)
                 MATCH (author)-[:POSTED_STORY]->(story:Story)
                 WHERE story.deletedAt IS NULL
-                  AND story.createdAt >= $since
+//                  AND story.createdAt >= $since
                 OPTIONAL MATCH (author)-[:HAS_PROFILE_PICTURE]->(pic:File)
                 OPTIONAL MATCH (story)-[:STORY_MEDIA]->(media:File)
                 OPTIONAL MATCH (me)-[viewed:VIEWED_STORY]->(story)
@@ -67,7 +67,7 @@ public class StoryServiceImpl implements StoryService {
                 ORDER BY authorId, createdAt ASC
                 """)
                 .bind(currentUserId.toString()).to("currentUserId")
-                .bind(since).to("since")
+//                .bind(since).to("since")
                 .fetch()
                 .all()
                 .stream()
@@ -129,12 +129,12 @@ public class StoryServiceImpl implements StoryService {
     @Override
     public List<StoryResponse> getMyStories() {
         UUID currentUserId = userService.getCurrentUserIdRequiredAuthentication();
-        ZonedDateTime since = ZonedDateTime.now().minusHours(STORY_TTL_HOURS);
+//        ZonedDateTime since = ZonedDateTime.now().minusHours(STORY_TTL_HOURS);
 
         List<Map<String, Object>> rows = neo4jClient.query("""
                 MATCH (me:User {id: $currentUserId})-[:POSTED_STORY]->(story:Story)
                 WHERE story.deletedAt IS NULL
-                  AND story.createdAt >= $since
+//                  AND story.createdAt >= $since
                 OPTIONAL MATCH (story)-[:STORY_MEDIA]->(media:File)
                 WITH
                     story.id        AS storyId,
@@ -148,7 +148,7 @@ public class StoryServiceImpl implements StoryService {
                 ORDER BY createdAt ASC
                 """)
                 .bind(currentUserId.toString()).to("currentUserId")
-                .bind(since).to("since")
+//                .bind(since).to("since")
                 .fetch()
                 .all()
                 .stream()
