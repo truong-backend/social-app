@@ -48,7 +48,7 @@ public class StoryServiceImpl implements StoryService {
                 OPTIONAL MATCH (author)-[:HAS_PROFILE_PICTURE]->(pic:File)
                 OPTIONAL MATCH (story)-[:STORY_MEDIA]->(media:File)
                 OPTIONAL MATCH (me)-[viewed:VIEWED_STORY]->(story)
-                RETURN
+                WITH
                     author.id           AS authorId,
                     author.username     AS username,
                     author.givenName    AS givenName,
@@ -62,7 +62,9 @@ public class StoryServiceImpl implements StoryService {
                     story.createdAt     AS createdAt,
                     media.id            AS mediaId,
                     viewed IS NOT NULL  AS isViewed
-                ORDER BY author.id, story.createdAt ASC
+                RETURN DISTINCT authorId, username, givenName, familyName, profilePicId,
+                    storyId, caption, bgColor, mediaType, viewCount, createdAt, mediaId, isViewed
+                ORDER BY authorId, createdAt ASC
                 """)
                 .bind(currentUserId.toString()).to("currentUserId")
                 .bind(since).to("since")
@@ -71,8 +73,15 @@ public class StoryServiceImpl implements StoryService {
                 .stream()
                 .collect(Collectors.toList());
 
-        Map<String, List<Map<String, Object>>> grouped = new LinkedHashMap<>();
+        // Deduplicate by storyId before grouping
+        Map<String, Map<String, Object>> deduped = new LinkedHashMap<>();
         for (Map<String, Object> row : rows) {
+            String storyId = row.get("storyId").toString();
+            deduped.putIfAbsent(storyId, row);
+        }
+
+        Map<String, List<Map<String, Object>>> grouped = new LinkedHashMap<>();
+        for (Map<String, Object> row : deduped.values()) {
             String authorId = row.get("authorId").toString();
             grouped.computeIfAbsent(authorId, k -> new ArrayList<>()).add(row);
         }
@@ -122,12 +131,12 @@ public class StoryServiceImpl implements StoryService {
         UUID currentUserId = userService.getCurrentUserIdRequiredAuthentication();
         ZonedDateTime since = ZonedDateTime.now().minusHours(STORY_TTL_HOURS);
 
-        return neo4jClient.query("""
+        List<Map<String, Object>> rows = neo4jClient.query("""
                 MATCH (me:User {id: $currentUserId})-[:POSTED_STORY]->(story:Story)
                 WHERE story.deletedAt IS NULL
                   AND story.createdAt >= $since
                 OPTIONAL MATCH (story)-[:STORY_MEDIA]->(media:File)
-                RETURN
+                WITH
                     story.id        AS storyId,
                     story.caption   AS caption,
                     story.bgColor   AS bgColor,
@@ -135,13 +144,24 @@ public class StoryServiceImpl implements StoryService {
                     story.viewCount AS viewCount,
                     story.createdAt AS createdAt,
                     media.id        AS mediaId
-                ORDER BY story.createdAt ASC
+                RETURN DISTINCT storyId, caption, bgColor, mediaType, viewCount, createdAt, mediaId
+                ORDER BY createdAt ASC
                 """)
                 .bind(currentUserId.toString()).to("currentUserId")
                 .bind(since).to("since")
                 .fetch()
                 .all()
                 .stream()
+                .collect(Collectors.toList());
+
+        // Deduplicate by storyId
+        Map<String, Map<String, Object>> deduped = new LinkedHashMap<>();
+        for (Map<String, Object> row : rows) {
+            String storyId = row.get("storyId").toString();
+            deduped.putIfAbsent(storyId, row);
+        }
+
+        return deduped.values().stream()
                 .map(r -> {
                     Object mediaId   = r.get("mediaId");
                     Object viewCount = r.get("viewCount");
