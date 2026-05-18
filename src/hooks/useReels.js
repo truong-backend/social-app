@@ -35,8 +35,27 @@ export default function useReels() {
       ]);
       const friendData = friendRes.data?.body || friendRes.data || [];
       const myData = myRes.data?.body || myRes.data || [];
-      setFriendGroups(Array.isArray(friendData) ? friendData : []);
-      setMyStories(Array.isArray(myData) ? myData : []);
+
+      const friendArray = Array.isArray(friendData) ? friendData : [];
+      const myArray = Array.isArray(myData) ? myData : [];
+
+      // Deduplicate friend groups by userId (phòng BE trả duplicate)
+      const seenGroups = new Map();
+      for (const group of friendArray) {
+        const key = group.userId ?? group.displayName;
+        if (!seenGroups.has(key)) {
+          seenGroups.set(key, {
+            ...group,
+            stories: deduplicateById(group.stories || []),
+          });
+        }
+      }
+
+      // Deduplicate myStories by id (phòng BE trả duplicate)
+      const uniqueMyStories = deduplicateById(myArray);
+
+      setFriendGroups(Array.from(seenGroups.values()));
+      setMyStories(uniqueMyStories);
     } catch {
       setError("Không thể tải story. Thử lại sau.");
     } finally {
@@ -170,20 +189,14 @@ export default function useReels() {
           headers: { "Content-Type": "multipart/form-data" },
         });
 
-        // Lấy story mới từ response — hỗ trợ cả {code, body} lẫn trả thẳng object
         const responseData = res.data;
         const newStory = responseData?.body ?? responseData;
 
         if (newStory && (newStory.id || newStory.storyId)) {
-          // Chuẩn hoá id nếu BE trả storyId thay vì id
-          const normalizedStory = {
-            ...newStory,
-            id: newStory.id || newStory.storyId,
-          };
-          setMyStories((prev) => [...prev, normalizedStory]);
           toast.success("Đã đăng story!");
-          // Reset form để tạo tiếp, KHÔNG đóng modal
           if (typeof onSuccessReset === "function") onSuccessReset();
+          // Reload toàn bộ để tránh duplicate — BE là source of truth
+          await loadStories();
         } else {
           const errMsg =
             responseData?.message || "Có lỗi xảy ra khi đăng story";
@@ -197,7 +210,7 @@ export default function useReels() {
         setIsCreating(false);
       }
     },
-    []
+    [loadStories]
   );
 
   // ── Delete story ───────────────────────────────────────────────────────────
@@ -256,4 +269,16 @@ export default function useReels() {
     openViewers,
     loadStories,
   };
+}
+
+// ── Helper ────────────────────────────────────────────────────────────────────
+
+function deduplicateById(arr) {
+  const seen = new Set();
+  return arr.filter((item) => {
+    const key = item.id ?? item.storyId;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
