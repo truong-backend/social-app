@@ -308,9 +308,9 @@ function StoryGridCard({ story, group, isMyStory = false, onClick }) {
       )}
 
       {/* Timer badge */}
-      <div className="absolute top-2 right-2 bg-black/50 text-white text-[10px] font-bold rounded-full px-2 py-0.5">
+      {/* <div className="absolute top-2 right-2 bg-black/50 text-white text-[10px] font-bold rounded-full px-2 py-0.5">
         {timeLeft()}
-      </div>
+      </div> */}
 
       {/* Footer */}
       <div className="absolute bottom-2 left-2 right-2">

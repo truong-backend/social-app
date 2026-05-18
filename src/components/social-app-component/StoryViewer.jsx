@@ -105,7 +105,7 @@ export default function StoryViewer({
     // Video: chờ loadeddata mới bắt đầu (xem handler bên dưới)
 
     return clearProgress;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeStoryIndex, activeGroupIndex, viewingMyStory]);
 
   // Pause / resume
@@ -123,7 +123,7 @@ export default function StoryViewer({
         startImageProgress();
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paused]);
 
   // ── Video event handlers ───────────────────────────────────────────────────
@@ -192,7 +192,9 @@ export default function StoryViewer({
 
   if (!currentStory) return null;
 
-  const authorName = viewingMyStory ? "Story của bạn" : currentGroup?.displayName;
+  const authorName = viewingMyStory
+    ? "Story của bạn"
+    : currentGroup?.displayName;
   const authorAvatar = viewingMyStory ? null : currentGroup?.avatar;
 
   const timeLeft = () => {
@@ -282,8 +284,8 @@ export default function StoryViewer({
                     i < activeStoryIndex
                       ? "100%"
                       : i === activeStoryIndex
-                      ? `${progress}%`
-                      : "0%",
+                        ? `${progress}%`
+                        : "0%",
                   transition: "none",
                 }}
               />
@@ -301,9 +303,14 @@ export default function StoryViewer({
             />
           )}
           <div className="flex-1 min-w-0">
-            <p className="text-white font-semibold text-sm truncate">{authorName}</p>
-            <p className="text-white/70 text-[11px]">
+            <p className="text-white font-semibold text-sm truncate">
+              {authorName}
+            </p>
+            {/* <p className="text-white/70 text-[11px]">
               còn {timeLeft()} · {currentStory.viewCount} lượt xem
+            </p> */}
+            <p className="text-white/70 text-[11px]">
+              {currentStory.viewCount} lượt xem
             </p>
           </div>
 
@@ -311,7 +318,10 @@ export default function StoryViewer({
           <div className="relative">
             <button
               className="text-white p-1 hover:bg-white/20 rounded-full transition-colors"
-              onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMenu(!showMenu);
+              }}
             >
               <MoreHorizontal size={20} />
             </button>
@@ -321,14 +331,20 @@ export default function StoryViewer({
                   <>
                     <button
                       className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#363636]"
-                      onClick={() => { setShowMenu(false); onOpenViewers(currentStory.id); }}
+                      onClick={() => {
+                        setShowMenu(false);
+                        onOpenViewers(currentStory.id);
+                      }}
                     >
                       <Eye size={16} />
                       Xem ai đã xem
                     </button>
                     <button
                       className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-gray-50 dark:hover:bg-[#363636]"
-                      onClick={() => { setShowMenu(false); onDelete(currentStory.id); }}
+                      onClick={() => {
+                        setShowMenu(false);
+                        onDelete(currentStory.id);
+                      }}
                     >
                       <Trash2 size={16} />
                       Xoá story
@@ -387,7 +403,11 @@ export default function StoryViewer({
             <div className="relative">
               <button
                 className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm border border-white/30 flex items-center justify-center text-white hover:bg-white/20 transition-colors"
-                onClick={(e) => { e.stopPropagation(); setShowReactions(!showReactions); setPaused(true); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowReactions(!showReactions);
+                  setPaused(true);
+                }}
               >
                 <Heart size={18} />
               </button>
@@ -423,11 +443,17 @@ export default function StoryViewer({
         {/* ─ Nav tap zones ─ */}
         <button
           className="absolute left-0 top-10 bottom-20 w-1/3 z-5 cursor-pointer"
-          onClick={(e) => { e.stopPropagation(); onPrev(); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onPrev();
+          }}
         />
         <button
           className="absolute right-0 top-10 bottom-20 w-1/3 z-5 cursor-pointer"
-          onClick={(e) => { e.stopPropagation(); onNext(); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onNext();
+          }}
         />
       </div>
 
