@@ -12,10 +12,8 @@ export default function EditPostModal({ isOpen, onClose, post, onPostUpdated }) 
 
   const [newContent, setNewContent] = useState("");
   const [newPrivacy, setNewPrivacy] = useState("PUBLIC");
-  
   const [filesToDelete, setFilesToDelete] = useState([]);
   const [newFiles, setNewFiles] = useState([]);
-  
   const [loading, setLoading] = useState(false);
   const [zoomIndex, setZoomIndex] = useState(null);
 
@@ -103,19 +101,16 @@ export default function EditPostModal({ isOpen, onClose, post, onPostUpdated }) 
     setLoading(true);
     try {
       let updatedPost = { ...post };
-      
       const hasContentChange = newContent !== post.content;
       const hasPrivacyChange = newPrivacy !== post.privacy;
       const hasFileChanges = canEditFiles && (filesToDelete.length > 0 || newFiles.length > 0);
-      
+
       if (hasPrivacyChange) {
         const privacyRes = await api.patch(`/v1/posts/update-privacy/${post.id}?privacy=${newPrivacy}`);
-        if (privacyRes.data.code !== 200) {
-          throw new Error(privacyRes.data.message || "Lỗi khi cập nhật privacy!");
-        }
+        if (privacyRes.data.code !== 200) throw new Error(privacyRes.data.message || "Lỗi khi cập nhật privacy!");
         updatedPost.privacy = newPrivacy;
       }
-      
+
       if (hasContentChange || hasFileChanges) {
         const formData = new FormData();
         formData.append("content", newContent);
@@ -126,9 +121,7 @@ export default function EditPostModal({ isOpen, onClose, post, onPostUpdated }) 
         const contentRes = await api.patch(`/v1/posts/update-content/${post.id}`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-        if (contentRes.data.code !== 200) {
-          throw new Error(contentRes.data.message || "Lỗi khi cập nhật content!");
-        }
+        if (contentRes.data.code !== 200) throw new Error(contentRes.data.message || "Lỗi khi cập nhật content!");
         updatedPost.content = newContent;
         if (canEditFiles && hasFileChanges) {
           const remainingOldFiles = (post.files || []).filter(url => !filesToDelete.includes(url));
@@ -136,11 +129,10 @@ export default function EditPostModal({ isOpen, onClose, post, onPostUpdated }) 
           updatedPost.files = [...remainingOldFiles, ...newFilesFromServer];
         }
       }
-      
+
       toast.success("Cập nhật bài viết thành công!");
       onPostUpdated?.(updatedPost);
       onClose();
-      
     } catch (error) {
       toast.error(error.message || "Lỗi kết nối hoặc máy chủ.");
       console.error(error);
@@ -155,7 +147,8 @@ export default function EditPostModal({ isOpen, onClose, post, onPostUpdated }) 
   return (
     <>
       <Modal isOpen={isOpen} onClose={onClose}>
-        <div className="relative p-5">
+        <div className="relative w-full max-w-lg mx-auto px-4 sm:px-5 py-4">
+
           {/* Header */}
           <div className="flex justify-center items-center mb-4 pb-3 border-b border-[var(--border)]">
             <h2 className="text-[17px] font-bold">
@@ -164,89 +157,71 @@ export default function EditPostModal({ isOpen, onClose, post, onPostUpdated }) 
           </div>
 
           {canEditFiles && displayMedia.length === 0 ? (
-            <div>
+            <div className="space-y-4">
               {/* Upload area */}
               <div
                 onClick={handleAddFiles}
                 onDrop={handleDrop}
                 onDragOver={(e) => e.preventDefault()}
-                className="flex flex-col items-center justify-center border-2 border-dashed border-[var(--border)] rounded-xl p-10 text-gray-500 hover:border-[var(--primary)] cursor-pointer transition-colors space-y-2"
+                className="flex flex-col items-center justify-center border-2 border-dashed border-[var(--border)] rounded-xl p-8 sm:p-10 text-gray-500 hover:border-[var(--primary)] cursor-pointer transition-colors space-y-2"
               >
-                <p className="text-sm">Chọn ảnh hoặc video, hoặc kéo thả vào đây</p>
+                <p className="text-sm text-center">Chọn ảnh hoặc video, hoặc kéo thả vào đây</p>
                 <div className="text-4xl">📁</div>
-                <input
-                  type="file"
-                  accept="image/*,video/*"
-                  multiple
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  hidden
+                <input type="file" accept="image/*,video/*" multiple ref={fileInputRef} onChange={handleFileChange} hidden />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Privacy</label>
+                <select
+                  value={newPrivacy}
+                  onChange={(e) => setNewPrivacy(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md bg-[var(--input)] text-[var(--foreground)]"
+                >
+                  <option value="PUBLIC">🌍 Public</option>
+                  <option value="FRIEND">👥 Friends</option>
+                  <option value="PRIVATE">🔒 Only me</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">What's on your mind?</label>
+                <textarea
+                  ref={textareaRef}
+                  value={newContent}
+                  onChange={handleContentChange}
+                  rows={4}
+                  placeholder="Viết điều gì đó..."
+                  className="w-full px-3 py-2 border rounded-md bg-[var(--input)] text-[var(--foreground)] resize-none overflow-hidden"
+                  style={{ minHeight: '96px' }}
                 />
               </div>
 
-              {/* Form khi không có media */}
-              <div className="mt-4 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Privacy</label>
-                  <select
-                    value={newPrivacy}
-                    onChange={(e) => setNewPrivacy(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md bg-[var(--input)] text-[var(--foreground)]"
-                  >
-                    <option value="PUBLIC">🌍 Public</option>
-                    <option value="FRIEND">👥 Friends</option>
-                    <option value="PRIVATE">🔒 Only me</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">What's on your mind?</label>
-                  <textarea
-                    ref={textareaRef}
-                    value={newContent}
-                    onChange={handleContentChange}
-                    rows={4}
-                    placeholder="Viết điều gì đó..."
-                    className="w-full px-3 py-2 border rounded-md bg-[var(--input)] text-[var(--foreground)] resize-none overflow-hidden"
-                    style={{ minHeight: '96px' }}
-                  />
-                </div>
-
-                <div className="flex justify-end">
-                  <button
-                    onClick={handleSaveEdit}
-                    disabled={loading}
-                    className="px-6 py-2 rounded-lg font-semibold text-sm bg-[var(--primary)] text-white hover:bg-opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loading ? "Đang lưu..." : "💾 Lưu"}
-                  </button>
-                </div>
+              <div className="flex justify-end">
+                <button
+                  onClick={handleSaveEdit}
+                  disabled={loading}
+                  className="px-6 py-2 rounded-lg font-semibold text-sm bg-[var(--primary)] text-white hover:bg-opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? "Đang lưu..." : "💾 Lưu"}
+                </button>
               </div>
             </div>
           ) : (
-            <div className={`flex flex-col ${canEditFiles && displayMedia.length > 0 ? 'md:flex-row' : ''} gap-6 p-4`}>
-              {/* Media preview */}
+            /* Khi có media: stack dọc mobile, ngang desktop */
+            <div className={`flex gap-4 ${canEditFiles && displayMedia.length > 0 ? 'flex-col sm:flex-row' : 'flex-col'}`}>
               {canEditFiles && displayMedia.length > 0 && (
-                <div className="md:w-1/2 w-full">
+                <div className="w-full sm:w-1/2">
                   <ImagePreview
                     images={displayMedia}
                     onImageClick={(i) => setZoomIndex(i)}
                     onDelete={handleRemoveMedia}
                     onAdd={handleAddFiles}
                   />
-                  <input
-                    type="file"
-                    accept="image/*,video/*"
-                    multiple
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    hidden
-                  />
+                  <input type="file" accept="image/*,video/*" multiple ref={fileInputRef} onChange={handleFileChange} hidden />
                 </div>
               )}
 
-              {/* Form inputs */}
-              <div className={`${canEditFiles && displayMedia.length > 0 ? 'md:w-1/2' : ''} w-full flex flex-col gap-4`}>
+              <div className={`${canEditFiles && displayMedia.length > 0 ? 'w-full sm:w-1/2' : 'w-full'} flex flex-col gap-4`}>
                 <div>
                   <label className="block text-sm font-medium mb-1">Privacy</label>
                   <select
@@ -275,11 +250,7 @@ export default function EditPostModal({ isOpen, onClose, post, onPostUpdated }) 
                   />
                 </div>
 
-                {/*{isSharedPost && post.originalPost && (*/}
-                {/*  <div className="p-3 border rounded-md bg-[var(--muted)]/20">*/}
-                {/*    ...*/}
-                {/*  </div>*/}
-                {/*)}*/}
+                {/*{isSharedPost && post.originalPost && (...)}*/}
 
                 <div className="flex justify-end mt-auto">
                   <button
@@ -293,30 +264,16 @@ export default function EditPostModal({ isOpen, onClose, post, onPostUpdated }) 
               </div>
             </div>
           )}
-
-          {/*{!canEditFiles && (*/}
-          {/*  ...*/}
-          {/*)}*/}
         </div>
       </Modal>
 
-      {/* Modal zoom preview */}
       {zoomIndex !== null && canEditFiles && (
         <Modal isOpen={zoomIndex !== null} onClose={() => setZoomIndex(null)}>
           <div className="relative w-full h-[80vh] flex items-center justify-center bg-black">
             {displayMedia[zoomIndex]?.type === "video" ? (
-              <video 
-                src={displayMedia[zoomIndex].preview} 
-                className="max-h-full max-w-full" 
-                controls 
-                autoPlay 
-              />
+              <video src={displayMedia[zoomIndex].preview} className="max-h-full max-w-full" controls autoPlay />
             ) : (
-              <img
-                src={displayMedia[zoomIndex].preview}
-                className="max-h-full max-w-full object-contain"
-                alt={`Preview ${zoomIndex}`}
-              />
+              <img src={displayMedia[zoomIndex].preview} className="max-h-full max-w-full object-contain" alt={`Preview ${zoomIndex}`} />
             )}
           </div>
         </Modal>
