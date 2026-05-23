@@ -27,7 +27,6 @@ export default function NewPostModal({ isOpen, onClose }) {
       }
     }
   }, [isOpen])
-
   const handleMediaSelect = (files) => {
     const mediaFiles = files.filter(
       (file) => file.type.startsWith("image/") || file.type.startsWith("video/")
@@ -134,11 +133,9 @@ export default function NewPostModal({ isOpen, onClose }) {
   return (
     <>
       <Modal isOpen={isOpen} onClose={onClose}>
-        <div className="relative w-full max-w-lg mx-auto px-4 sm:px-5 py-4">
-
-          {/* Header - căn giữa, có border-bottom như FB */}
-          <div className="flex justify-center items-center mb-4 pb-3 border-b border-[var(--border)]">
-            <h2 className="text-[17px] font-bold">Đăng bài viết</h2>
+        <div className="relative p-5">
+          <div className="flex justify-between items-center mb-4 px-2">
+            <h2 className="text-lg font-semibold">Đăng bài viết</h2>
           </div>
 
           {/* Hidden file input - đặt ở đây để luôn có thể truy cập */}
@@ -151,33 +148,33 @@ export default function NewPostModal({ isOpen, onClose }) {
             className="hidden"
           />
 
-          {media.length === 0 ? (
-            <div
-              onClick={handleClickUploadArea}
-              onDrop={handleDrop}
-              onDragOver={(e) => e.preventDefault()}
-              className="flex flex-col items-center justify-center border-2 border-dashed border-[var(--border)] rounded-xl p-8 sm:p-10 text-gray-500 hover:border-[var(--primary)] cursor-pointer transition-colors space-y-2"
-            >
-              <p className="text-sm text-center">Chọn ảnh hoặc video, hoặc kéo thả vào đây</p>
-              <p className="text-xs text-gray-400">Tối đa {MAX_FILES} ảnh/video</p>
-              <div className="text-4xl">📁</div>
-            </div>
-          ) : (
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="w-full sm:w-1/2">
-                {/* 🔧 Hiển thị số file hiện tại */}
-                <div className="mb-2 text-sm text-gray-500">
-                  Tập tin đã tải lên: {media.length}/{MAX_FILES}
+            {media.length === 0 ? (
+                <div
+                    onClick={handleClickUploadArea}
+                    onDrop={handleDrop}
+                    onDragOver={(e) => e.preventDefault()}
+                    className="flex flex-col items-center justify-center border-2 border-dashed border-[var(--border)] rounded-lg p-10 text-gray-500 hover:border-[var(--primary)] cursor-pointer transition-colors space-y-2"
+                >
+                  <p className="text-sm">Chọn ảnh hoặc video, hoặc kéo thả vào đây</p>
+                  <p className="text-xs text-gray-400">Tối đa {MAX_FILES} ảnh/video</p>
+                  <div className="text-4xl">📁</div>
                 </div>
-                <ImagePreview
-                  images={media}
-                  onImageClick={(i) => setZoomIndex(i)} // ⚡ xử lý zoom
-                  onDelete={handleRemoveMedia}
-                  onAdd={media.length < MAX_FILES ? handleClickUploadArea : undefined} // 🔧 Chỉ hiển thị nút Add nếu chưa đạt giới hạn
-                />
-              </div>
+            ) : (
+                <div className="flex flex-col md:flex-row gap-6 p-4">
+                  <div className="md:w-1/2 w-full">
+                    {/* 🔧 Hiển thị số file hiện tại */}
+                    <div className="mb-2 text-sm text-gray-500">
+                      Tập tin đã tải lên: {media.length}/{MAX_FILES}
+                    </div>
+                    <ImagePreview
+                        images={media}
+                        onImageClick={(i) => setZoomIndex(i)} // ⚡ xử lý zoom
+                        onDelete={handleRemoveMedia}
+                        onAdd={media.length < MAX_FILES ? handleClickUploadArea : undefined} // 🔧 Chỉ hiển thị nút Add nếu chưa đạt giới hạn
+                    />
+                  </div>
 
-              <div className="w-full sm:w-1/2 space-y-4">
+              <div className="md:w-1/2 w-full space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Ai có thể xem bài viết của bạn?</label>
                   <select
@@ -208,7 +205,7 @@ export default function NewPostModal({ isOpen, onClose }) {
                   <button
                     onClick={handleSubmit}
                     disabled={isLoading}
-                    className="px-6 py-2 rounded-lg font-semibold text-sm bg-[var(--primary)] text-white hover:bg-opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 rounded-md bg-[var(--primary)] text-white hover:bg-opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isLoading ? "Đang tải lên..." : "Đăng"}
                   </button>
@@ -245,15 +242,15 @@ export default function NewPostModal({ isOpen, onClose }) {
                   style={{ height: '96px' }}
                 />
                 <div className={`text-xs text-[var(--muted-foreground)] mt-1 text-right ${content.length > 10000 && "text-red-500"}`}>
-                  {content.length}/10000
-                </div>
+                        {content.length}/10000
+                    </div>
               </div>
 
               <div className="flex justify-end">
                 <button
                   onClick={handleSubmit}
                   disabled={isLoading || (!content.trim() && media.length === 0) || content.length > 10000}
-                  className="px-6 py-2 rounded-lg font-semibold text-sm bg-[var(--primary)] text-white hover:bg-opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 rounded-md bg-[var(--primary)] text-white hover:bg-opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? "Đang tải lên..." : "Đăng"}
                 </button>
