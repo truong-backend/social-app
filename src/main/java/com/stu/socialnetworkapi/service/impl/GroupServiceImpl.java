@@ -74,7 +74,7 @@ public class GroupServiceImpl implements GroupService {
         // Set creator as OWNER
         chatRepository.setMemberRole(creator.getId(), saved.getId(), GroupRole.OWNER.name());
 
-        // Invalidate cache for all members
+        // Invalidate cache for ALL members (bao gồm creator)
         members.forEach(m -> inChatRepository.invalidateUserChat(m.getId()));
 
         // Notify all members
@@ -117,7 +117,6 @@ public class GroupServiceImpl implements GroupService {
     @Override
     public void addMembers(GroupMemberRequest request) {
         User currentUser = userService.getCurrentUserRequiredAuthentication();
-        // Any member can add others
         validateIsMember(currentUser.getId(), request.chatId());
 
         Chat chat = chatRepository.findById(request.chatId())
@@ -125,10 +124,14 @@ public class GroupServiceImpl implements GroupService {
 
         List<String> added = new ArrayList<>();
         for (String username : request.usernames()) {
+            User newMember = userService.getUser(username);
             chatRepository.addMember(username, request.chatId());
+            // Invalidate cache cho thành viên mới được thêm vào
+            inChatRepository.invalidateUserChat(newMember.getId());
             added.add(username);
         }
 
+        // Invalidate cache của người thực hiện thêm
         inChatRepository.invalidateUserChat(currentUser.getId());
 
         // Notify all existing members
@@ -256,6 +259,9 @@ public class GroupServiceImpl implements GroupService {
     @Override
     public List<GroupMemberResponse> getMembers(UUID chatId) {
         User currentUser = userService.getCurrentUserRequiredAuthentication();
+
+        // Invalidate cache trước khi check để đảm bảo data mới nhất từ Neo4j
+        inChatRepository.invalidateUserChat(currentUser.getId());
         validateIsMember(currentUser.getId(), chatId);
 
         return chatRepository.getGroupMembers(chatId).stream()
@@ -264,7 +270,7 @@ public class GroupServiceImpl implements GroupService {
                         .username(p.username())
                         .givenName(p.givenName())
                         .familyName(p.familyName())
-                        .profilePictureUrl(File.getPath(p.profilePictureId()))
+                        .profilePictureUrl(File.getPath(p.profilePictureId()))  // FIX: dùng File.getPath
                         .role(GroupRole.valueOf(p.role()))
                         .joinedAt(p.joinedAt())
                         .build())
@@ -324,7 +330,6 @@ public class GroupServiceImpl implements GroupService {
         MessageCommand command = MessageCommand.builder()
                 .command(MessageCommand.Command.valueOf("GROUP_EVENT"))
                 .build();
-        // Broadcast to all members via WebSocket
         members.forEach(member ->
                 messagingTemplate.convertAndSendToUser(
                         member.getUsername(),
@@ -339,7 +344,7 @@ public class GroupServiceImpl implements GroupService {
                 .chatId(chat.getId())
                 .name(chat.getGroupName())
                 .isGroup(true)
-                .groupAvatarUrl(chat.getGroupAvatarFileId())
+                .groupAvatarUrl(File.getPath(chat.getGroupAvatarFileId()))  // FIX: dùng File.getPath
                 .myRole(myRole)
                 .memberCount(chat.getMembers() != null ? chat.getMembers().size() : 0)
                 .build();

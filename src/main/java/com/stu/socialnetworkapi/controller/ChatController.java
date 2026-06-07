@@ -70,10 +70,13 @@ public class ChatController {
         messageService.deleteMessage(messageId);
         return ApiResponse.success();
     }
+
+    // ── Group messages ────────────────────────────────────────────────────────
+
     @PostMapping("/group/{chatId}/send")
     public ApiResponse<MessageResponse> sendGroupMessage(
             @PathVariable UUID chatId,
-            @Valid @RequestBody TextMessageRequest request) {
+            @Valid @RequestBody GroupTextMessageRequest request) {
         return ApiResponse.success(messageService.sendGroupMessage(request, chatId));
     }
 

@@ -66,10 +66,14 @@ public class MessageServiceImpl implements MessageService {
         sendMessageNotification(chat.getId(), receiver.getId(), response);
         return response;
     }
-    // ── Group message send ────────────────────────────────────────────────────
+
+    // ── Group text message ────────────────────────────────────────────────────
     @Override
-    public MessageResponse sendGroupMessage(TextMessageRequest request, UUID chatId) {
+    public MessageResponse sendGroupMessage(GroupTextMessageRequest request, UUID chatId) {
         User sender = userService.getCurrentUserRequiredAuthentication();
+
+        // Invalidate cache để đảm bảo check membership mới nhất
+        inChatRepository.invalidateUserChat(sender.getId());
 
         if (!inChatRepository.isInChat(sender.getId(), chatId)) {
             throw new ApiException(ErrorCode.NOT_MEMBER_OF_GROUP);
@@ -80,6 +84,8 @@ public class MessageServiceImpl implements MessageService {
 
         String content = request.text().trim();
         if (content.isEmpty()) throw new ApiException(ErrorCode.TEXT_MESSAGE_CONTENT_REQUIRED);
+        if (content.length() > Message.MAX_CONTENT_LENGTH)
+            throw new ApiException(ErrorCode.INVALID_MESSAGE_CONTENT_LENGTH);
 
         Message message = Message.builder()
                 .chat(chat)
@@ -91,15 +97,18 @@ public class MessageServiceImpl implements MessageService {
         messageRepository.save(message);
         MessageResponse response = messageMapper.toMessageResponse(message);
 
-        // Broadcast to all group members
-        chat.getMembers().forEach(member -> {
-            if (!member.getId().equals(sender.getId())) {
-                sendMessageNotification(chatId, member.getId(), response);
-            }
-        });
+        // Broadcast to all group members (trừ người gửi)
+        if (chat.getMembers() != null) {
+            chat.getMembers().forEach(member -> {
+                if (!member.getId().equals(sender.getId())) {
+                    sendMessageNotification(chatId, member.getId(), response);
+                }
+            });
+        }
 
         return response;
     }
+
     @Override
     public MessageResponse sendMessage(TextMessageRequest request, UUID userId) {
         User sender = userService.getUser(userId);
@@ -179,6 +188,46 @@ public class MessageServiceImpl implements MessageService {
         return response;
     }
 
+    // ── Group file message ────────────────────────────────────────────────────
+    @Override
+    public MessageResponse sendGroupFile(FileMessageRequest request, UUID chatId) {
+        User sender = userService.getCurrentUserRequiredAuthentication();
+
+        // Invalidate cache để đảm bảo check membership mới nhất
+        inChatRepository.invalidateUserChat(sender.getId());
+
+        if (!inChatRepository.isInChat(sender.getId(), chatId)) {
+            throw new ApiException(ErrorCode.NOT_MEMBER_OF_GROUP);
+        }
+
+        Chat chat = chatRepository.findById(chatId)
+                .orElseThrow(() -> new ApiException(ErrorCode.CHAT_NOT_FOUND));
+
+        File file = fileService.upload(request.attachment());
+
+        Message message = Message.builder()
+                .chat(chat)
+                .sender(sender)
+                .type(MessageType.FILE)
+                .attachedFile(file)
+                .isRead(false)
+                .build();
+
+        messageRepository.save(message);
+        MessageResponse response = messageMapper.toMessageResponse(message);
+
+        // Broadcast tới tất cả thành viên nhóm (trừ người gửi)
+        if (chat.getMembers() != null) {
+            chat.getMembers().forEach(member -> {
+                if (!member.getId().equals(sender.getId())) {
+                    sendMessageNotification(chatId, member.getId(), response);
+                }
+            });
+        }
+
+        return response;
+    }
+
     @Override
     public List<MessageResponse> getHistory(UUID chatId, Neo4jPageable pageable) {
         UUID userId = userService.getCurrentUserIdRequiredAuthentication();
@@ -251,7 +300,6 @@ public class MessageServiceImpl implements MessageService {
         if (!message.getSender().getId().equals(user.getId())) {
             throw new ApiException(ErrorCode.UNAUTHORIZED);
         }
-
         if (ZonedDateTime.now().isAfter(message.getSentAt().plusMinutes(Message.MINUTES_TO_DELETE_MESSAGE))) {
             throw new ApiException(ErrorCode.CAN_NOT_DELETE_MESSAGE);
         }
@@ -281,42 +329,5 @@ public class MessageServiceImpl implements MessageService {
         messagingTemplate.convertAndSend(WebSocketChannelPrefix.CHAT_CHANNEL_PREFIX + "/" + chatId, response);
         // Gửi thông báo tin nhắn cho người nhận
         messagingTemplate.convertAndSend(WebSocketChannelPrefix.MESSAGE_CHANNEL_PREFIX + "/" + targetId, response);
-    }
-
-    @Override
-    public MessageResponse sendGroupFile(FileMessageRequest request, UUID chatId) {
-        User sender = userService.getCurrentUserRequiredAuthentication();
-
-        // Kiểm tra là thành viên nhóm
-        if (!inChatRepository.isInChat(sender.getId(), chatId)) {
-            throw new ApiException(ErrorCode.NOT_MEMBER_OF_GROUP);
-        }
-
-        Chat chat = chatRepository.findById(chatId)
-                .orElseThrow(() -> new ApiException(ErrorCode.CHAT_NOT_FOUND));
-
-        File file = fileService.upload(request.attachment());
-
-        Message message = Message.builder()
-                .chat(chat)
-                .sender(sender)
-                .type(MessageType.FILE)
-                .attachedFile(file)
-                .isRead(false)
-                .build();
-
-        messageRepository.save(message);
-        MessageResponse response = messageMapper.toMessageResponse(message);
-
-        // Broadcast tới tất cả thành viên nhóm (trừ người gửi)
-        if (chat.getMembers() != null) {
-            chat.getMembers().forEach(member -> {
-                if (!member.getId().equals(sender.getId())) {
-                    sendMessageNotification(chatId, member.getId(), response);
-                }
-            });
-        }
-
-        return response;
     }
 }
