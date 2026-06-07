@@ -13,7 +13,11 @@ function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center h-full gap-4 text-center px-8">
       <div className="w-24 h-24 rounded-full border-2 border-[var(--foreground)] flex items-center justify-center">
-        <MessageCircle size={48} strokeWidth={1} className="text-[var(--foreground)]" />
+        <MessageCircle
+          size={48}
+          strokeWidth={1}
+          className="text-[var(--foreground)]"
+        />
       </div>
       <div>
         <h3 className="text-xl font-semibold text-[var(--foreground)] mb-1">
@@ -57,7 +61,7 @@ export default function ChatLayoutInner() {
   useEffect(() => {
     if (chatIdFromUrl && chatList.length > 0) {
       const selectedChat = chatList.find(
-        (chat) => chat.chatId === chatIdFromUrl || chat.id === chatIdFromUrl
+        (chat) => chat.chatId === chatIdFromUrl || chat.id === chatIdFromUrl,
       );
       if (selectedChat) {
         setSelectedChatId(chatIdFromUrl);
@@ -104,7 +108,10 @@ export default function ChatLayoutInner() {
 
   if (isInitializing) {
     return (
-      <div className="flex items-center justify-center" style={{ height: "100%" }}>
+      <div
+        className="flex items-center justify-center"
+        style={{ height: "100%" }}
+      >
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--foreground)]" />
       </div>
     );
@@ -118,6 +125,8 @@ export default function ChatLayoutInner() {
           <ChatBox
             chatId={selectedChatId}
             targetUser={targetUser}
+            chat={selectedChat} // ← THÊM
+            isGroup={selectedChat?.isGroup} // ← THÊM
             onBack={handleBackToList}
             onChatCreated={handleChatCreated}
           />
@@ -163,8 +172,7 @@ export default function ChatLayoutInner() {
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border)]">
-          <span className="text-base font-bold text-[var(--foreground)]">
-          </span>
+          <span className="text-base font-bold text-[var(--foreground)]"></span>
           <button
             title="Tạo tin nhắn mới"
             className="text-[var(--foreground)] hover:text-[var(--muted-foreground)] transition-colors"
@@ -175,7 +183,9 @@ export default function ChatLayoutInner() {
 
         {/* Messages / Requests label */}
         <div className="flex items-center justify-between px-6 py-3">
-          <span className="text-base font-semibold text-[var(--foreground)]">Tin nhắn</span>
+          <span className="text-base font-semibold text-[var(--foreground)]">
+            Tin nhắn
+          </span>
           {/* <button className="text-sm font-semibold text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors">
             Yêu cầu
           </button> */}

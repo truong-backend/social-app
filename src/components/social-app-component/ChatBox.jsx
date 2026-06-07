@@ -18,8 +18,15 @@ import ChatHeader from "./ChatHeader";
 import ChatInput from "./ChatInput";
 import MessageItem from "./MessageItem";
 
-export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
-  // State management
+// SỬA: thêm props mới
+export default function ChatBox({
+  chatId,
+  targetUser,
+  chat,
+  isGroup,
+  onBack,
+  onChatCreated,
+}) {
   const [input, setInput] = useState("");
   const [uploading, setUploading] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState(null);
@@ -40,17 +47,30 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
   const isLoadingMoreRef = useRef(false);
 
   // Store & hooks
-  const fetchChatList = useAppStore(state => state.fetchChatList);
-  const selectChat = useAppStore(state => state.selectChat);
-  const getBlockStatusByChatId = useAppStore(state => state.getBlockStatusByChatId);
+  const fetchChatList = useAppStore((state) => state.fetchChatList);
+  const selectChat = useAppStore((state) => state.selectChat);
+  const getBlockStatusByChatId = useAppStore(
+    (state) => state.getBlockStatusByChatId,
+  );
 
-  const blockStatus = currentChatId ? getBlockStatusByChatId(currentChatId) : "NORMAL";
+  const blockStatus = currentChatId
+    ? getBlockStatusByChatId(currentChatId)
+    : "NORMAL";
   const canSendMessage = blockStatus === "NORMAL";
   const isBlockedByOther = blockStatus === "HAS_BEEN_BLOCKED";
   const hasBlockedOther = blockStatus === "BLOCKED";
 
-  const { messages, loading, loadingMore, hasMore, totalMessages, loadMoreMessages, isTyping } = useChat(currentChatId);
-  const { setupSubscription, cleanupSubscription } = useTypingNotification(currentChatId);
+  const {
+    messages,
+    loading,
+    loadingMore,
+    hasMore,
+    totalMessages,
+    loadMoreMessages,
+    isTyping,
+  } = useChat(currentChatId);
+  const { setupSubscription, cleanupSubscription } =
+    useTypingNotification(currentChatId);
   const { sendMessage, isConnected } = useSendMessage({
     chatId: currentChatId,
     receiverUsername: targetUser?.username,
@@ -58,8 +78,14 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
   const { initializeCall, makeCall } = useCall();
 
   // Handlers
-  const handleInputFocus = useCallback(() => setupSubscription(), [setupSubscription]);
-  const handleInputBlur = useCallback(() => cleanupSubscription(), [cleanupSubscription]);
+  const handleInputFocus = useCallback(
+    () => setupSubscription(),
+    [setupSubscription],
+  );
+  const handleInputBlur = useCallback(
+    () => cleanupSubscription(),
+    [cleanupSubscription],
+  );
 
   // Effects
   useEffect(() => {
@@ -82,10 +108,13 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
   }, [chatId, currentChatId]);
 
   // Cleanup on unmount
-  useEffect(() => () => {
-    if (abortControllerRef.current) abortControllerRef.current.abort();
-    if (filePreview?.startsWith("blob:")) URL.revokeObjectURL(filePreview);
-  }, [filePreview]);
+  useEffect(
+    () => () => {
+      if (abortControllerRef.current) abortControllerRef.current.abort();
+      if (filePreview?.startsWith("blob:")) URL.revokeObjectURL(filePreview);
+    },
+    [filePreview],
+  );
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
@@ -100,7 +129,7 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
           });
         }
       },
-      { root: messagesContainerRef.current, rootMargin: '0px', threshold: 0.1 }
+      { root: messagesContainerRef.current, rootMargin: "0px", threshold: 0.1 },
     );
 
     observer.observe(bottomElementRef.current);
@@ -111,7 +140,9 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
   const autoScrollToBottom = useCallback(() => {
     const container = messagesContainerRef.current;
     if (!container) return;
-    const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+    const isNearBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight <
+      100;
     if (isNearBottom) container.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
@@ -119,7 +150,11 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
     if (messages?.length > 0) {
       const container = messagesContainerRef.current;
       if (container) {
-        const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+        const isNearBottom =
+          container.scrollHeight -
+            container.scrollTop -
+            container.clientHeight <
+          100;
         if (isNearBottom || messages.length === 1) {
           container.scrollTo({ top: 0, behavior: "smooth" });
         }
@@ -156,13 +191,17 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
     const createChatPromise = (async () => {
       try {
         setIsCreatingChat(true);
-        const response = await api.post("/v1/chat/send", {
-          username: targetUser?.username,
-          text: message,
-        }, {
-          signal: abortController.signal,
-          timeout: 15000,
-        });
+        const response = await api.post(
+          "/v1/chat/send",
+          {
+            username: targetUser?.username,
+            text: message,
+          },
+          {
+            signal: abortController.signal,
+            timeout: 15000,
+          },
+        );
 
         if (abortController.signal.aborted) return null;
 
@@ -180,7 +219,8 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
         }
         throw new Error("Không thể tạo chat mới");
       } catch (error) {
-        if (error.name === 'AbortError' || abortController.signal.aborted) return null;
+        if (error.name === "AbortError" || abortController.signal.aborted)
+          return null;
         console.error("Error creating chat:", error);
         toast.error("Không thể tạo cuộc trò chuyện mới");
         throw error;
@@ -197,11 +237,30 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
     return await createChatPromise;
   };
 
+  // THÊM vào trước handleSend, sau các state declarations:
+  const handleGroupSend = async () => {
+    const trimmed = input.trim();
+    if (!trimmed || isSendingMessage) return;
+    try {
+      setIsSendingMessage(true);
+      const { groupApi } = await import("@/utils/groupApi");
+      await groupApi.sendGroupMessage(currentChatId, trimmed);
+      setInput("");
+    } catch {
+      toast.error("Lỗi gửi tin nhắn nhóm");
+    } finally {
+      setIsSendingMessage(false);
+    }
+  };
+
   // Message handlers
   const handleSend = async () => {
+
+    if (isGroup) { await handleGroupSend(); return; }
     const trimmed = input.trim();
     if (!trimmed || !canSendMessage || isSendingMessage || isCreatingChat) {
-      if (!canSendMessage) toast.error("Không thể gửi tin nhắn do bạn đã bị chặn");
+      if (!canSendMessage)
+        toast.error("Không thể gửi tin nhắn do bạn đã bị chặn");
       return;
     }
 
@@ -219,7 +278,7 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
       }
       setInput("");
     } catch (err) {
-      if (err.name !== 'AbortError') toast.error("Lỗi khi gửi tin nhắn");
+      if (err.name !== "AbortError") toast.error("Lỗi khi gửi tin nhắn");
     } finally {
       setIsSendingMessage(false);
     }
@@ -250,7 +309,7 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
     const errors = {
       blocked: "Không thể gửi file do bạn đã bị chặn",
       newChat: "Vui lòng gửi tin nhắn đầu tiên trước khi gửi file",
-      size: "File quá lớn! Vui lòng chọn file < 10MB"
+      size: "File quá lớn! Vui lòng chọn file < 10MB",
     };
 
     if (!canSendMessage) return toast.error(errors.blocked);
@@ -258,12 +317,31 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
     if (file.size > 10 * 1024 * 1024) return toast.error(errors.size);
 
     setSelectedFile(file);
-    setFilePreview(file.type.startsWith("image/") ? URL.createObjectURL(file) : null);
+    setFilePreview(
+      file.type.startsWith("image/") ? URL.createObjectURL(file) : null,
+    );
     e.target.value = null;
   };
 
   const handleSendFile = async () => {
-    if (!selectedFile || !currentChatId || !targetUser?.username || !canSendMessage) {
+    if (isGroup) {
+      if (!selectedFile || !currentChatId) return;
+      try {
+        setUploading(true);
+        const { groupApi } = await import("@/utils/groupApi");
+        await groupApi.sendGroupFile(currentChatId, selectedFile);
+        toast.success("File đã được gửi!");
+        handleCancelFile();
+      } catch { toast.error("Lỗi khi gửi file"); }
+      finally { setUploading(false); }
+      return;
+    }
+    if (
+      !selectedFile ||
+      !currentChatId ||
+      !targetUser?.username ||
+      !canSendMessage
+    ) {
       if (!canSendMessage) toast.error("Không thể gửi file do bạn đã bị chặn");
       return;
     }
@@ -285,7 +363,8 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
 
   const handleSendVoice = async (blob) => {
     if (!blob || !currentChatId || !targetUser?.username || !canSendMessage) {
-      if (!canSendMessage) toast.error("Không thể gửi tin nhắn thoại do bạn đã bị chặn");
+      if (!canSendMessage)
+        toast.error("Không thể gửi tin nhắn thoại do bạn đã bị chặn");
       return;
     }
 
@@ -386,25 +465,35 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
         message: `Bạn đã bị ${targetUser?.displayName || targetUser?.username} chặn. Không thể gửi tin nhắn.`,
         bgColor: "bg-red-50",
         textColor: "text-red-700",
-        borderColor: "border-red-200"
+        borderColor: "border-red-200",
       },
       BLOCKED: {
         message: `Bạn đã chặn ${targetUser?.displayName || targetUser?.username}. Bỏ chặn để có thể nhắn tin.`,
         bgColor: "bg-yellow-50",
         textColor: "text-yellow-700",
-        borderColor: "border-yellow-200"
-      }
+        borderColor: "border-yellow-200",
+      },
     };
 
     const config = statusConfig[blockStatus];
     if (!config) return null;
 
     return (
-      <div className={`mx-4 mb-3 p-3 rounded-lg border ${config.bgColor} ${config.borderColor}`}>
+      <div
+        className={`mx-4 mb-3 p-3 rounded-lg border ${config.bgColor} ${config.borderColor}`}
+      >
         <div className="flex items-center gap-2">
           <div className="flex-shrink-0">
-            <svg className={`w-5 h-5 ${config.textColor}`} fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
+            <svg
+              className={`w-5 h-5 ${config.textColor}`}
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z"
+                clipRule="evenodd"
+              />
             </svg>
           </div>
           <p className={`text-sm font-medium ${config.textColor}`}>
@@ -420,7 +509,9 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
       return (
         <div className="text-center py-4">
           <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
-          <p className="text-sm text-[var(--muted-foreground)] mt-2">Đang tải tin nhắn...</p>
+          <p className="text-sm text-[var(--muted-foreground)] mt-2">
+            Đang tải tin nhắn...
+          </p>
         </div>
       );
     }
@@ -428,7 +519,8 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
     if (isNewChat) {
       return (
         <div className="text-center py-8 text-[var(--muted-foreground)] text-sm">
-          Bắt đầu cuộc trò chuyện với {targetUser?.displayName || targetUser?.username}
+          Bắt đầu cuộc trò chuyện với{" "}
+          {targetUser?.displayName || targetUser?.username}
         </div>
       );
     }
@@ -448,13 +540,17 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
         {loadingMore && (
           <div className="text-center py-2">
             <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-            <p className="text-xs text-[var(--muted-foreground)] mt-1">Đang tải thêm tin nhắn...</p>
+            <p className="text-xs text-[var(--muted-foreground)] mt-1">
+              Đang tải thêm tin nhắn...
+            </p>
           </div>
         )}
 
         {!hasMore && totalMessages > 20 && (
           <div className="text-center py-2">
-            <p className="text-xs text-[var(--muted-foreground)]">Đã hiển thị tất cả tin nhắn</p>
+            <p className="text-xs text-[var(--muted-foreground)]">
+              Đã hiển thị tất cả tin nhắn
+            </p>
           </div>
         )}
 
@@ -476,7 +572,12 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
   };
 
   // Computed values
-  const isInputDisabled = !isConnected || isSendingMessage || isCreatingChat || uploading || !canSendMessage;
+  const isInputDisabled =
+    !isConnected ||
+    isSendingMessage ||
+    isCreatingChat ||
+    uploading ||
+    !canSendMessage;
 
   const inputPlaceholder = !canSendMessage
     ? isBlockedByOther
@@ -492,24 +593,28 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
 
   // ── Lấy userId của callee để làm địa chỉ WebRTC signal ──────────
   // targetUser có thể có: id, userId, hoặc fallback về username
-  const calleeUserId = targetUser?.id || targetUser?.userId || targetUser?.username;
+  const calleeUserId =
+    targetUser?.id || targetUser?.userId || targetUser?.username;
 
   return (
     <div className="flex flex-col h-full w-full bg-[var(--card)] text-[var(--foreground)] rounded-2xl overflow-hidden shadow-sm">
       <ChatHeader
         targetUser={targetUser}
+        chat={chat}
+        isGroup={isGroup}
         isConnected={isNewChat ? true : isConnected}
         onBack={onBack}
         onCall={() => makeCall(targetUser?.username, false, calleeUserId)}
         onVideoCall={() => makeCall(targetUser?.username, true, calleeUserId)}
+        onChatUpdated={() => fetchChatList()}
       />
 
       <div
         ref={messagesContainerRef}
         className="flex-1 px-4 py-3 overflow-y-auto space-y-2 bg-transparent flex flex-col-reverse"
         style={{
-          scrollBehavior: 'smooth',
-          overscrollBehavior: 'contain'
+          scrollBehavior: "smooth",
+          overscrollBehavior: "contain",
         }}
       >
         {renderMessages()}
