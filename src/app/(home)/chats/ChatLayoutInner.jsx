@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import ChatList from "@/components/social-app-component/ChatList";
 import ChatBox from "@/components/social-app-component/ChatBox";
+import CreateGroupModal from "@/components/social-app-component/CreateGroupModal";
 import useAppStore from "@/store/ZustandStore";
 import useIsMobile from "@/hooks/useIsMobile";
 import { pageMetadata, usePageMetadata } from "@/utils/clientMetadata";
 import { useSearchParams, useRouter } from "next/navigation";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Users } from "lucide-react";
 
 function EmptyState() {
   return (
@@ -34,9 +35,10 @@ function EmptyState() {
 export default function ChatLayoutInner() {
   const [selectedChatId, setSelectedChatId] = useState(null);
   const [targetUser, setTargetUser] = useState(null);
-  const [selectedChat, setSelectedChat] = useState(null); // ← FIX: thêm state
+  const [selectedChat, setSelectedChat] = useState(null);
   const [chatListKey, setChatListKey] = useState(0);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -63,12 +65,12 @@ export default function ChatLayoutInner() {
       if (found) {
         setSelectedChatId(chatIdFromUrl);
         setTargetUser(found.target);
-        setSelectedChat(found); // ← FIX: set state
+        setSelectedChat(found);
       }
     } else if (!chatIdFromUrl) {
       setSelectedChatId(null);
       setTargetUser(null);
-      setSelectedChat(null); // ← FIX: reset state
+      setSelectedChat(null);
     }
   }, [chatIdFromUrl, chatList]);
 
@@ -78,7 +80,7 @@ export default function ChatLayoutInner() {
     router.push(`/chats?${params.toString()}`, { scroll: false });
     setSelectedChatId(chatId);
     setTargetUser(user);
-    setSelectedChat(chat); // ← FIX: set state
+    setSelectedChat(chat);
   };
 
   const handleChatCreated = async (newChatId, user) => {
@@ -104,7 +106,18 @@ export default function ChatLayoutInner() {
     clearChatSelection();
     setSelectedChatId(null);
     setTargetUser(null);
-    setSelectedChat(null); // ← FIX: reset state
+    setSelectedChat(null);
+  };
+
+  const handleGroupCreated = async (newChatId) => {
+    setShowCreateGroup(false);
+    await fetchChatList();
+    setChatListKey((prev) => prev + 1);
+    if (newChatId) {
+      const params = new URLSearchParams(window.location.search);
+      params.set("chatId", newChatId);
+      router.push(`/chats?${params.toString()}`, { scroll: false });
+    }
   };
 
   if (isInitializing) {
@@ -137,6 +150,13 @@ export default function ChatLayoutInner() {
           <span className="text-base font-semibold text-[var(--foreground)]">
             Danh sách trò chuyện
           </span>
+          <button
+            onClick={() => setShowCreateGroup(true)}
+            className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 px-2 py-1 rounded-lg hover:bg-blue-50 transition-colors"
+            title="Tạo nhóm"
+          >
+            <Users size={18} />
+          </button>
         </div>
         <div className="flex-1 overflow-y-auto">
           <ChatList
@@ -145,60 +165,83 @@ export default function ChatLayoutInner() {
             selectedChatId={selectedChatId}
           />
         </div>
+        {showCreateGroup && (
+          <CreateGroupModal
+            onClose={() => setShowCreateGroup(false)}
+            onCreated={handleGroupCreated}
+          />
+        )}
       </div>
     );
   }
 
   // Desktop
   return (
-    <div
-      className="flex bg-[var(--background)] text-[var(--foreground)]"
-      style={{
-        height: "100vh",
-        marginLeft: "-9999px",
-        paddingLeft: "9999px",
-        marginRight: "-9999px",
-        paddingRight: "9999px",
-        overflow: "hidden",
-      }}
-    >
-      {/* Left panel */}
+    <>
       <div
-        className="flex flex-col border-r border-[var(--border)] flex-shrink-0 h-full overflow-hidden"
-        style={{ width: "397px" }}
+        className="flex bg-[var(--background)] text-[var(--foreground)]"
+        style={{
+          height: "100vh",
+          marginLeft: "-9999px",
+          paddingLeft: "9999px",
+          marginRight: "-9999px",
+          paddingRight: "9999px",
+          overflow: "hidden",
+        }}
       >
-        <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border)]">
-          <span className="text-base font-bold text-[var(--foreground)]"></span>
+        {/* Left panel */}
+        <div
+          className="flex flex-col border-r border-[var(--border)] flex-shrink-0 h-full overflow-hidden"
+          style={{ width: "397px" }}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border)]">
+            <span className="text-base font-semibold text-[var(--foreground)]">
+              Tin nhắn
+            </span>
+            <button
+              onClick={() => setShowCreateGroup(true)}
+              className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 px-2 py-1 rounded-lg hover:bg-blue-50 transition-colors"
+              title="Tạo nhóm chat mới"
+            >
+              <Users size={18} />
+              <span>Tạo nhóm</span>
+            </button>
+          </div>
+
+          {/* Chat list */}
+          <div className="flex-1 overflow-y-auto">
+            <ChatList
+              key={chatListKey}
+              onSelectChat={handleSelectChat}
+              selectedChatId={selectedChatId}
+            />
+          </div>
         </div>
-        <div className="flex items-center justify-between px-6 py-3">
-          <span className="text-base font-semibold text-[var(--foreground)]">
-            Tin nhắn
-          </span>
-        </div>
-        <div className="flex-1 overflow-y-auto">
-          <ChatList
-            key={chatListKey}
-            onSelectChat={handleSelectChat}
-            selectedChatId={selectedChatId}
-          />
+
+        {/* Right panel */}
+        <div className="flex-1 flex flex-col overflow-hidden h-full">
+          {targetUser ? (
+            <ChatBox
+              chatId={selectedChatId}
+              targetUser={targetUser}
+              chat={selectedChat}
+              isGroup={selectedChat?.isGroup}
+              onBack={handleBackToList}
+              onChatCreated={handleChatCreated}
+            />
+          ) : (
+            <EmptyState />
+          )}
         </div>
       </div>
 
-      {/* Right panel */}
-      <div className="flex-1 flex flex-col overflow-hidden h-full">
-        {targetUser ? (
-          <ChatBox
-            chatId={selectedChatId}
-            targetUser={targetUser}
-            chat={selectedChat}
-            isGroup={selectedChat?.isGroup}
-            onBack={handleBackToList}
-            onChatCreated={handleChatCreated}
-          />
-        ) : (
-          <EmptyState />
-        )}
-      </div>
-    </div>
+      {showCreateGroup && (
+        <CreateGroupModal
+          onClose={() => setShowCreateGroup(false)}
+          onCreated={handleGroupCreated}
+        />
+      )}
+    </>
   );
 }
