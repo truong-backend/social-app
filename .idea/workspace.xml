@@ -4,32 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="069b736b-0e6d-4b3d-af43-6e4a296b7724" name="Changes" comment="refactor: clean up commented code and improve formatting in StoryViewer component">
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/controller/GroupController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/projection/GroupMemberProjection.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/projection/PinnedMessageProjection.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/request/CreateGroupRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/request/GroupMemberRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/request/UpdateGroupRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/response/GroupMemberResponse.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/enums/GroupRole.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/impl/GroupServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/itf/GroupService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/config/WebSocketChannelPrefix.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/config/WebSocketChannelPrefix.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/controller/ChatController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/controller/ChatController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/projection/ChatProjection.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/projection/ChatProjection.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/response/ChatResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/response/ChatResponse.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/response/MessageCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/response/MessageCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/entity/Chat.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/entity/Chat.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/exception/ErrorCode.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/exception/ErrorCode.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/mapper/ChatMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/mapper/ChatMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/repository/neo4j/ChatRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/repository/neo4j/ChatRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/impl/ChatServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/impl/ChatServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/impl/MessageServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/impl/MessageServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/itf/ChatService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/itf/ChatService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/itf/MessageService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/itf/MessageService.java" afterDir="false" />
-    </list>
+    <list default="true" id="069b736b-0e6d-4b3d-af43-6e4a296b7724" name="Changes" comment="feat: Implement group chat functionality with CreateGroupModal and GroupInfoModal&#10;&#10;- Added CreateGroupModal component for creating new group chats.&#10;- Implemented GroupInfoModal for managing group details, including member actions and pinned messages.&#10;- Introduced groupApi utility for handling group-related API calls.&#10;- Enhanced Zustand store (ZustandStore.js) to manage group chat state and events." />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -97,14 +72,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1776389664504</updated>
-    </task>
-    <task id="LOCAL-00005" summary="Update deploy hetzner">
-      <option name="closed" value="true" />
-      <created>1776545046346</created>
-      <option name="number" value="00005" />
-      <option name="presentableId" value="LOCAL-00005" />
-      <option name="project" value="LOCAL" />
-      <updated>1776545046346</updated>
     </task>
     <task id="LOCAL-00006" summary="Update deploy hetzner">
       <option name="closed" value="true" />
@@ -490,7 +457,15 @@
       <option name="project" value="LOCAL" />
       <updated>1779078341110</updated>
     </task>
-    <option name="localTasksCounter" value="54" />
+    <task id="LOCAL-00054" summary="feat: Implement group chat functionality with CreateGroupModal and GroupInfoModal&#10;&#10;- Added CreateGroupModal component for creating new group chats.&#10;- Implemented GroupInfoModal for managing group details, including member actions and pinned messages.&#10;- Introduced groupApi utility for handling group-related API calls.&#10;- Enhanced Zustand store (ZustandStore.js) to manage group chat state and events.">
+      <option name="closed" value="true" />
+      <created>1780831034228</created>
+      <option name="number" value="00054" />
+      <option name="presentableId" value="LOCAL-00054" />
+      <option name="project" value="LOCAL" />
+      <updated>1780831034229</updated>
+    </task>
+    <option name="localTasksCounter" value="55" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -514,7 +489,8 @@
     <MESSAGE value="feat: enhance CallPopup and CallVideo components for improved call handling and UI updates" />
     <MESSAGE value="feat: implement deduplication for friend groups and my stories in useReels hook" />
     <MESSAGE value="refactor: clean up commented code and improve formatting in StoryViewer component" />
-    <option name="LAST_COMMIT_MESSAGE" value="refactor: clean up commented code and improve formatting in StoryViewer component" />
+    <MESSAGE value="feat: Implement group chat functionality with CreateGroupModal and GroupInfoModal&#10;&#10;- Added CreateGroupModal component for creating new group chats.&#10;- Implemented GroupInfoModal for managing group details, including member actions and pinned messages.&#10;- Introduced groupApi utility for handling group-related API calls.&#10;- Enhanced Zustand store (ZustandStore.js) to manage group chat state and events." />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: Implement group chat functionality with CreateGroupModal and GroupInfoModal&#10;&#10;- Added CreateGroupModal component for creating new group chats.&#10;- Implemented GroupInfoModal for managing group details, including member actions and pinned messages.&#10;- Introduced groupApi utility for handling group-related API calls.&#10;- Enhanced Zustand store (ZustandStore.js) to manage group chat state and events." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
