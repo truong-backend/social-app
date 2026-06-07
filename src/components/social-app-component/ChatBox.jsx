@@ -141,7 +141,7 @@ export default function ChatBox({
     const container = messagesContainerRef.current;
     if (!container) return;
     const isNearBottom =
-      container.scrollHeight - container.scrollTop - container.clientHeight <
+      container.scrollHeight - container.scrollTop - container.clientHeight 
       100;
     if (isNearBottom) container.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
@@ -153,7 +153,7 @@ export default function ChatBox({
         const isNearBottom =
           container.scrollHeight -
             container.scrollTop -
-            container.clientHeight <
+            container.clientHeight 
           100;
         if (isNearBottom || messages.length === 1) {
           container.scrollTo({ top: 0, behavior: "smooth" });
@@ -237,7 +237,6 @@ export default function ChatBox({
     return await createChatPromise;
   };
 
-  // THÊM vào trước handleSend, sau các state declarations:
   const handleGroupSend = async () => {
     const trimmed = input.trim();
     if (!trimmed || isSendingMessage) return;
@@ -255,7 +254,6 @@ export default function ChatBox({
 
   // Message handlers
   const handleSend = async () => {
-
     if (isGroup) { await handleGroupSend(); return; }
     const trimmed = input.trim();
     if (!trimmed || !canSendMessage || isSendingMessage || isCreatingChat) {
@@ -361,8 +359,27 @@ export default function ChatBox({
     }
   };
 
+  // ✅ FIX: Xử lý voice cho cả group và direct chat
   const handleSendVoice = async (blob) => {
-    if (!blob || !currentChatId || !targetUser?.username || !canSendMessage) {
+    if (!blob || !currentChatId) return;
+
+    // Group voice
+    if (isGroup) {
+      try {
+        setUploading(true);
+        const { groupApi } = await import("@/utils/groupApi");
+        await groupApi.sendGroupVoice(currentChatId, blob);
+        handleCancelFile();
+      } catch {
+        toast.error("Lỗi khi gửi tin nhắn thoại nhóm");
+      } finally {
+        setUploading(false);
+      }
+      return;
+    }
+
+    // Direct chat voice
+    if (!targetUser?.username || !canSendMessage) {
       if (!canSendMessage)
         toast.error("Không thể gửi tin nhắn thoại do bạn đã bị chặn");
       return;
@@ -591,8 +608,6 @@ export default function ChatBox({
           ? `Nhắn tin cho ${targetUser?.displayName || targetUser?.username}...`
           : "Nhập tin nhắn...";
 
-  // ── Lấy userId của callee để làm địa chỉ WebRTC signal ──────────
-  // targetUser có thể có: id, userId, hoặc fallback về username
   const calleeUserId =
     targetUser?.id || targetUser?.userId || targetUser?.username;
 
