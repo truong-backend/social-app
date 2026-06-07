@@ -64,7 +64,7 @@ export default function ChatLayoutInner() {
       );
       if (found) {
         setSelectedChatId(chatIdFromUrl);
-        setTargetUser(found.target);
+        setTargetUser(found.target || null);
         setSelectedChat(found);
       }
     } else if (!chatIdFromUrl) {
@@ -79,8 +79,8 @@ export default function ChatLayoutInner() {
     params.set("chatId", chatId);
     router.push(`/chats?${params.toString()}`, { scroll: false });
     setSelectedChatId(chatId);
-    setTargetUser(user);
-    setSelectedChat(chat);
+    setTargetUser(user || null);
+    setSelectedChat(chat || null);
   };
 
   const handleChatCreated = async (newChatId, user) => {
@@ -90,7 +90,7 @@ export default function ChatLayoutInner() {
       params.set("chatId", newChatId);
       router.push(`/chats?${params.toString()}`, { scroll: false });
       setSelectedChatId(newChatId);
-      setTargetUser(user);
+      setTargetUser(user || null);
       setChatListKey((prev) => prev + 1);
     } catch (error) {
       console.error("Error in chat creation flow:", error);
@@ -130,7 +130,7 @@ export default function ChatLayoutInner() {
 
   // Mobile
   if (isMobile) {
-    if (targetUser) {
+    if (selectedChatId) {
       return (
         <div className="fixed inset-0 z-50 bg-[var(--background)]">
           <ChatBox
@@ -221,7 +221,7 @@ export default function ChatLayoutInner() {
 
         {/* Right panel */}
         <div className="flex-1 flex flex-col overflow-hidden h-full">
-          {targetUser ? (
+          {selectedChatId ? (
             <ChatBox
               chatId={selectedChatId}
               targetUser={targetUser}
