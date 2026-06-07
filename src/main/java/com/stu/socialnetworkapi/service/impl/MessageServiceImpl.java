@@ -95,10 +95,7 @@ public class MessageServiceImpl implements MessageService {
 
         messageRepository.save(message);
         MessageResponse response = messageMapper.toMessageResponse(message);
-
-        // ✅ FIX duplicate: broadcast 1 lần duy nhất lên /chat/{chatId}
         sendGroupMessageNotification(chatId, sender.getId(), chat.getMembers(), response);
-
         return response;
     }
 
@@ -207,14 +204,10 @@ public class MessageServiceImpl implements MessageService {
 
         messageRepository.save(message);
         MessageResponse response = messageMapper.toMessageResponse(message);
-
-        // ✅ FIX duplicate: broadcast 1 lần duy nhất lên /chat/{chatId}
         sendGroupMessageNotification(chatId, sender.getId(), chat.getMembers(), response);
-
         return response;
     }
 
-    // ✅ FIX: Group file message dùng GroupFileMessageRequest (không cần username)
     @Override
     public MessageResponse sendGroupFile(GroupFileMessageRequest request, UUID chatId) {
         User sender = userService.getCurrentUserRequiredAuthentication();
@@ -240,10 +233,36 @@ public class MessageServiceImpl implements MessageService {
 
         messageRepository.save(message);
         MessageResponse response = messageMapper.toMessageResponse(message);
-
-        // ✅ FIX duplicate: broadcast 1 lần duy nhất lên /chat/{chatId}
         sendGroupMessageNotification(chatId, sender.getId(), chat.getMembers(), response);
+        return response;
+    }
 
+    @Override
+    public MessageResponse sendGroupVoice(GroupVoiceMessageRequest request, UUID chatId) {
+        User sender = userService.getCurrentUserRequiredAuthentication();
+
+        inChatRepository.invalidateUserChat(sender.getId());
+
+        if (!inChatRepository.isInChat(sender.getId(), chatId)) {
+            throw new ApiException(ErrorCode.NOT_MEMBER_OF_GROUP);
+        }
+
+        Chat chat = chatRepository.findById(chatId)
+                .orElseThrow(() -> new ApiException(ErrorCode.CHAT_NOT_FOUND));
+
+        File file = fileService.upload(request.voiceFile());
+
+        Message message = Message.builder()
+                .chat(chat)
+                .sender(sender)
+                .type(MessageType.VOICE)
+                .attachedFile(file)
+                .isRead(false)
+                .build();
+
+        messageRepository.save(message);
+        MessageResponse response = messageMapper.toMessageResponse(message);
+        sendGroupMessageNotification(chatId, sender.getId(), chat.getMembers(), response);
         return response;
     }
 
@@ -343,26 +362,15 @@ public class MessageServiceImpl implements MessageService {
             throw new ApiException(ErrorCode.TEXT_MESSAGE_CONTENT_UNCHANGED);
     }
 
-    /**
-     * Dùng cho direct chat: broadcast lên /chat/{chatId} + gửi riêng /message/{targetId}
-     */
     private void sendMessageNotification(UUID chatId, UUID targetId, MessageResponse response) {
         messagingTemplate.convertAndSend(WebSocketChannelPrefix.CHAT_CHANNEL_PREFIX + "/" + chatId, response);
         messagingTemplate.convertAndSend(WebSocketChannelPrefix.MESSAGE_CHANNEL_PREFIX + "/" + targetId, response);
     }
 
-    /**
-     * Dùng cho group chat:
-     * - Broadcast 1 lần duy nhất lên /chat/{chatId} → tránh duplicate N lần theo số thành viên
-     * - Loop gửi /message/{userId} per-member (trừ sender) để cập nhật sidebar chat list
-     */
     private void sendGroupMessageNotification(UUID chatId, UUID senderId,
                                               Collection<User> members,
                                               MessageResponse response) {
-        // ✅ Chỉ 1 lần — tất cả subscriber /chat/{chatId} đều nhận đúng 1 bản
         messagingTemplate.convertAndSend(WebSocketChannelPrefix.CHAT_CHANNEL_PREFIX + "/" + chatId, response);
-
-        // Per-user notification cho sidebar (chỉ các member không phải sender)
         if (members != null) {
             members.forEach(member -> {
                 if (!member.getId().equals(senderId)) {

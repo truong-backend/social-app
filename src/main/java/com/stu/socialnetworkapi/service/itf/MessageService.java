@@ -12,6 +12,7 @@ public interface MessageService {
     MessageResponse sendGroupMessage(GroupTextMessageRequest request, UUID chatId);
     MessageResponse sendGroupFile(FileMessageRequest request, UUID chatId);
     MessageResponse sendGroupFile(GroupFileMessageRequest request, UUID chatId);
+    MessageResponse sendGroupVoice(GroupVoiceMessageRequest request, UUID chatId);
 
     MessageResponse sendMessage(TextMessageRequest request, UUID userId);
 
