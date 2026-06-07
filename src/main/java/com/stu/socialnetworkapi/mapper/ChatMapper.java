@@ -2,6 +2,7 @@ package com.stu.socialnetworkapi.mapper;
 
 import com.stu.socialnetworkapi.dto.projection.ChatProjection;
 import com.stu.socialnetworkapi.dto.response.ChatResponse;
+import com.stu.socialnetworkapi.entity.File;
 import com.stu.socialnetworkapi.enums.GroupRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -25,7 +26,7 @@ public class ChatMapper {
         if (Boolean.TRUE.equals(projection.isGroup())) {
             // Group chat
             builder
-                    .groupAvatarUrl(projection.groupAvatarFileId())
+                    .groupAvatarUrl(File.getPath(projection.groupAvatarFileId()))
                     .memberCount(projection.memberCount())
                     .myRole(projection.myRole() != null
                             ? GroupRole.valueOf(projection.myRole().name())

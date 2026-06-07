@@ -264,7 +264,7 @@ public class GroupServiceImpl implements GroupService {
                         .username(p.username())
                         .givenName(p.givenName())
                         .familyName(p.familyName())
-                        .profilePictureUrl((p.profilePictureId()))
+                        .profilePictureUrl(File.getPath(p.profilePictureId()))
                         .role(GroupRole.valueOf(p.role()))
                         .joinedAt(p.joinedAt())
                         .build())
