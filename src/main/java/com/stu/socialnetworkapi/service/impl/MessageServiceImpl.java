@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.stu.socialnetworkapi.repository.neo4j.ChatRepository;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -95,13 +96,8 @@ public class MessageServiceImpl implements MessageService {
         messageRepository.save(message);
         MessageResponse response = messageMapper.toMessageResponse(message);
 
-        if (chat.getMembers() != null) {
-            chat.getMembers().forEach(member -> {
-                if (!member.getId().equals(sender.getId())) {
-                    sendMessageNotification(chatId, member.getId(), response);
-                }
-            });
-        }
+        // ✅ FIX duplicate: broadcast 1 lần duy nhất lên /chat/{chatId}
+        sendGroupMessageNotification(chatId, sender.getId(), chat.getMembers(), response);
 
         return response;
     }
@@ -212,13 +208,8 @@ public class MessageServiceImpl implements MessageService {
         messageRepository.save(message);
         MessageResponse response = messageMapper.toMessageResponse(message);
 
-        if (chat.getMembers() != null) {
-            chat.getMembers().forEach(member -> {
-                if (!member.getId().equals(sender.getId())) {
-                    sendMessageNotification(chatId, member.getId(), response);
-                }
-            });
-        }
+        // ✅ FIX duplicate: broadcast 1 lần duy nhất lên /chat/{chatId}
+        sendGroupMessageNotification(chatId, sender.getId(), chat.getMembers(), response);
 
         return response;
     }
@@ -250,13 +241,8 @@ public class MessageServiceImpl implements MessageService {
         messageRepository.save(message);
         MessageResponse response = messageMapper.toMessageResponse(message);
 
-        if (chat.getMembers() != null) {
-            chat.getMembers().forEach(member -> {
-                if (!member.getId().equals(sender.getId())) {
-                    sendMessageNotification(chatId, member.getId(), response);
-                }
-            });
-        }
+        // ✅ FIX duplicate: broadcast 1 lần duy nhất lên /chat/{chatId}
+        sendGroupMessageNotification(chatId, sender.getId(), chat.getMembers(), response);
 
         return response;
     }
@@ -357,8 +343,33 @@ public class MessageServiceImpl implements MessageService {
             throw new ApiException(ErrorCode.TEXT_MESSAGE_CONTENT_UNCHANGED);
     }
 
+    /**
+     * Dùng cho direct chat: broadcast lên /chat/{chatId} + gửi riêng /message/{targetId}
+     */
     private void sendMessageNotification(UUID chatId, UUID targetId, MessageResponse response) {
         messagingTemplate.convertAndSend(WebSocketChannelPrefix.CHAT_CHANNEL_PREFIX + "/" + chatId, response);
         messagingTemplate.convertAndSend(WebSocketChannelPrefix.MESSAGE_CHANNEL_PREFIX + "/" + targetId, response);
+    }
+
+    /**
+     * Dùng cho group chat:
+     * - Broadcast 1 lần duy nhất lên /chat/{chatId} → tránh duplicate N lần theo số thành viên
+     * - Loop gửi /message/{userId} per-member (trừ sender) để cập nhật sidebar chat list
+     */
+    private void sendGroupMessageNotification(UUID chatId, UUID senderId,
+                                              Collection<User> members,
+                                              MessageResponse response) {
+        // ✅ Chỉ 1 lần — tất cả subscriber /chat/{chatId} đều nhận đúng 1 bản
+        messagingTemplate.convertAndSend(WebSocketChannelPrefix.CHAT_CHANNEL_PREFIX + "/" + chatId, response);
+
+        // Per-user notification cho sidebar (chỉ các member không phải sender)
+        if (members != null) {
+            members.forEach(member -> {
+                if (!member.getId().equals(senderId)) {
+                    messagingTemplate.convertAndSend(
+                            WebSocketChannelPrefix.MESSAGE_CHANNEL_PREFIX + "/" + member.getId(), response);
+                }
+            });
+        }
     }
 }
