@@ -36,7 +36,6 @@ class StompClientSingleton {
         console.log("✅ STOMP connected", frame);
         this.reconnectAttempts = 0;
         this.isConnecting = false;
-        // ── Expose cho CallContext (WebRTC signaling) ──
         if (typeof window !== "undefined") {
           window.__stompClient = this.client;
         }
@@ -154,6 +153,18 @@ class StompClientSingleton {
         return null;
       }
 
+      // ✅ FIX: Nếu đã có subscription cũ cho destination này, unsubscribe trước
+      const existing = this.subscribers.get(destination);
+      if (existing?.subscription) {
+        console.log("🧹 Unsubscribing existing subscription before re-subscribing:", destination);
+        try {
+          existing.subscription.unsubscribe();
+        } catch (e) {
+          console.warn("⚠️ Error unsubscribing old subscription:", e);
+        }
+        this.subscribers.delete(destination);
+      }
+
       const subscription = client.subscribe(destination, callback, headers);
       this.subscribers.set(destination, { callback, headers, subscription });
 
@@ -168,7 +179,11 @@ class StompClientSingleton {
   unsubscribe(destination) {
     const subscriberInfo = this.subscribers.get(destination);
     if (subscriberInfo?.subscription) {
-      subscriberInfo.subscription.unsubscribe();
+      try {
+        subscriberInfo.subscription.unsubscribe();
+      } catch (e) {
+        console.warn("⚠️ Error during unsubscribe:", e);
+      }
       this.subscribers.delete(destination);
       console.log("✅ Unsubscribed from", destination);
     }
@@ -179,7 +194,20 @@ class StompClientSingleton {
 
     for (const [destination, subscriberInfo] of this.subscribers) {
       try {
-        const subscription = this.client.subscribe(destination, subscriberInfo.callback, subscriberInfo.headers);
+        // ✅ FIX: Unsubscribe cũ trước khi tạo subscription mới
+        if (subscriberInfo.subscription) {
+          try {
+            subscriberInfo.subscription.unsubscribe();
+          } catch (e) {
+            console.warn("⚠️ Error unsubscribing old subscription during resubscribe:", e);
+          }
+        }
+
+        const subscription = this.client.subscribe(
+          destination,
+          subscriberInfo.callback,
+          subscriberInfo.headers
+        );
         subscriberInfo.subscription = subscription;
         console.log("✅ Resubscribed to", destination);
       } catch (error) {
@@ -232,7 +260,9 @@ class StompClientSingleton {
 
   isAuthenticationError(frame) {
     const message = frame.headers["message"] || frame.body || "";
-    return ["403", "401", "Unauthorized", "Access Denied", "Authentication"].some(error => message.includes(error));
+    return ["403", "401", "Unauthorized", "Access Denied", "Authentication"].some(
+      (error) => message.includes(error)
+    );
   }
 
   async ensureValidToken(timeout = 15000) {
@@ -255,7 +285,9 @@ class StompClientSingleton {
       new Promise((resolve, reject) => {
         const unsubscribe = onTokenRefresh((newToken) => {
           unsubscribe();
-          newToken && isTokenValid() ? resolve(newToken) : reject(new Error("Invalid token received"));
+          newToken && isTokenValid()
+            ? resolve(newToken)
+            : reject(new Error("Invalid token received"));
         });
 
         setTimeout(() => {
@@ -265,9 +297,9 @@ class StompClientSingleton {
       }),
 
       (async () => {
-        await new Promise(resolve => setTimeout(resolve, 15000));
+        await new Promise((resolve) => setTimeout(resolve, 15000));
         return await this.forceTokenRefresh();
-      })()
+      })(),
     ]);
 
     try {
@@ -284,7 +316,7 @@ class StompClientSingleton {
 
   async triggerTokenRefresh() {
     try {
-      await api.get('/v1/auth/me');
+      await api.get("/v1/auth/me");
     } catch (error) {
       if (error.response?.status === 401) {
         console.log("🔄 401 response received, token refresh should be triggered");
@@ -295,15 +327,15 @@ class StompClientSingleton {
 
   async forceTokenRefresh() {
     try {
-      const response = await api.post('/v1/auth/refresh', {}, {
+      const response = await api.post("/v1/auth/refresh", {}, {
         skipAuth: true,
-        withCredentials: true
+        withCredentials: true,
       });
 
       const newToken = response.data.body?.token;
       if (!newToken) throw new Error("No token in refresh response");
 
-      const { setAuthToken, getUserId, getUserName } = await import('./axios');
+      const { setAuthToken, getUserId, getUserName } = await import("./axios");
       setAuthToken(newToken, getUserId(), getUserName());
 
       return newToken;
@@ -328,7 +360,7 @@ class StompClientSingleton {
 
   cleanup() {
     console.log("🧹 Cleaning up STOMP singleton...");
-    this.tokenRefreshListeners.forEach(unsubscribe => unsubscribe());
+    this.tokenRefreshListeners.forEach((unsubscribe) => unsubscribe());
     this.tokenRefreshListeners = [];
     this.disconnect();
     this.client = null;
@@ -344,8 +376,10 @@ const stompClientSingleton = new StompClientSingleton();
 
 // Export functions for backward compatibility
 export const getStompClient = () => stompClientSingleton.getInstance();
-export const sendMessage = (destination, message, headers = {}) => stompClientSingleton.sendMessage(destination, message, headers);
-export const subscribe = (destination, callback, headers = {}) => stompClientSingleton.subscribe(destination, callback, headers);
+export const sendMessage = (destination, message, headers = {}) =>
+  stompClientSingleton.sendMessage(destination, message, headers);
+export const subscribe = (destination, callback, headers = {}) =>
+  stompClientSingleton.subscribe(destination, callback, headers);
 export const unsubscribe = (destination) => stompClientSingleton.unsubscribe(destination);
 export const connect = () => stompClientSingleton.connect();
 export const disconnect = () => stompClientSingleton.disconnect();
@@ -356,8 +390,8 @@ export const cleanup = () => stompClientSingleton.cleanup();
 export { stompClientSingleton };
 
 // Cleanup on page unload
-if (typeof window !== 'undefined') {
-  window.addEventListener('beforeunload', () => {
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeunload", () => {
     stompClientSingleton.cleanup();
   });
 }
