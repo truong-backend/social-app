@@ -285,7 +285,7 @@ export default function ChatList({ onSelectChat, selectedChatId }) {
         )}
 
         {/* Search */}
-        <div className="px-2 md:px-3 py-1 md:py-2 border-b hidden md:block">
+        <div className="px-2 md:px-3 py-1 md:py-2 border-b">
           <div className="relative">
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
