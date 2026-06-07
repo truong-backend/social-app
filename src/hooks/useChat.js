@@ -17,40 +17,33 @@ export default function useChat(chatId) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [totalMessages, setTotalMessages] = useState(0);
-  const [currentUserId, setCurrentUserId] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
-  
   const [isTyping, setIsTyping] = useState(false);
-  const typingTimeoutRef = useRef(null);
 
+  // ✅ FIX: Dùng ref thay vì state cho currentUserId
+  // → Không trigger re-render/re-subscription khi userId load xong
+  const currentUserIdRef = useRef(null);
+  const [currentUserId, setCurrentUserId] = useState(null);
+
+  const typingTimeoutRef = useRef(null);
   const subscriptionRef = useRef(null);
   const subscribedChatIdRef = useRef(null);
   const reconnectIntervalRef = useRef(null);
 
-  // Get userId từ localStorage
+  // Get userId từ localStorage — chỉ chạy 1 lần
   useEffect(() => {
     const uid = localStorage.getItem("userId");
-    if (uid) setCurrentUserId(uid);
+    if (uid) {
+      currentUserIdRef.current = uid;
+      setCurrentUserId(uid);
+    }
   }, []);
 
   const updateChatList = useCallback((newMessage) => {
-    console.log("🔄 Processing message for chatList:", newMessage);
-    
     const { chatList } = useAppStore.getState();
-    console.log("📜 Current chatList:", chatList);
-    
     const foundChat = chatList.find((c) => c.chatId === chatId);
-    console.log("🔍 Found chat:", foundChat);
 
     if (foundChat) {
-      console.log("🔍 Current latestMessage:", foundChat.latestMessage);
-      console.log("🆕 New message structure:", {
-        id: newMessage.id,
-        content: newMessage.content,
-        sentAt: newMessage.sentAt,
-        sender: newMessage.sender
-      });
-
       const updatedChat = {
         ...foundChat,
         latestMessage: {
@@ -67,83 +60,58 @@ export default function useChat(chatId) {
         notReadMessageCount:
           (foundChat.notReadMessageCount || 0) + (newMessage.isOwnMessage ? 0 : 1),
       };
-      
-      console.log("🆕 UpdatedChat latestMessage:", updatedChat.latestMessage);
-      
+
       const otherChats = chatList.filter((c) => c.chatId !== chatId);
       const newChatList = [...otherChats, updatedChat];
 
-      console.log("📜 New chatList first item latestMessage:", newChatList[0]?.latestMessage);
-      
       useAppStore.setState({ 
         chatList: newChatList.map(chat => ({...chat}))
       });
-      
-      console.log("✅ ChatList updated successfully!");
-      
-      setTimeout(() => {
-        const { chatList: updatedList } = useAppStore.getState();
-        console.log("🔍 Verified latestMessage after update:", updatedList.find(c => c.chatId === chatId)?.latestMessage);
-      }, 100);
     } else {
       console.warn(`⚠️ Không tìm thấy chat với chatId: ${chatId}`);
     }
   }, [chatId]);
 
+  // ✅ FIX: Dùng ref để đọc currentUserId trong callback
+  // → Không cần currentUserId trong dependency array
   const handleTypingNotification = useCallback((data) => {
-    console.log("💬 Typing notification received:", data);
-    
-    if (data.id === currentUserId) {
-      console.log("💬 Ignoring own typing notification");
-      return;
-    }
+    if (data.id === currentUserIdRef.current) return;
 
     if (data.command === "TYPING") {
       setIsTyping(true);
     } else if (data.command === "STOP_TYPING") {
       setIsTyping(false);
     }
-  }, [currentUserId]);
+  }, []); // ✅ Không còn [currentUserId] trong deps
 
   const handleBlockNotification = useCallback((data) => {
-    console.log("🚫 Block notification received:", data);
-    
     const { updateBlockStatus } = useAppStore.getState();
-    
+
     if (data.command === "HAS_BEEN_BLOCKED") {
       updateBlockStatus(chatId, {
         blockStatus: "HAS_BEEN_BLOCKED",
         blockedAt: data.blockedAt || new Date().toISOString(),
         blockReason: data.blockReason || "Blocked by user"
       });
-      console.log(`🚫 Updated blockStatus to HAS_BEEN_BLOCKED for chat ${chatId}`);
     } else if (data.command === "HAS_BEEN_UNBLOCKED") {
       updateBlockStatus(chatId, {
         blockStatus: "NORMAL",
         blockedAt: null,
         blockReason: null
       });
-      console.log(`✅ Updated blockStatus to NORMAL for chat ${chatId}`);
     }
   }, [chatId]);
 
   const handleReadingNotification = useCallback((data) => {
-    console.log("👁️ Reading notification received:", data);
-    
-    if (data.id === currentUserId) {
-      console.log("👁️ Ignoring own reading notification");
-      return;
-    }
+    if (data.id === currentUserIdRef.current) return; // ✅ Dùng ref
 
-    console.log("👁️ Marking all messages as read");
-    setMessages((prevMessages) => {
-      return prevMessages.map((message) => ({
-        ...message,
-        isRead: true
-      }));
-    });
-  }, [currentUserId]);
+    setMessages((prevMessages) =>
+      prevMessages.map((message) => ({ ...message, isRead: true }))
+    );
+  }, []); // ✅ Không còn [currentUserId] trong deps
 
+  // ✅ FIX: handleMessage không còn depend vào currentUserId state
+  // → Không tạo lại khi userId load → không trigger re-subscription
   const handleMessage = useCallback((message) => {
     try {
       const data = JSON.parse(message.body);
@@ -159,7 +127,6 @@ export default function useChat(chatId) {
       }
 
       if (data.command === "READING") {
-        console.log("👁️ READING received:", data);
         handleReadingNotification(data);
         return;
       }
@@ -167,7 +134,9 @@ export default function useChat(chatId) {
       if (data.command === "DELETE") {
         setMessages((prev) =>
           prev.map((msg) =>
-            msg.id === data.id ? { ...msg, content: "[Tin nhắn đã bị xóa]", deleted: true } : msg
+            msg.id === data.id
+              ? { ...msg, content: "[Tin nhắn đã bị xóa]", deleted: true }
+              : msg
           )
         );
         return;
@@ -184,21 +153,17 @@ export default function useChat(chatId) {
         return;
       }
 
-      const newMessage = { ...data, isOwnMessage: data.sender?.id === currentUserId };
-      console.log("📩 Processing new message:", newMessage);
-      console.log("🆔 Current userId:", currentUserId);
-      console.log("🆔 Sender ID:", data.sender?.id);
-      
+      // ✅ Dùng ref để check isOwnMessage, không cần state
+      const newMessage = {
+        ...data,
+        isOwnMessage: data.sender?.id === currentUserIdRef.current,
+      };
+
       if (!newMessage.isOwnMessage) {
         setIsTyping(false);
       }
-      
-      setMessages((prev) => {
-        console.log("📝 Previous messages count:", prev.length);
-        const newMessages = [newMessage, ...prev];
-        console.log("📝 New messages count:", newMessages.length);
-        return newMessages;
-      });
+
+      setMessages((prev) => [newMessage, ...prev]);
 
       requestAnimationFrame(() => {
         updateChatList(newMessage);
@@ -207,7 +172,8 @@ export default function useChat(chatId) {
     } catch (err) {
       console.error("❌ Error parsing message:", err);
     }
-  }, [currentUserId, updateChatList, handleTypingNotification, handleBlockNotification, handleReadingNotification]);
+  }, [updateChatList, handleTypingNotification, handleBlockNotification, handleReadingNotification]);
+  // ✅ currentUserId đã bị xóa khỏi deps → handleMessage ổn định, không tạo lại
 
   // Load messages lần đầu khi chatId thay đổi
   useEffect(() => {
@@ -220,18 +186,16 @@ export default function useChat(chatId) {
         setHasMore(true);
         setTotalMessages(0);
         setIsTyping(false);
-        
+
         const limit = 20;
         const skip = 0;
-        
+
         const res = await api.get(`/v1/chat/messages/${chatId}?skip=${skip}&limit=${limit}`);
         const fetchedMessages = res.data.body || [];
-        
+
         setMessages(fetchedMessages);
         setTotalMessages(fetchedMessages.length);
         setHasMore(fetchedMessages.length === limit);
-        
-        console.log(`📨 Loaded initial messages: ${fetchedMessages.length}, hasMore=${fetchedMessages.length === limit}`);
       } catch (err) {
         console.error("❌ Lỗi tải tin nhắn:", err);
         setMessages([]);
@@ -242,7 +206,7 @@ export default function useChat(chatId) {
     };
 
     fetchInitialMessages();
-  }, [chatId, currentUserId]);
+  }, [chatId]); // ✅ Bỏ currentUserId khỏi deps — không cần thiết
 
   // Load more messages (infinity scroll)
   const loadMoreMessages = useCallback(async () => {
@@ -250,25 +214,20 @@ export default function useChat(chatId) {
 
     try {
       setLoadingMore(true);
-      
+
       const limit = 20;
       const currentCount = messages.length;
       const skip = currentCount;
-      
-      console.log(`📨 Loading more messages: currentCount=${currentCount}, skip=${skip}`);
-      
+
       const res = await api.get(`/v1/chat/messages/${chatId}?skip=${skip}&limit=${limit}`);
       const olderMessages = res.data.body || [];
-      
+
       if (olderMessages.length > 0) {
         setMessages(prev => [...prev, ...olderMessages]);
         setTotalMessages(prev => prev + olderMessages.length);
         setHasMore(olderMessages.length === limit);
-        
-        console.log(`📨 Loaded ${olderMessages.length} more messages, hasMore=${olderMessages.length === limit}`);
       } else {
         setHasMore(false);
-        console.log(`📨 No more messages to load`);
       }
     } catch (err) {
       console.error("❌ Lỗi load thêm tin nhắn:", err);
@@ -278,11 +237,12 @@ export default function useChat(chatId) {
     }
   }, [chatId, messages.length, loadingMore, hasMore]);
 
-  // ✅ FIX BUG 8 TIN NHẮN: Luôn unsubscribe cũ trước khi subscribe mới
+  // ✅ FIX: Dependency array chỉ còn [chatId, handleMessage]
+  // handleMessage giờ ổn định → useEffect này chỉ chạy khi đổi chat
   useEffect(() => {
-    if (!chatId || !currentUserId) return;
+    if (!chatId) return;
 
-    // Luôn cleanup subscription cũ trước (bỏ guard check chatId === chatId)
+    // Cleanup subscription cũ trước
     if (subscriptionRef.current) {
       console.log(`🧹 Unsubscribing from previous chat:${subscribedChatIdRef.current}`);
       unsubscribe(`/chat/${subscribedChatIdRef.current}`);
@@ -301,9 +261,9 @@ export default function useChat(chatId) {
         setConnectionStatus('connecting');
 
         await getStompClient();
-        
+
         const subscription = await subscribe(`/chat/${chatId}`, handleMessage);
-        
+
         if (subscription) {
           subscriptionRef.current = subscription;
           subscribedChatIdRef.current = chatId;
@@ -323,14 +283,14 @@ export default function useChat(chatId) {
 
     reconnectIntervalRef.current = setInterval(async () => {
       const connected = isConnected();
-      
+
       if (!connected && isTokenValid()) {
         console.log(`🔁 Reconnecting to chat:${chatId}...`);
         setConnectionStatus('reconnecting');
-        
+
         try {
           await connect();
-          
+
           if (isConnected()) {
             const subscription = await subscribe(`/chat/${chatId}`, handleMessage);
             if (subscription) {
@@ -346,34 +306,31 @@ export default function useChat(chatId) {
         }
       } else {
         setConnectionStatus(connected ? 'connected' : 'disconnected');
-        console.log(
-          `[chat:${chatId}] Status: ${connected ? "✅ connected" : "❌ disconnected"}`
-        );
       }
     }, 15000);
 
     return () => {
       console.log(`🧹 Cleaning up chat:${chatId} subscription...`);
-      
+
       if (subscriptionRef.current && subscribedChatIdRef.current === chatId) {
         unsubscribe(`/chat/${chatId}`);
         subscriptionRef.current = null;
         subscribedChatIdRef.current = null;
       }
-      
+
       if (reconnectIntervalRef.current) {
         clearInterval(reconnectIntervalRef.current);
         reconnectIntervalRef.current = null;
       }
-      
+
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
         typingTimeoutRef.current = null;
       }
-      
+
       setConnectionStatus('disconnected');
     };
-  }, [chatId, currentUserId, handleMessage]);
+  }, [chatId, handleMessage]); // ✅ Bỏ currentUserId — chỉ còn chatId và handleMessage ổn định
 
   // Cleanup khi component unmount
   useEffect(() => {
@@ -382,11 +339,11 @@ export default function useChat(chatId) {
         console.log(`🧹 Component unmounting, cleaning up chat:${subscribedChatIdRef.current}`);
         unsubscribe(`/chat/${subscribedChatIdRef.current}`);
       }
-      
+
       if (reconnectIntervalRef.current) {
         clearInterval(reconnectIntervalRef.current);
       }
-      
+
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
@@ -395,19 +352,19 @@ export default function useChat(chatId) {
 
   const forceReconnect = useCallback(async () => {
     if (!chatId) return;
-    
+
     console.log(`🔄 Force reconnecting to chat:${chatId}...`);
     setConnectionStatus('connecting');
-    
+
     try {
       if (subscriptionRef.current) {
         unsubscribe(`/chat/${chatId}`);
         subscriptionRef.current = null;
         subscribedChatIdRef.current = null;
       }
-      
+
       await connect();
-      
+
       const subscription = await subscribe(`/chat/${chatId}`, handleMessage);
       if (subscription) {
         subscriptionRef.current = subscription;
@@ -423,9 +380,9 @@ export default function useChat(chatId) {
     }
   }, [chatId, handleMessage]);
 
-  return { 
-    messages, 
-    loading, 
+  return {
+    messages,
+    loading,
     loadingMore,
     hasMore,
     totalMessages,
