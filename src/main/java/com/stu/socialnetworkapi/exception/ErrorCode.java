@@ -123,7 +123,20 @@ public enum ErrorCode {
     INVALID_UUID(9996, "Invalid uuid", HttpStatus.BAD_REQUEST),
     UNAUTHENTICATED(9997, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     NO_RESOURCE_FOUND(9998, "Resource not found", HttpStatus.NOT_FOUND),
-    UNKNOWN_ERROR(9999, "Something went wrong", HttpStatus.INTERNAL_SERVER_ERROR);
+    UNKNOWN_ERROR(9999, "Something went wrong", HttpStatus.INTERNAL_SERVER_ERROR),
+
+    // Group Chat errors (8xxx)
+    GROUP_MUST_HAVE_AT_LEAST_2_MEMBERS(8000, "Group must have at least 2 members", HttpStatus.BAD_REQUEST),
+    NOT_MEMBER_OF_GROUP(8001, "You are not a member of this group", HttpStatus.FORBIDDEN),
+    INSUFFICIENT_GROUP_PERMISSION(8002, "Insufficient permission for this action", HttpStatus.FORBIDDEN),
+    CANNOT_REMOVE_OWNER(8003, "Cannot remove group owner", HttpStatus.FORBIDDEN),
+    OWNER_MUST_TRANSFER_BEFORE_LEAVE(8004, "Owner must transfer ownership before leaving", HttpStatus.BAD_REQUEST),
+    GROUP_NOT_FOUND(8005, "Group not found", HttpStatus.NOT_FOUND),
+    MEMBER_ALREADY_IN_GROUP(8006, "Member already in group", HttpStatus.CONFLICT),
+
+    ;
+
+
 
     int code;
     String message;

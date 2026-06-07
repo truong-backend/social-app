@@ -20,7 +20,8 @@ public class MessageCommand {
         HAS_BEEN_BLOCKED,
         HAS_BEEN_UNBLOCKED,
         READING,
-        END_CALL
+        END_CALL,
+        GROUP_EVENT
     }
 }
 

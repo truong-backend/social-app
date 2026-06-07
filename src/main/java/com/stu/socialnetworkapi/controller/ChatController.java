@@ -70,4 +70,17 @@ public class ChatController {
         messageService.deleteMessage(messageId);
         return ApiResponse.success();
     }
+    @PostMapping("/group/{chatId}/send")
+    public ApiResponse<MessageResponse> sendGroupMessage(
+            @PathVariable UUID chatId,
+            @Valid @RequestBody TextMessageRequest request) {
+        return ApiResponse.success(messageService.sendGroupMessage(request, chatId));
+    }
+
+    @PostMapping("/group/{chatId}/send-file")
+    public ApiResponse<MessageResponse> sendGroupFile(
+            @PathVariable UUID chatId,
+            @Valid FileMessageRequest request) {
+        return ApiResponse.success(messageService.sendGroupFile(request, chatId));
+    }
 }

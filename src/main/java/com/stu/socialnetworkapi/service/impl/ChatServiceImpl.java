@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -76,9 +77,20 @@ public class ChatServiceImpl implements ChatService {
     @Override
     public List<ChatResponse> getChatList() {
         UUID userId = userService.getCurrentUserIdRequiredAuthentication();
-        return chatRepository.getChatListOrderByLatestMessageSentTimeDesc(userId)
-                .stream().map(chatMapper::toChatResponse)
-                .toList();
+        List<ChatResponse> direct = chatRepository.getDirectChatList(userId)
+                .stream().map(chatMapper::toChatResponse).toList();
+        List<ChatResponse> groups = chatRepository.getGroupChatList(userId)
+                .stream().map(chatMapper::toChatResponse).toList();
+
+        List<ChatResponse> all = new ArrayList<>();
+        all.addAll(direct);
+        all.addAll(groups);
+        all.sort((a, b) -> {
+            if (a.getLatestMessage() == null) return 1;
+            if (b.getLatestMessage() == null) return -1;
+            return b.getLatestMessage().getSentAt().compareTo(a.getLatestMessage().getSentAt());
+        });
+        return all;
     }
 
     @Override
@@ -92,5 +104,15 @@ public class ChatServiceImpl implements ChatService {
     @Override
     public boolean isMemberOfChat(UUID userId, UUID chatId) {
         return inChatRepository.isInChat(userId, chatId);
+    }
+
+    @Override
+    public Chat getGroupChat(UUID chatId) {
+        UUID userId = userService.getCurrentUserIdRequiredAuthentication();
+        if (!inChatRepository.isInChat(userId, chatId)) {
+            throw new ApiException(ErrorCode.NOT_MEMBER_OF_GROUP);
+        }
+        return chatRepository.findById(chatId)
+                .orElseThrow(() -> new ApiException(ErrorCode.CHAT_NOT_FOUND));
     }
 }

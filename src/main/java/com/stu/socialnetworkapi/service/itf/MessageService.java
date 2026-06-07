@@ -9,6 +9,9 @@ import java.util.UUID;
 public interface MessageService {
     MessageResponse sendMessage(TextMessageRequest request);
 
+    MessageResponse sendGroupMessage(TextMessageRequest request, UUID chatId);
+    MessageResponse sendGroupFile(FileMessageRequest request, UUID chatId);
+
     MessageResponse sendMessage(TextMessageRequest request, UUID userId);
 
     MessageResponse sendFile(FileMessageRequest message);

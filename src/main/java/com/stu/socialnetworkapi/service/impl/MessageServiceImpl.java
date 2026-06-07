@@ -24,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.stu.socialnetworkapi.repository.neo4j.ChatRepository;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -41,6 +42,7 @@ public class MessageServiceImpl implements MessageService {
     private final SimpMessagingTemplate messagingTemplate;
     private final InChatRepository inChatRepository;
     private final IsTypingRepository isTypingRepository;
+    private final ChatRepository chatRepository;
 
     @Override
     public MessageResponse sendMessage(TextMessageRequest request) {
@@ -64,7 +66,40 @@ public class MessageServiceImpl implements MessageService {
         sendMessageNotification(chat.getId(), receiver.getId(), response);
         return response;
     }
+    // ── Group message send ────────────────────────────────────────────────────
+    @Override
+    public MessageResponse sendGroupMessage(TextMessageRequest request, UUID chatId) {
+        User sender = userService.getCurrentUserRequiredAuthentication();
 
+        if (!inChatRepository.isInChat(sender.getId(), chatId)) {
+            throw new ApiException(ErrorCode.NOT_MEMBER_OF_GROUP);
+        }
+
+        Chat chat = chatRepository.findById(chatId)
+                .orElseThrow(() -> new ApiException(ErrorCode.CHAT_NOT_FOUND));
+
+        String content = request.text().trim();
+        if (content.isEmpty()) throw new ApiException(ErrorCode.TEXT_MESSAGE_CONTENT_REQUIRED);
+
+        Message message = Message.builder()
+                .chat(chat)
+                .content(content)
+                .sender(sender)
+                .isRead(false)
+                .build();
+
+        messageRepository.save(message);
+        MessageResponse response = messageMapper.toMessageResponse(message);
+
+        // Broadcast to all group members
+        chat.getMembers().forEach(member -> {
+            if (!member.getId().equals(sender.getId())) {
+                sendMessageNotification(chatId, member.getId(), response);
+            }
+        });
+
+        return response;
+    }
     @Override
     public MessageResponse sendMessage(TextMessageRequest request, UUID userId) {
         User sender = userService.getUser(userId);
@@ -246,5 +281,42 @@ public class MessageServiceImpl implements MessageService {
         messagingTemplate.convertAndSend(WebSocketChannelPrefix.CHAT_CHANNEL_PREFIX + "/" + chatId, response);
         // Gửi thông báo tin nhắn cho người nhận
         messagingTemplate.convertAndSend(WebSocketChannelPrefix.MESSAGE_CHANNEL_PREFIX + "/" + targetId, response);
+    }
+
+    @Override
+    public MessageResponse sendGroupFile(FileMessageRequest request, UUID chatId) {
+        User sender = userService.getCurrentUserRequiredAuthentication();
+
+        // Kiểm tra là thành viên nhóm
+        if (!inChatRepository.isInChat(sender.getId(), chatId)) {
+            throw new ApiException(ErrorCode.NOT_MEMBER_OF_GROUP);
+        }
+
+        Chat chat = chatRepository.findById(chatId)
+                .orElseThrow(() -> new ApiException(ErrorCode.CHAT_NOT_FOUND));
+
+        File file = fileService.upload(request.attachment());
+
+        Message message = Message.builder()
+                .chat(chat)
+                .sender(sender)
+                .type(MessageType.FILE)
+                .attachedFile(file)
+                .isRead(false)
+                .build();
+
+        messageRepository.save(message);
+        MessageResponse response = messageMapper.toMessageResponse(message);
+
+        // Broadcast tới tất cả thành viên nhóm (trừ người gửi)
+        if (chat.getMembers() != null) {
+            chat.getMembers().forEach(member -> {
+                if (!member.getId().equals(sender.getId())) {
+                    sendMessageNotification(chatId, member.getId(), response);
+                }
+            });
+        }
+
+        return response;
     }
 }

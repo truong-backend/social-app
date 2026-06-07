@@ -11,12 +11,13 @@ public interface ChatService {
     void createChatIfNotExist(User user1, User user2);
 
     Chat getOrCreateDirectChat(UUID senderId, UUID receiverId);
-
     Chat getOrCreateDirectChat(User sender, User receiver);
 
     List<ChatResponse> getChatList();
-
     List<ChatResponse> search(String query);
 
     boolean isMemberOfChat(UUID userId, UUID chatId);
+
+    // Group: helper to get a group chat, validating membership
+    Chat getGroupChat(UUID chatId);
 }

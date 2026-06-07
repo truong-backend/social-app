@@ -4,9 +4,31 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="069b736b-0e6d-4b3d-af43-6e4a296b7724" name="Changes" comment="feat: implement deduplication for friend groups and my stories in useReels hook">
+    <list default="true" id="069b736b-0e6d-4b3d-af43-6e4a296b7724" name="Changes" comment="refactor: clean up commented code and improve formatting in StoryViewer component">
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/controller/GroupController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/projection/GroupMemberProjection.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/projection/PinnedMessageProjection.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/request/CreateGroupRequest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/request/GroupMemberRequest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/request/UpdateGroupRequest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/response/GroupMemberResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/enums/GroupRole.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/impl/GroupServiceImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/itf/GroupService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/impl/StoryServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/impl/StoryServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/config/WebSocketChannelPrefix.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/config/WebSocketChannelPrefix.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/controller/ChatController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/controller/ChatController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/projection/ChatProjection.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/projection/ChatProjection.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/response/ChatResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/response/ChatResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/response/MessageCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/dto/response/MessageCommand.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/entity/Chat.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/entity/Chat.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/exception/ErrorCode.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/exception/ErrorCode.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/mapper/ChatMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/mapper/ChatMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/repository/neo4j/ChatRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/repository/neo4j/ChatRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/impl/ChatServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/impl/ChatServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/impl/MessageServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/impl/MessageServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/itf/ChatService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/itf/ChatService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/itf/MessageService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/service/itf/MessageService.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -75,14 +97,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1776389664504</updated>
-    </task>
-    <task id="LOCAL-00004" summary="Update deploy hetzner">
-      <option name="closed" value="true" />
-      <created>1776544290861</created>
-      <option name="number" value="00004" />
-      <option name="presentableId" value="LOCAL-00004" />
-      <option name="project" value="LOCAL" />
-      <updated>1776544290861</updated>
     </task>
     <task id="LOCAL-00005" summary="Update deploy hetzner">
       <option name="closed" value="true" />
@@ -468,7 +482,15 @@
       <option name="project" value="LOCAL" />
       <updated>1779077173128</updated>
     </task>
-    <option name="localTasksCounter" value="53" />
+    <task id="LOCAL-00053" summary="refactor: clean up commented code and improve formatting in StoryViewer component">
+      <option name="closed" value="true" />
+      <created>1779078341110</created>
+      <option name="number" value="00053" />
+      <option name="presentableId" value="LOCAL-00053" />
+      <option name="project" value="LOCAL" />
+      <updated>1779078341110</updated>
+    </task>
+    <option name="localTasksCounter" value="54" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -491,7 +513,140 @@
     <MESSAGE value="chore: add docker files and env from tracking" />
     <MESSAGE value="feat: enhance CallPopup and CallVideo components for improved call handling and UI updates" />
     <MESSAGE value="feat: implement deduplication for friend groups and my stories in useReels hook" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: implement deduplication for friend groups and my stories in useReels hook" />
+    <MESSAGE value="refactor: clean up commented code and improve formatting in StoryViewer component" />
+    <option name="LAST_COMMIT_MESSAGE" value="refactor: clean up commented code and improve formatting in StoryViewer component" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-field">
+          <url>file://$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/repository/redis/IsOnlineRepository.java</url>
+          <line>20</line>
+          <properties field="redisTemplate" class="com.stu.socialnetworkapi.repository.redis.IsOnlineRepository" />
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/repository/redis/IsOnlineRepository.java</url>
+          <line>31</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/repository/redis/IsOnlineRepository.java</url>
+          <line>27</line>
+          <option name="timeStamp" value="3" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/repository/redis/IsOnlineRepository.java</url>
+          <line>39</line>
+          <option name="timeStamp" value="4" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/repository/redis/IsOnlineRepository.java</url>
+          <line>42</line>
+          <option name="timeStamp" value="5" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/repository/redis/IsOnlineRepository.java</url>
+          <line>47</line>
+          <option name="timeStamp" value="6" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/repository/redis/IsOnlineRepository.java</url>
+          <line>48</line>
+          <option name="timeStamp" value="7" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/repository/redis/IsOnlineRepository.java</url>
+          <line>50</line>
+          <option name="timeStamp" value="8" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/repository/redis/IsOnlineRepository.java</url>
+          <line>75</line>
+          <option name="timeStamp" value="9" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/repository/redis/IsOnlineRepository.java</url>
+          <line>83</line>
+          <option name="timeStamp" value="10" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/repository/redis/IsOnlineRepository.java</url>
+          <line>85</line>
+          <option name="timeStamp" value="11" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/repository/redis/InChatRepository.java</url>
+          <line>54</line>
+          <option name="timeStamp" value="12" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/repository/redis/RelationshipCacheRepository.java</url>
+          <line>40</line>
+          <option name="timeStamp" value="13" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/repository/redis/RelationshipCacheRepository.java</url>
+          <line>51</line>
+          <option name="timeStamp" value="14" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/repository/redis/RelationshipCacheRepository.java</url>
+          <line>62</line>
+          <option name="timeStamp" value="15" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/repository/redis/RelationshipCacheRepository.java</url>
+          <line>73</line>
+          <option name="timeStamp" value="16" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/repository/redis/RelationshipCacheRepository.java</url>
+          <line>84</line>
+          <option name="timeStamp" value="17" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/repository/redis/RelationshipCacheRepository.java</url>
+          <line>126</line>
+          <option name="timeStamp" value="18" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/repository/redis/RelationshipCacheRepository.java</url>
+          <line>164</line>
+          <option name="timeStamp" value="19" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/repository/redis/RelationshipCacheRepository.java</url>
+          <line>179</line>
+          <option name="timeStamp" value="20" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/repository/redis/RelationshipCacheRepository.java</url>
+          <line>200</line>
+          <option name="timeStamp" value="21" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/repository/redis/RelationshipCacheRepository.java</url>
+          <line>148</line>
+          <option name="timeStamp" value="22" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/repository/redis/RelationshipCacheRepository.java</url>
+          <line>117</line>
+          <option name="timeStamp" value="23" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/repository/redis/RelationshipCacheRepository.java</url>
+          <line>111</line>
+          <option name="timeStamp" value="24" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/stu/socialnetworkapi/repository/redis/RelationshipCacheRepository.java</url>
+          <line>112</line>
+          <option name="timeStamp" value="25" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/social_app$SocialNetworkApiApplication.ic" NAME="SocialNetworkApiApplication Coverage Results" MODIFIED="1776389746974" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
