@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="069b736b-0e6d-4b3d-af43-6e4a296b7724" name="Changes" comment="Update URL and member">
+    <list default="true" id="069b736b-0e6d-4b3d-af43-6e4a296b7724" name="Changes" comment="Update URL and memberrefactor: Clean up comments and improve typing notification handling in useChat hook">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -74,14 +74,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1776389664504</updated>
-    </task>
-    <task id="LOCAL-00009" summary="Update deploy hetzner">
-      <option name="closed" value="true" />
-      <created>1776869338232</created>
-      <option name="number" value="00009" />
-      <option name="presentableId" value="LOCAL-00009" />
-      <option name="project" value="LOCAL" />
-      <updated>1776869338232</updated>
     </task>
     <task id="LOCAL-00010" summary="Update deploy hetzner">
       <option name="closed" value="true" />
@@ -467,7 +459,15 @@
       <option name="project" value="LOCAL" />
       <updated>1780834952847</updated>
     </task>
-    <option name="localTasksCounter" value="58" />
+    <task id="LOCAL-00058" summary="Update URL and memberrefactor: Clean up comments and improve typing notification handling in useChat hook">
+      <option name="closed" value="true" />
+      <created>1780836635568</created>
+      <option name="number" value="00058" />
+      <option name="presentableId" value="LOCAL-00058" />
+      <option name="project" value="LOCAL" />
+      <updated>1780836635568</updated>
+    </task>
+    <option name="localTasksCounter" value="59" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -494,7 +494,8 @@
     <MESSAGE value="feat: Implement group chat functionality with CreateGroupModal and GroupInfoModal&#10;&#10;- Added CreateGroupModal component for creating new group chats.&#10;- Implemented GroupInfoModal for managing group details, including member actions and pinned messages.&#10;- Introduced groupApi utility for handling group-related API calls.&#10;- Enhanced Zustand store (ZustandStore.js) to manage group chat state and events." />
     <MESSAGE value="refactor: clean up unused imports and enhance layout in ChatLayoutInner and ChatList components" />
     <MESSAGE value="Update URL and member" />
-    <option name="LAST_COMMIT_MESSAGE" value="Update URL and member" />
+    <MESSAGE value="Update URL and memberrefactor: Clean up comments and improve typing notification handling in useChat hook" />
+    <option name="LAST_COMMIT_MESSAGE" value="Update URL and memberrefactor: Clean up comments and improve typing notification handling in useChat hook" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
