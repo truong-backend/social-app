@@ -80,10 +80,11 @@ public class ChatController {
         return ApiResponse.success(messageService.sendGroupMessage(request, chatId));
     }
 
+    // ✅ FIX: Dùng GroupFileMessageRequest thay vì FileMessageRequest
     @PostMapping("/group/{chatId}/send-file")
     public ApiResponse<MessageResponse> sendGroupFile(
             @PathVariable UUID chatId,
-            @Valid FileMessageRequest request) {
+            @Valid GroupFileMessageRequest request) {
         return ApiResponse.success(messageService.sendGroupFile(request, chatId));
     }
 }
