@@ -20,11 +20,9 @@ export default function useChat(chatId) {
   const [currentUserId, setCurrentUserId] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
   
-  // ✅ Thêm state cho typing notifications
   const [isTyping, setIsTyping] = useState(false);
   const typingTimeoutRef = useRef(null);
 
-  // Refs để track subscription
   const subscriptionRef = useRef(null);
   const subscribedChatIdRef = useRef(null);
   const reconnectIntervalRef = useRef(null);
@@ -35,7 +33,6 @@ export default function useChat(chatId) {
     if (uid) setCurrentUserId(uid);
   }, []);
 
-  // Hàm helper để cập nhật chatList
   const updateChatList = useCallback((newMessage) => {
     console.log("🔄 Processing message for chatList:", newMessage);
     
@@ -73,22 +70,17 @@ export default function useChat(chatId) {
       
       console.log("🆕 UpdatedChat latestMessage:", updatedChat.latestMessage);
       
-      // Tìm chat được update và các chat khác
       const otherChats = chatList.filter((c) => c.chatId !== chatId);
-      
-      // Đặt chat được chọn ở cuối, các chat khác giữ nguyên thứ tự
       const newChatList = [...otherChats, updatedChat];
 
       console.log("📜 New chatList first item latestMessage:", newChatList[0]?.latestMessage);
       
-      // Force update bằng cách tạo object mới hoàn toàn
       useAppStore.setState({ 
         chatList: newChatList.map(chat => ({...chat}))
       });
       
       console.log("✅ ChatList updated successfully!");
       
-      // Verify update
       setTimeout(() => {
         const { chatList: updatedList } = useAppStore.getState();
         console.log("🔍 Verified latestMessage after update:", updatedList.find(c => c.chatId === chatId)?.latestMessage);
@@ -98,11 +90,9 @@ export default function useChat(chatId) {
     }
   }, [chatId]);
 
-  // ✅ Xử lý typing notifications
   const handleTypingNotification = useCallback((data) => {
     console.log("💬 Typing notification received:", data);
     
-    // Chỉ xử lý typing của người khác, không phải của mình
     if (data.id === currentUserId) {
       console.log("💬 Ignoring own typing notification");
       return;
@@ -110,17 +100,14 @@ export default function useChat(chatId) {
 
     if (data.command === "TYPING") {
       setIsTyping(true);
-      
     } else if (data.command === "STOP_TYPING") {
       setIsTyping(false);
     }
   }, [currentUserId]);
 
-  // ✅ NEW: Xử lý block/unblock notifications
   const handleBlockNotification = useCallback((data) => {
     console.log("🚫 Block notification received:", data);
     
-    // Cập nhật blockStatus trong store
     const { updateBlockStatus } = useAppStore.getState();
     
     if (data.command === "HAS_BEEN_BLOCKED") {
@@ -140,17 +127,14 @@ export default function useChat(chatId) {
     }
   }, [chatId]);
 
-  // UPDATED: Xử lý READING notifications
   const handleReadingNotification = useCallback((data) => {
     console.log("👁️ Reading notification received:", data);
     
-    // Nếu là tin nhắn đọc của chính mình thì không xử lý
     if (data.id === currentUserId) {
       console.log("👁️ Ignoring own reading notification");
       return;
     }
 
-    // Nếu là người khác đọc tin nhắn, đánh dấu tất cả messages là đã đọc
     console.log("👁️ Marking all messages as read");
     setMessages((prevMessages) => {
       return prevMessages.map((message) => ({
@@ -160,24 +144,20 @@ export default function useChat(chatId) {
     });
   }, [currentUserId]);
 
-  // Xử lý message nhận được từ WebSocket
   const handleMessage = useCallback((message) => {
     try {
       const data = JSON.parse(message.body);
 
-      // ✅ Xử lý typing notifications
       if (data.command === "TYPING" || data.command === "STOP_TYPING") {
         handleTypingNotification(data);
         return;
       }
 
-      // ✅ UPDATED: Xử lý block/unblock notifications
       if (data.command === "HAS_BEEN_BLOCKED" || data.command === "HAS_BEEN_UNBLOCKED") {
         handleBlockNotification(data);
         return;
       }
 
-      // ✅ UPDATED: Xử lý READING command
       if (data.command === "READING") {
         console.log("👁️ READING received:", data);
         handleReadingNotification(data);
@@ -204,18 +184,15 @@ export default function useChat(chatId) {
         return;
       }
 
-      // NEW MESSAGE
       const newMessage = { ...data, isOwnMessage: data.sender?.id === currentUserId };
       console.log("📩 Processing new message:", newMessage);
       console.log("🆔 Current userId:", currentUserId);
       console.log("🆔 Sender ID:", data.sender?.id);
       
-      // ✅ Khi nhận được tin nhắn mới, ẩn typing indicator
       if (!newMessage.isOwnMessage) {
         setIsTyping(false);
       }
       
-      // Cập nhật messages state - thêm vào đầu mảng (tin nhắn mới nhất)
       setMessages((prev) => {
         console.log("📝 Previous messages count:", prev.length);
         const newMessages = [newMessage, ...prev];
@@ -223,7 +200,6 @@ export default function useChat(chatId) {
         return newMessages;
       });
 
-      // Cập nhật chatList ngay lập tức
       requestAnimationFrame(() => {
         updateChatList(newMessage);
       });
@@ -243,8 +219,6 @@ export default function useChat(chatId) {
         setMessages([]);
         setHasMore(true);
         setTotalMessages(0);
-        
-        // ✅ Reset typing state khi chuyển chat
         setIsTyping(false);
         
         const limit = 20;
@@ -304,20 +278,21 @@ export default function useChat(chatId) {
     }
   }, [chatId, messages.length, loadingMore, hasMore]);
 
-  // Quản lý WebSocket subscription với singleton client
+  // ✅ FIX BUG 8 TIN NHẮN: Luôn unsubscribe cũ trước khi subscribe mới
   useEffect(() => {
     if (!chatId || !currentUserId) return;
 
-    if (subscribedChatIdRef.current === chatId && subscriptionRef.current) {
-      console.log(`✅ Already subscribed to chat:${chatId}`);
-      return;
-    }
-
-    if (subscriptionRef.current && subscribedChatIdRef.current) {
+    // Luôn cleanup subscription cũ trước (bỏ guard check chatId === chatId)
+    if (subscriptionRef.current) {
       console.log(`🧹 Unsubscribing from previous chat:${subscribedChatIdRef.current}`);
       unsubscribe(`/chat/${subscribedChatIdRef.current}`);
       subscriptionRef.current = null;
       subscribedChatIdRef.current = null;
+    }
+
+    if (reconnectIntervalRef.current) {
+      clearInterval(reconnectIntervalRef.current);
+      reconnectIntervalRef.current = null;
     }
 
     const subscribeToChat = async () => {
@@ -391,7 +366,6 @@ export default function useChat(chatId) {
         reconnectIntervalRef.current = null;
       }
       
-      // ✅ Cleanup typing state
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
         typingTimeoutRef.current = null;
@@ -413,14 +387,12 @@ export default function useChat(chatId) {
         clearInterval(reconnectIntervalRef.current);
       }
       
-      // ✅ Cleanup typing timeout
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
     };
   }, []);
 
-  // Utility function để force reconnect
   const forceReconnect = useCallback(async () => {
     if (!chatId) return;
     
@@ -461,7 +433,6 @@ export default function useChat(chatId) {
     connectionStatus,
     loadMoreMessages,
     forceReconnect,
-    // ✅ Thêm typing states
     isTyping,
   };
 }
